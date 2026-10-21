@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "fidelity": {
+    "wirelength": "guide-rectangle Manhattan MST proxy",
+    "congestion": "GRT guide demand / merged DEF track capacity",
+    "drc": "not available; overflow entries are only a mock-DRT risk proxy",
+    "thermal": "external"
+  },
+  "inputs": {
+    "guide": "eda-elite-challenge2026/cases/sample001/sample001.output.guide",
+    "lefs": [
+      "eda-elite-challenge2026/cases/sample001/sample001.input.lef"
+    ],
+    "defs": [
+      "eda-elite-challenge2026/cases/sample001/sample001.input.def"
+    ],
+    "thermal_json": "eda-elite-challenge2026/cases/sample001/sample001.thermal.input.json"
+  },
+  "grid": {
+    "dbu_per_micron": 2000.0,
+    "rows": 42,
+    "cols": 42,
+    "mapped_thermal_xy_nodes": 10000
+  },
+  "wirelength": {
+    "total_dbu": 2219900.0,
+    "total_um": 1109.95,
+    "guide_mst_proxy_dbu": 2219900.0,
+    "hpwl_reference_dbu": 1299900.0,
+    "normalized": 1.7077467497499808,
+    "tsv_count": 12,
+    "tsv_cost_dbu_each": 2000.0
+  },
+  "congestion": {
+    "max_overflow": 2,
+    "average_overflow": 0.005780346820809248,
+    "total_overflow": 4,
+    "used_layer_gcells": 692,
+    "overflow_entries": 3,
+    "mock_drt_risk_hotspots": 3
+  },
+  "thermal_tsv": {
+    "synthetic": false,
+    "ambient_temperature": 25.0,
+    "tsv_points": 12,
+    "correlation_above_ambient": 0.02471328866412276
+  },
+  "score": {
+    "wirelength_score": 58.5566917428713,
+    "congestion_score": 80.0,
+    "thermal_score": 51.23566443320614,
+    "wirelength_quality": 0.585566917428713,
+    "congestion_quality": 0.8,
+    "thermal_quality": 0.5123566443320614,
+    "weights": {
+      "wirelength": 0.45,
+      "congestion": 0.3,
+      "thermal_tsv": 0.25
+    }
+  },
+  "warnings": [
+    "GCELLGRID X ended before DIEAREA; a clipped edge GCell was appended",
+    "GCELLGRID Y ended before DIEAREA; a clipped edge GCell was appended"
+  ]
+}
