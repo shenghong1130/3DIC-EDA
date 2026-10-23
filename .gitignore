@@ -18,3 +18,6 @@ Thumbs.db
 !.env.example
 *.pem
 *.key
+
+# Local 3DIC development orchestration
+/.routing_work/
