@@ -7,7 +7,7 @@ def main():
     p.add_argument('--output',type=Path,default=OUTPUTS/'submission_v1.zip');p.add_argument('--with-linux-binary',action='store_true');a=p.parse_args()
     target=a.output.resolve()
     if not target.is_relative_to(OUTPUTS.resolve()):p.error('Archive must stay inside outputs/')
-    required=['build.sh','run.sh','CMakeLists.txt','README.md','docs/编译与运行说明.md','docs/设计架构.md','docs/算法原理.md','docs/第三方库说明.md','docs/优化结果对比.md']
+    required=['build.sh','run.sh','CMakeLists.txt','docs/编译与运行说明.md','docs/设计架构.md','docs/算法原理.md','docs/第三方库说明.md','docs/优化结果对比.md']
     files=[PROJECT/x for x in required]+sorted((PROJECT/'src').rglob('*.cpp'))+sorted((PROJECT/'include').rglob('*.hpp'))
     # Tests belong to the development tree; submission CMake explicitly disables BUILD_TESTING.
     if a.with_linux_binary:
