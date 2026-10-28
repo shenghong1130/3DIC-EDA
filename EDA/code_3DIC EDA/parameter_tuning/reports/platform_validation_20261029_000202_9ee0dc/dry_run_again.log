@@ -1,0 +1,52 @@
+Experiment phase1_case001 | open_3d_case001 | 12 candidates | wsl/latest
+JSON time_limit=600; effective Router CLI=600s; evaluator=600s
+Reports: D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\reports\phase1_case001
+Runs: D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\outputs\runs\open_3d_case001
+
+baseline: {} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_baseline_96edd701_a001_f27bae --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\baseline.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_baseline_96edd701_a001_f27bae --backend wsl --engine latest --timeout 600
+
+via_low: {"via": 0.25} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_via_low_96edd701_a001_e01fd9 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\via_low.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_via_low_96edd701_a001_e01fd9 --backend wsl --engine latest --timeout 600
+
+via_high: {"via": 1} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_via_high_96edd701_a001_2fcca3 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\via_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_via_high_96edd701_a001_2fcca3 --backend wsl --engine latest --timeout 600
+
+congestion_low: {"congestion": 2} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_congestion_low_96edd701_a001_9424c2 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\congestion_low.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_congestion_low_96edd701_a001_9424c2 --backend wsl --engine latest --timeout 600
+
+congestion_high: {"congestion": 8} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_congestion_high_96edd701_a001_242b89 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\congestion_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_congestion_high_96edd701_a001_242b89 --backend wsl --engine latest --timeout 600
+
+history_low: {"history": 0.5} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_history_low_96edd701_a001_322430 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\history_low.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_history_low_96edd701_a001_322430 --backend wsl --engine latest --timeout 600
+
+history_high: {"history": 2} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_history_high_96edd701_a001_94b824 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\history_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_history_high_96edd701_a001_94b824 --backend wsl --engine latest --timeout 600
+
+thermal_off: {"thermal": 0} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_thermal_off_96edd701_a001_7669e2 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\thermal_off.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_thermal_off_96edd701_a001_7669e2 --backend wsl --engine latest --timeout 600
+
+thermal_high: {"thermal": 3} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_thermal_high_96edd701_a001_553d0c --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\thermal_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_thermal_high_96edd701_a001_553d0c --backend wsl --engine latest --timeout 600
+
+iterations_off: {"iterations": 0} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_iterations_off_96edd701_a001_d244db --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\iterations_off.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_iterations_off_96edd701_a001_d244db --backend wsl --engine latest --timeout 600
+
+iterations_high: {"iterations": 4} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_iterations_high_96edd701_a001_f80fd7 --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\iterations_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_iterations_high_96edd701_a001_f80fd7 --backend wsl --engine latest --timeout 600
+
+margin_high: {"margin": 16} [PENDING]
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\run_case.py" --case open_3d_case001 --backend wsl --label tune_phase1_case001_margin_high_96edd701_a001_8e9ebe --router "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\router" --config "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\parameter_tuning\configs\phase1_case001\margin_high.json" --time-limit 600 --progress-every 1000 --monitor-interval 5 --heartbeat-interval 10 --stall-after 30
+  C:\Users\scsm11\miniconda3\python.exe -B "D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\scripts\evaluate.py" --case open_3d_case001 --label tune_phase1_case001_margin_high_96edd701_a001_8e9ebe --backend wsl --engine latest --timeout 600

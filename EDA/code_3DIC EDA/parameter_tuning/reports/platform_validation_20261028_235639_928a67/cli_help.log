@@ -1,0 +1,35 @@
+usage: tune_parameters.py [-h]
+                          [--case {open_3d_case001,open_3d_case003,open_3d_case005}]
+                          [--experiment EXPERIMENT]
+                          [--plan-config PLAN_CONFIG] [--suite SUITE]
+                          [--backend {wsl,native}] [--engine {latest,legacy}]
+                          [--router ROUTER] [--router-timeout ROUTER_TIMEOUT]
+                          [--evaluation-timeout EVALUATION_TIMEOUT]
+                          [--max-runs MAX_RUNS] [--dry-run | --report-only]
+                          [--resume] [--retry-failed]
+                          [--confirm-thermal-source NOTE]
+
+Phase-one OAT experiments; existing Router/evaluator helpers remain unchanged.
+
+options:
+  -h, --help            show this help message and exit
+  --case {open_3d_case001,open_3d_case003,open_3d_case005}
+  --experiment EXPERIMENT
+  --plan-config PLAN_CONFIG
+  --suite SUITE
+  --backend {wsl,native}
+  --engine {latest,legacy}
+  --router ROUTER       Default: Linux project/router for WSL; native platform
+                        default otherwise
+  --router-timeout ROUTER_TIMEOUT
+  --evaluation-timeout EVALUATION_TIMEOUT
+  --max-runs MAX_RUNS   Maximum NEW Router attempts in this invocation;
+                        pending evaluations do not consume this limit
+  --dry-run
+  --report-only
+  --resume
+  --retry-failed        Explicitly retry failed/interrupted candidates using
+                        fresh Labels; never overwrite
+  --confirm-thermal-source NOTE
+                        case005 only: record how the mismatched Thermal source
+                        was verified

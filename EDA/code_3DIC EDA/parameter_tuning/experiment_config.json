@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "default_case": "open_3d_case001",
+  "backend": "wsl",
+  "engine": "latest",
+  "router_timeout": 600,
+  "evaluation_timeout": 600,
+  "monitoring": {"progress_every": 1000, "monitor_interval": 5, "heartbeat_interval": 10, "stall_after": 30},
+  "fixed_parameters": {"wire": 1, "tsv": 4, "stagnation": 2, "search_limit": 1500000, "trace_mb": 32},
+  "suites": {
+    "oat": {
+      "mode": "oat",
+      "variants": [
+        {"id": "baseline", "changes": {}},
+        {"id": "via_low", "changes": {"via": 0.25}},
+        {"id": "via_high", "changes": {"via": 1}},
+        {"id": "congestion_low", "changes": {"congestion": 2}},
+        {"id": "congestion_high", "changes": {"congestion": 8}},
+        {"id": "history_low", "changes": {"history": 0.5}},
+        {"id": "history_high", "changes": {"history": 2}},
+        {"id": "thermal_off", "changes": {"thermal": 0}},
+        {"id": "thermal_high", "changes": {"thermal": 3}},
+        {"id": "iterations_off", "changes": {"iterations": 0}},
+        {"id": "iterations_high", "changes": {"iterations": 4}},
+        {"id": "margin_high", "changes": {"margin": 16}}
+      ]
+    }
+  }
+}

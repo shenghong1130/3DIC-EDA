@@ -1,0 +1,14 @@
+{
+  "congestion": 4,
+  "history": 1,
+  "iterations": 2,
+  "margin": 8,
+  "search_limit": 1500000,
+  "stagnation": 2,
+  "thermal": 1,
+  "time_limit": 600,
+  "trace_mb": 32,
+  "tsv": 4,
+  "via": 1,
+  "wire": 1
+}

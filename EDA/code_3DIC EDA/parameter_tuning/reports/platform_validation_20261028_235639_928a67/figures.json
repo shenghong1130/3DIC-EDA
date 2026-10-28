@@ -1,0 +1,50 @@
+[
+  {
+    "name": "memory_comparison.png",
+    "bytes": 105922,
+    "dimensions": [
+      1400,
+      840
+    ]
+  },
+  {
+    "name": "parameter_component_sensitivity.png",
+    "bytes": 107050,
+    "dimensions": [
+      1400,
+      840
+    ]
+  },
+  {
+    "name": "parameter_sensitivity.png",
+    "bytes": 109643,
+    "dimensions": [
+      1400,
+      840
+    ]
+  },
+  {
+    "name": "runtime_comparison.png",
+    "bytes": 105250,
+    "dimensions": [
+      1400,
+      840
+    ]
+  },
+  {
+    "name": "score_breakdown.png",
+    "bytes": 105205,
+    "dimensions": [
+      1400,
+      840
+    ]
+  },
+  {
+    "name": "score_comparison.png",
+    "bytes": 104228,
+    "dimensions": [
+      1400,
+      840
+    ]
+  }
+]

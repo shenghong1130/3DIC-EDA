@@ -1,0 +1,57 @@
+{
+  "batch_state": "PENDING",
+  "events": [],
+  "experiments": {
+    "baseline": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "congestion_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "congestion_low": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "history_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "history_low": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "iterations_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "iterations_off": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "margin_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "thermal_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "thermal_off": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "via_high": {
+      "attempts": [],
+      "state": "PENDING"
+    },
+    "via_low": {
+      "attempts": [],
+      "state": "PENDING"
+    }
+  },
+  "plan_sha256": "24cc34861bae49f3c0ade321be1b13ea7b4982c1a0642f4fd5633e7ceb84a1fe",
+  "schema_version": 1,
+  "updated_at": "2026-10-28T15:57:01.664670+00:00"
+}

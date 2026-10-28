@@ -1,0 +1,384 @@
+{
+  "backend": "wsl",
+  "baseline": {
+    "congestion": 4,
+    "history": 1,
+    "iterations": 2,
+    "margin": 8,
+    "search_limit": 1500000,
+    "stagnation": 2,
+    "thermal": 1,
+    "time_limit": 600,
+    "trace_mb": 32,
+    "tsv": 4,
+    "via": 0.5,
+    "wire": 1
+  },
+  "batch_id": "96edd701b94a4a0284f018f44f989985",
+  "case": "open_3d_case001",
+  "created_at": "2026-10-28T15:57:01.655598+00:00",
+  "default_config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\configs\\default.json",
+  "engine": "latest",
+  "evaluation_timeout": 600,
+  "experiment": "phase1_case001",
+  "fingerprints": {
+    "environment": {
+      "backend": "wsl",
+      "environment": {
+        "LD_LIBRARY_PATH": null,
+        "MKL_NUM_THREADS": null,
+        "NUMEXPR_NUM_THREADS": null,
+        "OMP_NUM_THREADS": null,
+        "OPENBLAS_NUM_THREADS": null,
+        "PYTHONHASHSEED": null,
+        "WSLENV": null
+      },
+      "linux": {
+        "kernel": "6.18.54.1-microsoft-standard-WSL2",
+        "libc": [
+          "glibc",
+          "2.35"
+        ],
+        "machine": "x86_64",
+        "os_release": "PRETTY_NAME=\"Ubuntu 22.04.3 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.3 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+        "python": "3.10.12 (main, May 27 2025, 17:12:29) [GCC 11.4.0]"
+      },
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+      "python_executable": "C:\\Users\\scsm11\\miniconda3\\python.exe",
+      "wsl_distro": "Ubuntu"
+    },
+    "evaluator_sha256": "4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a",
+    "files": {
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\configs\\default.json": "f4c192ef20102193f02b5d39eb15be3fadc7183cedaf1a65035c55dcc0f743e5",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\include\\router.hpp": "488423392e343662868a730483a16cef6e2e75a91dcebe8988c9a5479ffec05b",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\experiment_config.json": "1c6eea7cb76468e121c413627adc0b2981b5c8b5b9090945b2aa5c76733d87c0",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\common.py": "2de62c4a69bab1f043ac5dd56ed1c5aa2f186b279fe15188d0ec7aa945a314ae",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\diagnostics.py": "20d334b325b42aeb66cd055e4e1b7a27e07644f6b4e6ad050f8d47f77ab74240",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py": "6826c02371543fa192be9356461d024910d761329cd832eb09c5442da237208c",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\linux_supervisor.py": "92394995e6965360771ffdfcaa734dd9a6eec7e5eae37db2d9e88286126ed98c",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py": "61746a8dcbf1fbbf6cff2f09ca37316a6636fa5d8576c095c80a27f0fb479d3d",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\src\\router.cpp": "bc1e3ce584e5e55a30b7352586c2edcba69c2144c7532fa5515a1f507e3939a6",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\ui\\result_store.py": "4aa96c3c4cafafe3c4166a72dd129387ca228e3e720c63adae02fe329c39a5c5",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.def": "4185c4df2a179ec3f115ccc12967d25af98773b7086d531173a5c4a702c26795",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.lef": "d44105a71d9aa2bedcc62754784f24d0ca922d555ff734d65cbb60e9dde2ad12",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.thermal.input.json": "07db896c3043a408a43b2855a1610aeb4d984487531d84fead85b75d7ffa47b5",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\评估程序\\POST9.dat": "20455530e0eb52c5b0b0405e3ae25c20f9f1e9af00e2a70290136e1243f94d01",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\评估程序\\POWV9.dat": "876eb7fd9b6e2f98fc4e5679545f7d563cf32dd44fd4b2c4b97893066bb3b699",
+      "D:\\我\\大学\\program\\3DIC EDA\\EDA\\评估程序\\score": "4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a"
+    },
+    "input_sha256": {
+      "def": "4185c4df2a179ec3f115ccc12967d25af98773b7086d531173a5c4a702c26795",
+      "lef": "d44105a71d9aa2bedcc62754784f24d0ca922d555ff734d65cbb60e9dde2ad12",
+      "thermal": "07db896c3043a408a43b2855a1610aeb4d984487531d84fead85b75d7ffa47b5"
+    },
+    "inputs": {
+      "def": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.def",
+      "lef": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.lef",
+      "thermal": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.thermal.input.json"
+    },
+    "router_sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+    "warning": null
+  },
+  "monitoring": {
+    "heartbeat_interval": 10,
+    "monitor_interval": 5,
+    "progress_every": 1000,
+    "stall_after": 30
+  },
+  "plan_config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\experiment_config.json",
+  "router_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+  "router_timeout": 600,
+  "schema_version": 1,
+  "score_policy": "Only explicit official total fields; no weighted total is synthesized.",
+  "suite": "oat",
+  "tuning_source_sha256": {
+    "analysis.py": "bfff1f9dbeb893c33c80686c6e74684176ec735814101bd1c21f9d84f0c3c5fb",
+    "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+    "records.py": "b780b1219d73243f32a8079080a8384012fff8b9fa5b298d4be7323464b193a1",
+    "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+    "tune_parameters.py": "b52a2220768c0dd28652946bbfd714a32bc676cec5c5a8e54c233dca588b966d"
+  },
+  "variants": [
+    {
+      "changes": {},
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\baseline.json",
+      "config_sha256": "35f2b88dab1d5fae491c3aa82211771f795e5002e77f11f496861b03d8e65336",
+      "first_label": "tune_phase1_case001_baseline_96edd701_a001_f27bae",
+      "id": "baseline"
+    },
+    {
+      "changes": {
+        "via": 0.25
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.25,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\via_low.json",
+      "config_sha256": "18f8c80ed1e5a7d528104421b67750197b5e46ad4b1b7f97e41835589467035f",
+      "first_label": "tune_phase1_case001_via_low_96edd701_a001_e01fd9",
+      "id": "via_low"
+    },
+    {
+      "changes": {
+        "via": 1
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 1,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\via_high.json",
+      "config_sha256": "6e2197ddfcd04e7dc0e66ecd63b9bd0a6f6a1dc9ea5bc55148b805676ffba9a0",
+      "first_label": "tune_phase1_case001_via_high_96edd701_a001_2fcca3",
+      "id": "via_high"
+    },
+    {
+      "changes": {
+        "congestion": 2
+      },
+      "config": {
+        "congestion": 2,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\congestion_low.json",
+      "config_sha256": "956d68aa9dee9aecbb73cbd95670ffd3ba0c8c41d8b10c488e951ac5bd3f04ac",
+      "first_label": "tune_phase1_case001_congestion_low_96edd701_a001_9424c2",
+      "id": "congestion_low"
+    },
+    {
+      "changes": {
+        "congestion": 8
+      },
+      "config": {
+        "congestion": 8,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\congestion_high.json",
+      "config_sha256": "7cfddd80f963c424fb420006db9850d888eb3532cb6e80cdc9b0f7b541304a59",
+      "first_label": "tune_phase1_case001_congestion_high_96edd701_a001_242b89",
+      "id": "congestion_high"
+    },
+    {
+      "changes": {
+        "history": 0.5
+      },
+      "config": {
+        "congestion": 4,
+        "history": 0.5,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\history_low.json",
+      "config_sha256": "4ba844ae679e8230c3ee3eb52354f9c384eed450ddade4d047887dac9a79a8cc",
+      "first_label": "tune_phase1_case001_history_low_96edd701_a001_322430",
+      "id": "history_low"
+    },
+    {
+      "changes": {
+        "history": 2
+      },
+      "config": {
+        "congestion": 4,
+        "history": 2,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\history_high.json",
+      "config_sha256": "a10b366fde0711dafaac6160ded03bcaeb5e60834e71b320192be8cba2bdee4c",
+      "first_label": "tune_phase1_case001_history_high_96edd701_a001_94b824",
+      "id": "history_high"
+    },
+    {
+      "changes": {
+        "thermal": 0
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 0,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\thermal_off.json",
+      "config_sha256": "6499147b6decddb7a409e1831062ff5dbac26b26c4317836293ade6e006c0edf",
+      "first_label": "tune_phase1_case001_thermal_off_96edd701_a001_7669e2",
+      "id": "thermal_off"
+    },
+    {
+      "changes": {
+        "thermal": 3
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 3,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\thermal_high.json",
+      "config_sha256": "54277b4a3a89d431c958fd286e5f825ff2a3e26ce417634414f87c229f424137",
+      "first_label": "tune_phase1_case001_thermal_high_96edd701_a001_553d0c",
+      "id": "thermal_high"
+    },
+    {
+      "changes": {
+        "iterations": 0
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 0,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\iterations_off.json",
+      "config_sha256": "787f813c82c1771fc17906057b31cf6fe444c573a891a517e3359fc3c0ca4fe1",
+      "first_label": "tune_phase1_case001_iterations_off_96edd701_a001_d244db",
+      "id": "iterations_off"
+    },
+    {
+      "changes": {
+        "iterations": 4
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 4,
+        "margin": 8,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\iterations_high.json",
+      "config_sha256": "83513f84027a57c43a317757070b4ba95128f74b6693f2e334b1f9e39cc34192",
+      "first_label": "tune_phase1_case001_iterations_high_96edd701_a001_f80fd7",
+      "id": "iterations_high"
+    },
+    {
+      "changes": {
+        "margin": 16
+      },
+      "config": {
+        "congestion": 4,
+        "history": 1,
+        "iterations": 2,
+        "margin": 16,
+        "search_limit": 1500000,
+        "stagnation": 2,
+        "thermal": 1,
+        "time_limit": 600,
+        "trace_mb": 32,
+        "tsv": 4,
+        "via": 0.5,
+        "wire": 1
+      },
+      "config_path": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001\\margin_high.json",
+      "config_sha256": "eb02450caa85f8b1af40c1b031279f9c69198d35531ad70fed1544cf232b2e9b",
+      "first_label": "tune_phase1_case001_margin_high_96edd701_a001_8e9ebe",
+      "id": "margin_high"
+    }
+  ]
+}

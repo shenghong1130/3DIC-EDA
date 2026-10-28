@@ -1,0 +1,94 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "check": "all_platform_python_AST",
+      "passed": true
+    },
+    {
+      "check": "unit_tests",
+      "passed": true
+    },
+    {
+      "check": "cli_help",
+      "passed": true
+    },
+    {
+      "check": "dry_run",
+      "passed": true
+    },
+    {
+      "check": "dry_run_again",
+      "passed": true
+    },
+    {
+      "check": "report_only",
+      "passed": true
+    },
+    {
+      "check": "analysis_cli",
+      "passed": true
+    },
+    {
+      "check": "immutable_plan_state_configs_unchanged",
+      "passed": true
+    },
+    {
+      "check": "twelve_real_default_based_configs",
+      "passed": true
+    },
+    {
+      "check": "all_pending_no_attempts",
+      "passed": true
+    },
+    {
+      "check": "all_scores_null_no_fabricated_observations",
+      "passed": true
+    },
+    {
+      "check": "no_new_tuning_Router_runs",
+      "passed": true
+    },
+    {
+      "check": "no_unjustified_best_config",
+      "passed": true
+    },
+    {
+      "check": "nine_report_sections",
+      "passed": true
+    },
+    {
+      "check": "six_valid_PNGs",
+      "passed": true
+    },
+    {
+      "check": "all_report_image_links_resolve",
+      "passed": true
+    },
+    {
+      "check": "all_original_files_exist",
+      "passed": true
+    },
+    {
+      "check": "original_sources_inputs_tools_history_unchanged_except_active_logs",
+      "passed": true
+    }
+  ],
+  "unit_tests": 28,
+  "real_Router_or_evaluator_started": false,
+  "case003_or_case005_started": false,
+  "experiment_state": "12 PENDING / 0 attempts",
+  "dependencies": {
+    "matplotlib": "3.11.2"
+  },
+  "protected_files": 816,
+  "active_existing_run_log_changes": [
+    "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case005\\case005_limit5m03\\resource_monitor.csv",
+    "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case005\\case005_limit5m03\\host_monitor.jsonl",
+    "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case005\\case005_limit5m03\\host_heartbeat.json",
+    "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case005\\case005_limit5m03\\progress.log",
+    "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case005\\case005_limit5m03\\progress.jsonl"
+  ],
+  "reports": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\reports\\phase1_case001",
+  "validation": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\reports\\platform_validation_20261029_000202_9ee0dc"
+}
