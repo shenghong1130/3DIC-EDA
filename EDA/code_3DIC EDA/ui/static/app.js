@@ -7,14 +7,30 @@ const S = {
     netMap:new Map(), allPins:[], pinIndex:new Map(), matches:[], allowed:new Set(),
     page:0, colors:new Map(), resourceMap:new Map(), stats:null, inspect:null,
     choices:[], choicePage:0, loading:false, filterKey:null, filteredPins:[], frame:0,
-    dimension:'2d', layerView3d:null, loader3d:null, fit3d:false
+    dimension:'2d', layerView3d:null, loader3d:null, fit3d:false, controller:null, remote:null
 };
 const PAGE_SIZE = 500, PIN_BUCKETS = 128, CHOICE_SIZE = 20;
 const esc = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (x,d=2) => x==null||typeof x==='number'&&!Number.isFinite(x)?'N/A':typeof x==='number'?x.toLocaleString('zh-CN',{maximumFractionDigits:d}):String(x);
-const api = async url => {const r=await fetch(url),d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
+function requestError(message,signal){const e=Error(message);e.requestSignal=signal;return e;}
+const api = async (url,{signal=S.controller?.signal}={}) => {
+    let response;
+    try{response=await fetch(url,{signal});}catch(e){if(e.name==='AbortError'&&signal?.aborted)throw e;throw requestError((e.name==='AbortError'?'浏览器请求中止':'网络请求失败（尚未收到 HTTP 响应）')+'：'+e.message+' · '+url,signal);}
+    let data;
+    try{data=await response.json();}catch(e){if(e.name==='AbortError'&&signal?.aborted)throw e;throw requestError((e instanceof SyntaxError?'JSON 解析失败':'响应读取中断')+' · HTTP '+response.status+' · '+e.message+' · '+url,signal);}
+    if(!response.ok)throw requestError('服务器 HTTP '+response.status+' · '+(data.error_kind||'error')+'：'+(data.error||response.statusText),signal);
+    return data;
+};
+function setLoadStatus(message){$('loadState').textContent=message;}
+async function readyApi(url,{signal=S.controller?.signal,progress=()=>{}}={}){
+    let next=url;
+    while(true){const data=await api(next,{signal});if(data.state!=='indexing')return data;progress(data);
+        const parsed=new URL(next,location.href);parsed.searchParams.delete('retry');next=parsed.pathname+parsed.search;
+        await new Promise((resolve,reject)=>{const timer=setTimeout(done,600);function done(){signal?.removeEventListener('abort',cancel);resolve();}function cancel(){clearTimeout(timer);reject(new DOMException('旧请求已取消','AbortError'));}if(signal?.aborted)cancel();else signal?.addEventListener('abort',cancel,{once:true});});
+    }
+}
 const yieldUI = () => new Promise(resolve=>setTimeout(resolve,0));
-function error(e){$('error').hidden=!e;$('error').textContent=e?.message||e||'';}
+function error(e){if(e?.name==='AbortError'||e?.requestSignal?.aborted)return;$('error').hidden=!e;$('error').textContent=e?.message||e||'';$('retryLoad').hidden=!e;if(e)setLoadStatus('请求失败；可重试当前 Case / Run。');}
 function options(el,items,value){el.innerHTML=items.map(([v,t])=>'<option value="'+esc(v)+'">'+esc(t)+'</option>').join('');if(value!==undefined&&items.some(x=>x[0]===value))el.value=value;}
 function table(headers,rows){return '<table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';}
 function hash(s){let h=2166136261;for(const c of s){h^=c.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
@@ -40,33 +56,42 @@ function setRuns(){
     options($('compare'),[['','选择另一条真实记录'],...rs.map(r=>[r.id,r.label])]);load();
 }
 function clearData(){
-    S.data=null;S.allPins=[];S.pinIndex=new Map();S.netMap=new Map();S.active=new Map();S.pending=new Map();
+    S.remote=null;S.raw=null;S.resourceMap=new Map();S.data=null;S.allPins=[];S.pinIndex=new Map();S.netMap=new Map();S.active=new Map();S.pending=new Map();
     S.trace=[];S.fullTrace=[];S.traceByNet=new Map();S.largeTrace=false;S.index=-1;S.ghost=null;
     S.inspect=null;S.choices=[];S.selected='all';S.filterKey=null;S.stats=null;S.learningKey=null;
     $('pinchoices').hidden=true;$('choiceList').innerHTML='';$('tooltip').hidden=true;$('pinStats').textContent='';
     $('inspectdetail').innerHTML='<p class="small">点击 Pin 查看 GCell 与真实 Node ID。</p>';
     options($('net'),[['all','全部符合条件网络']]);options($('layer'),[['all','全部金属层']]);
     for(const id of ['prev','play','next','timeline','fitNet','focus','mst'])$(id).disabled=true;
+    for(const id of ['metrics','netdetail','nettitle','iterations','eventjson','comparetable','report','logs','warnings','fidelity','viewnote','legend','process','eventtitle','eventdetail','step','layers3dStats'])$(id).textContent='';
+    $('badge').textContent='LOADING';$('badge').classList.remove('fail');S.layerView3d?.clear();
+    for(const id of ['bottom','top']){const c=$(id);c.getContext('2d').clearRect(0,0,c.width,c.height);c._world=null;c._edges=[];c._guides=[];}
+    $('bottomEmpty').hidden=$('topEmpty').hidden=true;
 }
 async function load(){
-    const id=++S.loadId;S.traceRequest++;stop();error(null);clearData();S.loading=true;draw();
+    const id=++S.loadId;S.selectionVersion++;S.traceRequest++;S.controller?.abort();S.controller=new AbortController();const signal=S.controller.signal;
+    stop();error(null);clearData();S.loading=true;setLoadStatus('正在读取所选 Case / Run…');draw();
     try{
         const ref=$('source').value==='reference',run=$('run').value;
-        if(!run&&!ref){$('subtitle').textContent='该用例尚无完整运行记录。请先使用 scripts/run_case.py 运行。';$('badge').textContent='NOT RUN';$('metrics').innerHTML='';$('netdetail').textContent='N/A';$('report').textContent='Not Tested';$('logs').textContent='';return;}
-        $('subtitle').textContent='读取真实结果并建立全量 Pin 索引…';
-        const data=await api(ref?'/api/reference?case='+encodeURIComponent($('case').value):'/api/run?id='+encodeURIComponent(run));
-        const tr=ref?{events:[]}:await api('/api/trace?id='+encodeURIComponent(run));
+        if(!run&&!ref){$('subtitle').textContent='该用例尚无完整运行记录。请先使用 scripts/run_case.py 运行。';$('badge').textContent='NOT RUN';setLoadStatus('没有可加载的完整运行记录。');return;}
+        const indexed=S.catalog.runs.find(r=>r.id===run)?.indexed;
+        $('subtitle').textContent=indexed?'读取概要 / 检查可重用本地索引…':'读取真实结果并建立 Pin 索引…';
+        const url=indexed?'/api/summary?'+new URLSearchParams({id:run,source:ref?'reference':'own',retry:'1'}):ref?'/api/reference?case='+encodeURIComponent($('case').value):'/api/run?id='+encodeURIComponent(run);
+        const data=await readyApi(url,{signal,progress:state=>{if(id===S.loadId)setLoadStatus('建立本地索引 · '+state.phase+' · '+fmt(state.nets,0)+' Net / '+fmt(state.pins,0)+' Pin · 已扫描 '+fmt(state.processed_bytes/1048576,1)+' / '+fmt(state.total_bytes/1048576,1)+' MiB');}});
         if(id!==S.loadId)return;
+        setLoadStatus(data.indexed?'概要已读取，按需加载网络列表和视口聚合…':'结果已读取，建立 Pin 索引…');
+        const tr=ref?{events:[]}:await api('/api/trace?id='+encodeURIComponent(run),{signal});if(id!==S.loadId)return;
         S.data=data;S.fullTrace=tr.events;S.largeTrace=!!tr.requires_net;S.raw=null;S.colors=new Map();
-        if(!await buildIndex(id))return;
         options($('layer'),[['all','全部金属层'],...data.layers.map(l=>[String(l.number),l.name+' · '+(l.direction==='HORIZONTAL'?'水平':'垂直')])]);
-        S.active=new Map(data.nets.map(n=>[n.net,n]));S.zoom=1;S.panX=0;S.panY=0;S.fit3d=false;S.layerView3d?.reset();setNets(false);installTrace(S.fullTrace);
-        $('subtitle').textContent=$('case').value+' / '+(ref?'官方参考 Guide':data.run.label)+' · '+fmt(data.nets.length,0)+' Nets · '+(data.x_lines.length-1)+' × '+(data.y_lines.length-1)+' GCells';
-        $('badge').textContent=ref?'REFERENCE · 仅展示':'官方 '+data.run.official_status;
-        $('badge').classList.toggle('fail',!ref&&data.run.official_status!=='PASS');
+        S.zoom=1;S.panX=0;S.panY=0;S.fit3d=false;S.layerView3d?.reset();
+        if(data.indexed){S.remote=new RemoteResult(data,run,signal);await S.remote.start();if(id!==S.loadId)return;}
+        else{if(!await buildIndex(id))return;S.active=new Map(data.nets.map(n=>[n.net,n]));setNets(false);setLoadStatus('完整结果已加载。');}
+        installTrace(S.fullTrace);
+        $('subtitle').textContent=$('case').value+' / '+(ref?'官方参考 Guide':data.run.label)+' · '+fmt(data.metrics.nets,0)+' Nets · '+(data.x_lines.length-1)+' × '+(data.y_lines.length-1)+' GCells'+(data.indexed?' · 按需加载':'');
+        $('badge').textContent=ref?'REFERENCE · 仅展示':'官方 '+data.run.official_status;$('badge').classList.toggle('fail',!ref&&data.run.official_status!=='PASS');
         $('paths').disabled=ref;$('overviewPaths').disabled=ref;$('tsvs').disabled=ref;
         metrics();details();reports();compare();if(S.view==='raw')await raw();
-    }catch(e){if(id===S.loadId){clearData();error(e);$('subtitle').textContent='加载失败，请检查所选记录与下方错误。';}}
+    }catch(e){if(id===S.loadId&&e.name!=='AbortError'){clearData();error(e);$('badge').textContent='LOAD FAILED';$('badge').classList.add('fail');$('subtitle').textContent='所选 Case / Run 加载失败；旧数据已清空。';}}
     finally{if(id===S.loadId){S.loading=false;draw();}}
 }
 // Store every recorded terminal once. Path display limits never enter this index.
@@ -91,7 +116,7 @@ async function buildIndex(loadId=S.loadId){
     return true;
 }
 function setNets(resetPage=true){
-    if(!S.data)return;
+    if(!S.data)return;if(S.remote){S.remote.search(resetPage).catch(error);return;}
     const q=$('search').value.toLowerCase(),cross=$('crossOnly').checked;
     S.matches=S.data.nets.filter(n=>(!cross||n.cross_die)&&n.net.toLowerCase().includes(q));
     S.allowed=new Set(S.matches.map(n=>n.net));S.filterKey=null;
@@ -100,6 +125,11 @@ function setNets(resetPage=true){
     netOptions();details();draw();
 }
 function netOptions(){
+    if(S.remote){
+        const total=S.remote.total,start=S.page*PAGE_SIZE,items=[...S.matches];const n=S.netMap.get(S.selected);if(n&&S.selected!=='all'&&!items.some(x=>x.net===n.net))items.push(n);
+        options($('net'),[['all','全部符合条件网络 ('+fmt(total,0)+')'],...items.map(n=>[n.net,n.net+(n.cross_die?' ↕':'')])],S.selected);
+        $('netPage').textContent=total?(start+1)+'–'+Math.min(start+PAGE_SIZE,total)+' / '+fmt(total,0):'0 / 0';$('netPrev').disabled=S.page===0;$('netNext').disabled=start+PAGE_SIZE>=total;return;
+    }
     S.page=Math.max(0,Math.min(S.page,Math.max(0,Math.ceil(S.matches.length/PAGE_SIZE)-1)));
     const start=S.page*PAGE_SIZE,items=S.matches.slice(start,start+PAGE_SIZE);
     if(S.selected!=='all'&&!items.some(n=>n.net===S.selected)){const n=S.netMap.get(S.selected);if(n)items.push(n);}
@@ -108,10 +138,12 @@ function netOptions(){
     $('netPrev').disabled=S.page===0;$('netNext').disabled=start+PAGE_SIZE>=S.matches.length;
 }
 async function selectNet(name,{autoFit=true,pin=null}={}){
-    if(S.loading||!S.data||name!=='all'&&!S.netMap.has(name))return false;
-    const version=++S.selectionVersion,data=S.data;
-    stop();S.selected=name;S.inspect=pin?{kind:'pin',pin}:null;S.choices=[];$('pinchoices').hidden=true;
-    const index=S.matches.findIndex(n=>n.net===name);if(index>=0)S.page=Math.floor(index/PAGE_SIZE);
+    if(S.loading||!S.data||name!=='all'&&!S.remote&&!S.netMap.has(name))return false;
+    const version=++S.selectionVersion,data=S.data;stop();
+    if(S.remote){try{if(!await S.remote.prepare(name,version))return false;}catch(e){if(S.data===data&&S.selectionVersion===version)error(e);return false;}}
+    if(S.data!==data||version!==S.selectionVersion)return false;
+    S.selected=name;S.inspect=pin?{kind:'pin',pin}:null;S.choices=[];$('pinchoices').hidden=true;
+    const index=S.matches.findIndex(n=>n.net===name);if(index>=0&&!S.remote)S.page=Math.floor(index/PAGE_SIZE);
     netOptions();details();inspectDetails();if(autoFit&&name!=='all')fitNet();else draw();
     try{await scopedTrace();}catch(e){if(S.data===data&&S.selectionVersion===version)error(e);return false;}
     return S.data===data&&S.selectionVersion===version;
@@ -129,7 +161,7 @@ function officialTotalScore(official){
     return .45*values[0]+.30*values[1]+.25*values[2];
 }
 function reportMetrics(d){const r=d.official_latest?.report;return [['本地图边线长 (DBU)',d.metrics.wirelength_dbu_local],['本地 Overflow',d.metrics.overflow_local],['TSV 数量',d.metrics.tsv_count],['本地 Pearson',d.metrics.thermal_correlation_local],['Router 时间 (s)',d.metrics.runtime_seconds],['峰值内存 (MiB)',d.run.peak_memory_bytes==null?null:d.run.peak_memory_bytes/1048576],['官方合法性',d.official_latest?.status??'Not Tested'],['官方总分',officialTotalScore(d.official_latest)],['官方 Wirelength 得分',r?.score?.wirelength_score],['官方 Congestion 得分',r?.score?.congestion_score],['官方 Thermal 得分',r?.score?.thermal_score]];}
-async function compare(){if(!S.data)return;const current=S.data,key=$('compare').value;try{const b=key?await api('/api/run?id='+encodeURIComponent(key)):null;if(S.data!==current)return;const a=reportMetrics(current),bb=b?reportMetrics(b):[];$('comparetable').innerHTML=table(['指标',`A · ${current.source==='official_reference_guide'?'参考 Guide':current.run.label}`,b?`B · ${b.run.label}`:'B · 未选择'],a.map(([k,v],i)=>[k,fmt(v,4),fmt(bb[i]?.[1],4)]));}catch(e){error(e);}}
+async function compare(){if(!S.data)return;const current=S.data,key=$('compare').value;try{const b=key?await readyApi('/api/run?id='+encodeURIComponent(key)):null;if(S.data!==current)return;const a=reportMetrics(current),bb=b?reportMetrics(b):[];$('comparetable').innerHTML=table(['指标',`A · ${current.source==='official_reference_guide'?'参考 Guide':current.run.label}`,b?`B · ${b.run.label}`:'B · 未选择'],a.map(([k,v],i)=>[k,fmt(v,4),fmt(bb[i]?.[1],4)]));}catch(e){if(S.data===current)error(e);}}
 function node(id){
     if(!S.data||!Number.isSafeInteger(id)||id<0)return null;
     const d=S.data,nx=d.x_lines.length-1,ny=d.y_lines.length-1,gx=id%nx,gy=Math.floor(id/nx)%ny,l=Math.floor(id/(nx*ny));
@@ -197,7 +229,7 @@ function setDimension(dimension){
             script.onload=resolve;script.onerror=()=>{script.remove();reject(Error('3D 模块加载失败；可返回 2D 后重试。'));};document.head.append(script);
         });
         S.loader3d.then(()=>{
-            if(!S.layerView3d)S.layerView3d=new window.LayerView3D($('layers3d'),{requestDraw:draw,hover:$('layers3dHover'),pickPin:pin=>selectNet(pin.net,{autoFit:false,pin}).catch(error)});
+            if(!S.layerView3d)S.layerView3d=new window.LayerView3D($('layers3d'),{requestDraw:draw,hover:$('layers3dHover'),pickPin:pin=>(pin.cluster?S.remote.openPins(pin):selectNet(pin.net,{autoFit:false,pin})).catch(error)});
             draw();
         }).catch(e=>{S.loader3d=null;$('layers3dStats').textContent=e.message;error(e);});
     }
@@ -226,17 +258,17 @@ function render3D(){
     processPanel(learning());
 }
 function heatColor(t){t=Math.max(0,Math.min(1,t));return 'rgb('+Math.round(52+193*t)+','+Math.round(139-64*t)+','+Math.round(213-130*t)+')';}
-function draw(){if(!S.frame)S.frame=requestAnimationFrame(()=>{S.frame=0;render();});}
+function draw(){if(S.remote&&!S.loading)S.remote.schedule();if(!S.frame)S.frame=requestAnimationFrame(()=>{S.frame=0;render();});}
 function render(){
     if(S.dimension==='3d'){render3D();return;}
     const tier=$('tier').value;
     $('bottomPanel').hidden=S.view==='raw'?false:tier==='top';$('topPanel').hidden=S.view==='raw'?true:tier==='bottom';
     if(!S.data||S.loading){
         for(const id of ['bottom','top']){const c=$(id);c.getContext('2d').clearRect(0,0,c.width,c.height);c._world=null;}
-        $('pinStats').textContent=S.loading?'正在建立全量 Pin 索引…':'无可显示结果';$('process').innerHTML='';return;
+        $('pinStats').textContent=S.loading?'正在读取当前 Case 的数据…':'无可显示结果';$('process').innerHTML='';return;
     }
     const ns=visibleNets(),learn=learning();
-    S.stats={total:S.allPins.length,filtered:filteredPins().length,inView:0,points:0,clusters:0,represented:0};
+    S.stats={total:S.data.index_counts?.pins??S.allPins.length,filtered:filteredPins().reduce((n,p)=>n+(p.count||1),0),inView:0,points:0,clusters:0,represented:0};
     document.querySelector('#bottomPanel .plotlabel').innerHTML=S.view==='raw'?'原始温度节点 · XY 投影':'<span class="dot blue"></span>Die 1 <span>Bottom · M1–M10</span>';
     for(const t of ['bottom','top'])if(!$(t+'Panel').hidden)drawPanel(t,ns,learn);
     const stats=S.stats;
@@ -248,7 +280,7 @@ function render(){
         density:reference()?'参考 Guide 无实际 TSV 密度数据，不推断。':'TSV 密度来自最终 Route 的实际跨 Die 边，与普通 Via 不同。',
         raw:'原始 Thermal JSON 的 XY 投影，保留温度，不由 z 正负判断 Die。超过约 10,000 节点时抽样。'
     };
-    $('viewnote').textContent=notes[S.view];
+    $('viewnote').textContent=notes[S.view]+(S.remote?' 大用例按视口聚合；聚合点可分页查看真实 Pin。总览几何上限 150 Net / 4 MiB，选中 Net 完整按需加载。统计色块按视口合并，单个 GCell 仍查询真实资源。':'');
     $('overview').classList.toggle('active',S.selected==='all');$('focus').classList.toggle('active',S.selected!=='all');
     $('focus').disabled=S.selected==='all';$('fitNet').disabled=S.selected==='all';
     $('mst').disabled=reference()||S.selected==='all'||!learn.topologies.length;
@@ -285,7 +317,9 @@ function drawPanel(tier,ns,learn){
     const line=(a,b,color,width=1.5,dash=[])=>{const[p,q]=xy(a.x,a.y),[r,s]=xy(b.x,b.y);if(Math.max(p,r)<-8||Math.min(p,r)>w+8||Math.max(q,s)<-8||Math.min(q,s)>h+8)return false;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(p,q);ctx.lineTo(r,s);ctx.stroke();ctx.setLineDash([]);return true;};
     rect(d.die,'#fcfdfe','#dce1e7');
     const nx=d.x_lines.length-1,ny=d.y_lines.length-1;
-    if(['thermal','density','congestion'].includes(S.view)){
+    if(S.remote&&['thermal','density','congestion'].includes(S.view)){
+        const data=S.remote.tiles[tier];if(data)for(const tile of data.tiles)rect(tile.box,heatColor((tile.value-data.min)/Math.max(1e-12,data.max-data.min)),null);canvas._heat={remote:true};
+    }else if(['thermal','density','congestion'].includes(S.view)){
         let values=S.view==='thermal'?d.heat:S.view==='density'?d.tsv_density:new Float64Array(nx*ny).fill(NaN),info=new Map();
         if(S.view==='congestion')for(const r of d.resources||[]){
             const v=node(r[0]);if(!v||!layerVisible(v.l,tier))continue;
@@ -339,18 +373,18 @@ function drawPanel(tier,ns,learn){
         if(showPaths&&S.ghost&&(S.selected==='all'||S.ghost.net===S.selected))for(const edge of S.ghost.edges||[])drawEdge(Object.assign([...edge],{_net:S.ghost.net}),S.ghost.remove?'#d95062':'#12a178',2.8);
     }
     const lo=canvas._world(0,h),hi=canvas._world(w,0),pins=queryPins([lo[0],lo[1],hi[0],hi[1]],tier);
-    if(S.view!=='raw')S.stats.inView+=pins.length;
+    if(S.view!=='raw')S.stats.inView+=pins.reduce((n,p)=>n+(p.count||1),0);
     if(S.view==='routing'&&$('pins').checked){
         const groups=new Map(),selected=[];
         for(const pin of pins){
             if(pin.net===S.selected){selected.push(pin);continue;}
             const[x,y]=xy(pin.p.x,pin.p.y),key=Math.floor(x/6)+','+Math.floor(y/6);
-            let group=groups.get(key);if(!group){group={x:0,y:0,count:0,net:pin.net,mixed:false,pins:[]};groups.set(key,group);}
-            group.x+=x;group.y+=y;group.count++;group.mixed||=group.net!==pin.net;if(group.pins.length<3)group.pins.push(pin);
+            let group=groups.get(key);if(!group){group={x:0,y:0,count:0,net:pin.net,mixed:false,aggregate:false,pins:[]};groups.set(key,group);}
+            const count=pin.count||1;group.x+=x*count;group.y+=y*count;group.count+=count;group.aggregate||=!!pin.cluster;group.mixed||=!!pin.cluster||group.net!==pin.net;if(group.pins.length<3)group.pins.push(pin);
         }
         const point=(pin,r,alpha)=>{const[x,y]=xy(pin.p.x,pin.p.y);ctx.globalAlpha=alpha;ctx.fillStyle=netColor(pin.net);ctx.strokeStyle='#fff';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(x,y,r,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.globalAlpha=1;S.stats.points++;S.stats.represented++;};
         for(const group of groups.values()){
-            if(group.count<3){for(const pin of group.pins)point(pin,2.5,focused?.22:.72);}
+            if(group.count<3&&!group.aggregate){for(const pin of group.pins)point(pin,2.5,focused?.22:.72);}
             else{
                 ctx.globalAlpha=focused?.22:.65;ctx.fillStyle=group.mixed?'#7e8b9b':netColor(group.net);
                 ctx.beginPath();ctx.arc(group.x/group.count,group.y/group.count,Math.min(5,2+Math.log10(group.count)),0,2*Math.PI);ctx.fill();ctx.globalAlpha=1;
@@ -463,7 +497,7 @@ function seek(index){
 function stop(){if(S.playing)clearInterval(S.playing);S.playing=null;$('play').textContent='播放';}
 function play(){if(S.playing){stop();return;}if(!S.trace.length)return;if(S.index<0||S.index===S.trace.length-1)seek(0);$('play').textContent='暂停';S.playing=setInterval(()=>{if(S.index>=S.trace.length-1){stop();return;}seek(S.index+1);},+$('speed').value);}
 function finalResult(){stop();if(!S.data)return;S.index=-1;S.active=new Map(S.data.nets.map(n=>[n.net,n]));S.pending=new Map();S.ghost=null;$('eventtitle').textContent='最终真实结果';$('step').textContent='最终 / '+S.trace.length;$('eventjson').textContent='';draw();}
-async function raw(){if(S.raw||!S.data)return;const data=S.data,run=$('run').value;try{const result=await api('/api/thermal?id='+encodeURIComponent(run));if(S.data===data){S.raw=result;draw();}}catch(e){if(S.data===data)error(e);}}
+async function raw(){if(S.raw||!S.data)return;const data=S.data,run=$('run').value;setLoadStatus('读取原始温度节点；首次抽样缓存可能需要几秒…');try{const result=await api('/api/thermal?id='+encodeURIComponent(run));if(S.data===data){S.raw=result;setLoadStatus('原始温度节点已读取 · '+fmt(result.nodes.length,0)+' / '+fmt(result.total_nodes,0)+' 节点 · stride '+result.stride);draw();}}catch(e){if(S.data===data)error(e);}}
 function locate(lines,x){if(x<lines[0]||x>lines.at(-1))return -1;let a=0,b=lines.length;while(a<b){const m=(a+b)>>1;if(lines[m]<=x)a=m+1;else b=m;}return Math.min(lines.length-2,a-1);}
 function cellAt(x,y,tier){
     const gx=locate(S.data.x_lines,x),gy=locate(S.data.y_lines,y);if(gx<0||gy<0)return null;
@@ -471,6 +505,7 @@ function cellAt(x,y,tier){
     const ls=S.data.layers.filter(l=>layerVisible(l.number,tier));
     return {kind:'cell',gx,gy,tier,box:[S.data.x_lines[gx],S.data.y_lines[gy],S.data.x_lines[gx+1],S.data.y_lines[gy+1]],rows:ls.map(l=>{
         const id=(l.number*ny+gy)*nx+gx,r=S.resourceMap.get(id);
+        if(S.remote&&!S.remote.cells.has(gx+','+gy))return ['M'+l.number,id,'读取中','读取中','读取中','读取中'];
         return ['M'+l.number,id,r?.[1]??'N/A',r?.[2]??'N/A',r?.[3]??'N/A',r?.[4]??'N/A'];
     })};
 }
@@ -481,6 +516,7 @@ function inspectDetails(){
     else $('inspectdetail').innerHTML=table(['对象','实际数据'],[['类型',obj.kind==='mst'?'MST 抽象拓扑（非金属走线）':obj.kind==='tsv'?'跨 Die TSV':obj.kind==='guide'?'Guide 区域':'实际图边'],['Net',obj.net],['Metal Layer',obj.layers?.map(l=>'M'+l).join(' ↔ ')||'M'+obj.g?.[4]],['Node IDs',obj.edge?.join(' → ')??'N/A · Guide 不含内部边'],['Guide 边界',obj.g?.slice(0,4).join(', ')??'—']]);
 }
 function choiceList(){
+    if(S.remote?.choices){S.remote.showChoices();return;}
     $('pinchoices').hidden=!S.choices.length;if(!S.choices.length)return;
     const start=S.choicePage*CHOICE_SIZE,items=S.choices.slice(start,start+CHOICE_SIZE);
     $('choiceTitle').textContent='此位置 '+fmt(S.choices.length,0)+' 个重合 / 邻近 Pin · 选择具体端子';
@@ -503,25 +539,30 @@ function hitAt(tier,px,py){
 function hover(e,tier){
     const c=$(tier),box=c.getBoundingClientRect(),hit=hitAt(tier,e.clientX-box.left,e.clientY-box.top);
     let text='';
-    if(hit?.kind==='pins'){
+    if(hit?.kind==='pins'&&hit.pins[0].cluster){text='视口聚合 · '+fmt(hit.pins[0].count,0)+' 个 Pin · M'+hit.pins[0].p.layer+'\n点击后按服务器分页查看真实端子。';
+    }else if(hit?.kind==='pins'){
         text=pinInfo(hit.pins[0]).map(([k,v])=>k+': '+v).join('\n');
         if(hit.pins.length>1)text+='\n此位置 '+hit.pins.length+' 个 Pin；点击后可分页选择全部端子。\n'+hit.pins.slice(1,4).map(p=>p.p.name+' · '+p.net+' · M'+p.p.layer).join('\n');
     }else if(hit?.kind==='cell'){
         text='GCell ('+hit.gx+', '+hit.gy+') · '+(tier==='bottom'?'Die 1':'Die 2')+'\n边界 ['+hit.box.join(', ')+']\n'+hit.rows.map(r=>r[0]+' · Node '+r[1]+' · Capacity '+r[2]+' Usage '+r[3]+' Fixed '+r[4]+' Overflow '+r[5]).join('\n');
-        if(c._heat){const v=c._heat.values[hit.gy*(S.data.x_lines.length-1)+hit.gx];text+='\n当前统计值 '+fmt(v,5);const info=c._heat.info.get(hit.gy*(S.data.x_lines.length-1)+hit.gx);if(info)text+=' · 代表层 M'+info.l;}
+        if(c._heat&&!c._heat.remote){const v=c._heat.values[hit.gy*(S.data.x_lines.length-1)+hit.gx];text+='\n当前统计值 '+fmt(v,5);const info=c._heat.info.get(hit.gy*(S.data.x_lines.length-1)+hit.gx);if(info)text+=' · 代表层 M'+info.l;}
     }else if(hit)text=hit.net+'\n'+(hit.kind==='mst'?'MST 抽象拓扑 · 非金属走线':hit.kind==='guide'?'Guide 区域':'实际图边')+'\n层 '+(hit.layers?.join(' ↔ ')||hit.g[4])+'\nNode '+(hit.edge?.join(' → ')||'N/A');
+    if(hit?.kind==='cell'&&S.remote&&!S.remote.cells.has(hit.gx+','+hit.gy)){
+        const remote=S.remote;c._hoverXY=[e.clientX,e.clientY];remote.cell(hit.gx,hit.gy).then(rows=>{if(rows&&S.remote===remote&&c._hoverXY?.[0]===e.clientX&&c._hoverXY?.[1]===e.clientY)hover(e,tier);}).catch(error);
+    }
     const tip=$('tooltip');tip.hidden=!text;tip.textContent=text;
     if(text){const r=tip.getBoundingClientRect(),left=e.clientX+18+r.width<innerWidth?e.clientX+18:e.clientX-r.width-18,top=e.clientY+18+r.height<innerHeight?e.clientY+18:e.clientY-r.height-18;tip.style.left=Math.max(4,left)+'px';tip.style.top=Math.max(4,top)+'px';}
     return hit;
 }
 async function clickHit(hit){
     if(!hit)return;
+    if(hit.kind==='pins'&&hit.pins[0].cluster){await S.remote.openPins(hit.pins[0]);return;}
     if(hit.kind==='pins'){
         const pins=hit.pins;if(!await selectNet(pins[0].net,{autoFit:false,pin:pins[0]}))return;
         S.choices=pins.length>1?pins:[];S.choicePage=0;choiceList();draw();
     }else if(hit.net){
         if(!await selectNet(hit.net,{autoFit:false}))return;S.inspect=hit;inspectDetails();draw();
-    }else{S.selectionVersion++;S.inspect=hit;S.choices=[];choiceList();inspectDetails();draw();}
+    }else{if(S.remote&&hit.kind==='cell'){const remote=S.remote;await remote.cell(hit.gx,hit.gy);if(S.remote!==remote)return;hit=cellAt((hit.box[0]+hit.box[2])/2,(hit.box[1]+hit.box[3])/2,hit.tier);}S.selectionVersion++;S.inspect=hit;S.choices=[];choiceList();inspectDetails();draw();}
 }
 for(const tier of ['bottom','top']){
     const c=$(tier);let drag=null,moved=false;
@@ -530,16 +571,17 @@ for(const tier of ['bottom','top']){
     c.addEventListener('pointerup',e=>{if(drag&&!moved){const r=c.getBoundingClientRect();clickHit(hitAt(tier,e.clientX-r.left,e.clientY-r.top)).catch(error);}drag=null;});
     c.addEventListener('pointercancel',()=>{drag=null;});
     c.addEventListener('pointermove',e=>{if(drag){if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>3)moved=true;S.panX=drag.px+e.clientX-drag.x;S.panY=drag.py+e.clientY-drag.y;draw();}else hover(e,tier);});
-    c.addEventListener('pointerleave',()=>{$('tooltip').hidden=true;});
+    c.addEventListener('pointerleave',()=>{c._hoverXY=null;$('tooltip').hidden=true;});
 }
+$('retryLoad').onclick=load;
 $('dataset').onchange=setCases;$('case').onchange=setRuns;$('source').onchange=load;$('run').onchange=load;$('reload').onclick=init;
 let searchTimer;
-$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{setNets();scopedTrace().catch(error);},120);};
-$('crossOnly').onchange=()=>{setNets();scopedTrace().catch(error);};
+$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{if(S.remote)S.remote.search().catch(error);else{setNets();scopedTrace().catch(error);}},180);};
+$('crossOnly').onchange=()=>{if(S.remote)S.remote.search().catch(error);else{setNets();scopedTrace().catch(error);}};
 $('net').onchange=()=>selectNet($('net').value);
-$('netPrev').onclick=()=>{S.page--;netOptions();};$('netNext').onclick=()=>{S.page++;netOptions();};
-$('choicePrev').onclick=()=>{S.choicePage--;choiceList();};$('choiceNext').onclick=()=>{S.choicePage++;choiceList();};
-$('choiceList').onclick=async e=>{const b=e.target.closest('[data-choice]');if(!b)return;const pin=S.choices[+b.dataset.choice],choices=S.choices,page=S.choicePage;if(!await selectNet(pin.net,{autoFit:false,pin}))return;S.choices=choices;S.choicePage=page;choiceList();};
+$('netPrev').onclick=()=>{S.page--;if(S.remote)S.remote.search(false).catch(error);else netOptions();};$('netNext').onclick=()=>{S.page++;if(S.remote)S.remote.search(false).catch(error);else netOptions();};
+$('choicePrev').onclick=()=>{if(S.remote?.choices)S.remote.pinPage(Math.max(0,S.remote.choices.offset-20)).catch(error);else{S.choicePage--;choiceList();}};$('choiceNext').onclick=()=>{if(S.remote?.choices)S.remote.pinPage(S.remote.choices.offset+20).catch(error);else{S.choicePage++;choiceList();}};
+$('choiceList').onclick=async e=>{const b=e.target.closest('[data-choice]');if(!b)return;const pin=S.choices[+b.dataset.choice],choices=S.choices,page=S.choicePage,remoteChoices=S.remote?.choices;if(!await selectNet(pin.net,{autoFit:false,pin}))return;S.choices=choices;S.choicePage=page;if(remoteChoices&&S.remote)S.remote.choices=remoteChoices;choiceList();};
 for(const id of ['tier','layer','guides','paths','overviewPaths','mst','pins','tsvs','grid','instances'])$(id).onchange=()=>{S.filterKey=null;draw();};
 $('mode2d').onclick=()=>setDimension('2d');$('mode3d').onclick=()=>setDimension('3d');
 $('reset3d').onclick=()=>S.layerView3d?.reset();

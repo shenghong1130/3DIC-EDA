@@ -47,6 +47,17 @@ window.LayerView3D = class LayerView3D {
     isVisible(layer,s) {
         return s.layerNumbers.has(layer)&&(s.tier==='both'||(s.tier==='bottom'?layer<=10:layer>=11))&&(s.layer==='all'||+s.layer===layer);
     }
+    viewportBox(d){
+        const die=d.die,c=this.camera,r=this.canvas.getBoundingClientRect(),sin=Math.sin(c.elevation);
+        if(!r.width||!r.height||Math.abs(sin)<.1)return die;
+        const step=.085*this.spacing,heights=d.layers.map(l=>(l.number-1)*step+(l.number>=11?4*step:0)),low=Math.min(...heights),high=Math.max(...heights),middle=(low+high)/2;
+        const scale=this.base(r.width,r.height)*c.zoom,unit=Math.max(die[2]-die[0],die[3]-die[1])/2,points=[];
+        for(const z of [low-middle,high-middle])for(const x of [0,r.width])for(const y of [0,r.height]){
+            const horizontal=(x-r.width/2-c.panX)/scale,vertical=(r.height/2+c.panY-y)/scale,depth=(Math.cos(c.elevation)*(z-c.center[2])-vertical)/sin;
+            points.push([(Math.cos(c.yaw)*horizontal-Math.sin(c.yaw)*depth+c.center[0])*unit+(die[0]+die[2])/2,(Math.sin(c.yaw)*horizontal+Math.cos(c.yaw)*depth+c.center[1])*unit+(die[1]+die[3])/2]);
+        }
+        return [Math.max(die[0],Math.min(...points.map(p=>p[0]))),Math.max(die[1],Math.min(...points.map(p=>p[1]))),Math.min(die[2],Math.max(...points.map(p=>p[0]))),Math.min(die[3],Math.max(...points.map(p=>p[1])))];
+    }
     makeScene(s) {
         const d=s.data,[x1,y1,x2,y2]=d.die,scale=2/Math.max(x2-x1,y2-y1),step=.085*this.spacing;
         const height=l=>(l-1)*step+(l>=11?step*4:0),numbers=d.layers.map(l=>l.number),middle=(height(Math.min(...numbers))+height(Math.max(...numbers)))/2;
@@ -73,7 +84,7 @@ window.LayerView3D = class LayerView3D {
             if(this.onlyNetPins&&s.selected!=='all'&&pin.net!==s.selected)continue;
             const p=point(pin.p.x,pin.p.y,pin.p.layer),focused=pin.net===s.selected;
             if(focused)scene.focus.push(p);
-            if(s.showPins)scene.pins.push({p,pin,focused,color:s.color(pin.net),layer:pin.p.layer});
+            if(s.showPins)scene.pins.push({p,pin,focused,color:pin.cluster?'#8b99a9':s.color(pin.net),layer:pin.p.layer});
         }
         const addEdge=(edge,net,ghost=false)=>{
             const a=node(edge[0]),b=node(edge[1]);if(!a||!b)return;
@@ -172,12 +183,12 @@ window.LayerView3D = class LayerView3D {
             if(item.focused){focused.push(q);continue;}
             const key=item.layer+','+Math.floor(p[0]/7)+','+Math.floor(p[1]/7);
             let group=groups.get(key);if(!group){group={x:0,y:0,count:0,color:item.color,net:item.pin.net,mixed:false,singles:[]};groups.set(key,group);}
-            group.x+=p[0];group.y+=p[1];group.count++;group.mixed||=group.net!==item.pin.net;if(group.singles.length<2)group.singles.push(q);
+            const count=item.pin.count||1;group.x+=p[0]*count;group.y+=p[1]*count;group.count+=count;group.aggregate||=!!item.pin.cluster;group.mixed||=!!item.pin.cluster||group.net!==item.pin.net;if(group.singles.length<2)group.singles.push(q);
         }
         let clusters=0,points=0;
         const dot=(x,y,color,radius,alpha)=>{ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#ffffffd9';ctx.lineWidth=.6;ctx.beginPath();ctx.arc(x,y,radius,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.globalAlpha=1;};
         for(const g of groups.values()){
-            if(g.count<3)for(const q of g.singles){dot(q.screen[0],q.screen[1],q.color,2.2,s.selected==='all'?.8:.2);points++;}
+            if(g.count<3&&!g.aggregate)for(const q of g.singles){dot(q.screen[0],q.screen[1],q.color,2.2,s.selected==='all'?.8:.2);points++;}
             else{dot(g.x/g.count,g.y/g.count,g.mixed?'#8b99a9':g.color,Math.min(5,2+Math.log10(g.count)),s.selected==='all'?.65:.18);clusters++;}
         }
         for(const q of focused){dot(q.screen[0],q.screen[1],q.color,4.1,1);points++;}
@@ -189,7 +200,7 @@ window.LayerView3D = class LayerView3D {
                 placed.push(p);ctx.fillStyle='#ffffffdd';ctx.fillRect(p[0]-4,p[1]-10,68,12);ctx.fillStyle=plate.color;ctx.fillText(plate.name+(plate.layer===1?' · Die 1':plate.layer===11?' · Die 2':''),p[0],p[1]);
             }
         }
-        this.stats={layers:scene.planes.length,pins:scene.pins.length,inView:this.projectedPins.length,points,clusters,paths:scene.paths.length,vias:scene.vias.length,tsvs:scene.tsvs.length,caps:scene.caps.length,guides:scene.guides.length,invalidEdges:scene.invalidEdges};
+        this.stats={layers:scene.planes.length,pins:scene.pins.reduce((n,p)=>n+(p.pin.count||1),0),inView:this.projectedPins.reduce((n,p)=>n+(p.pin.count||1),0),points,clusters,paths:scene.paths.length,vias:scene.vias.length,tsvs:scene.tsvs.length,caps:scene.caps.length,guides:scene.guides.length,invalidEdges:scene.invalidEdges};
         return this.stats;
     }
     hit(event) {
@@ -205,6 +216,7 @@ window.LayerView3D = class LayerView3D {
     }
     inspect(event) {
         const hit=this.hit(event);this.hover.hidden=!hit;if(!hit)return;
+        if(hit.pin?.cluster){this.hover.textContent='聚合 '+hit.pin.count+' 个 Pin · M'+hit.layer+' · 点击后分页读取真实端子';return;}
         this.hover.textContent=hit.pin?'Pin '+hit.pin.p.name+' · '+hit.pin.net+' · M'+hit.layer+' · XY ('+hit.pin.p.x+', '+hit.pin.p.y+')':(hit.kind==='tsv'?'TSV 跨 Die':hit.kind==='via'?'普通 Via':'真实路径')+' · '+hit.net+' · '+hit.layers.map(l=>'M'+l).join(' ↔ ');
     }
 };
