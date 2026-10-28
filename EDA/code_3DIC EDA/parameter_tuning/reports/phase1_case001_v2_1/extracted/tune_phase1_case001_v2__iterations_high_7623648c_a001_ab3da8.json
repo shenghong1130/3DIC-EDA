@@ -1,0 +1,55 @@
+{
+  "result_sha256": "310d621fd38b20ff3ee0d8c73603a54d505ca55255c6cf31cd06def1d4e8d4b7",
+  "summary": {
+    "iterations": [
+      {
+        "iteration": 0,
+        "overflow_local": 585256
+      },
+      {
+        "accepted": true,
+        "candidate_overflow_local": 585007,
+        "iteration": 1,
+        "overflow_local": 585007,
+        "rerouted_nets": 3118
+      },
+      {
+        "accepted": true,
+        "candidate_overflow_local": 584899,
+        "iteration": 2,
+        "overflow_local": 584899,
+        "rerouted_nets": 3117
+      },
+      {
+        "accepted": true,
+        "candidate_overflow_local": 584791,
+        "iteration": 3,
+        "overflow_local": 584791,
+        "rerouted_nets": 3117
+      },
+      {
+        "accepted": true,
+        "candidate_overflow_local": 584757,
+        "iteration": 4,
+        "overflow_local": 584757,
+        "rerouted_nets": 3117
+      }
+    ],
+    "metrics": {
+      "nets": 3152,
+      "official_status": "NOT_EVALUATED",
+      "overflow_local": 584757,
+      "routed_nets": 3152,
+      "runtime_seconds": 184.631116524,
+      "thermal_correlation_local": 0.127166182413313,
+      "tsv_count": 657,
+      "via_count": 37343,
+      "wirelength_dbu_local": 436641000
+    },
+    "net_count": 3152,
+    "schema_version": 1,
+    "source": "independent_cpp_router",
+    "tsv_density_sha256": "98b68356436276a1e76bf65c8035575f14de87da83989e62afedc62b24dc926c",
+    "tsv_mapping_sha256": "4620f1b8981c0419a26d6e5778fce01453ab321912db9d969c1c3c9245b8d6b9"
+  }
+}

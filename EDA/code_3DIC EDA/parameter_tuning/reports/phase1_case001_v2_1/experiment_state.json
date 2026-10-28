@@ -1,0 +1,1210 @@
+{
+  "batch_state": "FINISHED",
+  "events": [
+    {
+      "at": "2026-10-28T17:59:14.575617+00:00",
+      "id": "baseline",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:01:02.254097+00:00",
+      "id": "baseline",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:01:02.814243+00:00",
+      "id": "baseline",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:02:08.202217+00:00",
+      "id": "baseline",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:02:09.880188+00:00",
+      "id": "via_low",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:04:06.938262+00:00",
+      "id": "via_low",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:04:07.666420+00:00",
+      "id": "via_low",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:05:25.927339+00:00",
+      "id": "via_low",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:08:31.575251+00:00",
+      "id": "via_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:10:07.054968+00:00",
+      "id": "via_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:10:07.484852+00:00",
+      "id": "via_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:11:20.479280+00:00",
+      "id": "via_high",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:11:22.368504+00:00",
+      "id": "congestion_low",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:12:41.607780+00:00",
+      "id": "congestion_low",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:12:42.067900+00:00",
+      "id": "congestion_low",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:13:50.441001+00:00",
+      "id": "congestion_low",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:13:52.325365+00:00",
+      "id": "congestion_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:16:18.554999+00:00",
+      "id": "congestion_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:16:19.118839+00:00",
+      "id": "congestion_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:17:26.329263+00:00",
+      "id": "congestion_high",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:17:27.950022+00:00",
+      "id": "history_low",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:19:19.466811+00:00",
+      "id": "history_low",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:19:20.171010+00:00",
+      "id": "history_low",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:20:30.257484+00:00",
+      "id": "history_low",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:20:32.069246+00:00",
+      "id": "history_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:22:08.112379+00:00",
+      "id": "history_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:22:08.619797+00:00",
+      "id": "history_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:23:09.447304+00:00",
+      "id": "history_high",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:23:11.124268+00:00",
+      "id": "thermal_off",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:24:59.008770+00:00",
+      "id": "thermal_off",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:24:59.511770+00:00",
+      "id": "thermal_off",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:26:08.370487+00:00",
+      "id": "thermal_off",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:26:09.919983+00:00",
+      "id": "thermal_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:27:44.107821+00:00",
+      "id": "thermal_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:27:44.588928+00:00",
+      "id": "thermal_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:28:50.405166+00:00",
+      "id": "thermal_high",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:28:51.929707+00:00",
+      "id": "iterations_off",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:29:23.917368+00:00",
+      "id": "iterations_off",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:29:24.368302+00:00",
+      "id": "iterations_off",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:30:25.077026+00:00",
+      "id": "iterations_off",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:30:26.740147+00:00",
+      "id": "iterations_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:33:34.324131+00:00",
+      "id": "iterations_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:33:34.890073+00:00",
+      "id": "iterations_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:34:35.632008+00:00",
+      "id": "iterations_high",
+      "reason": null,
+      "state": "COMPLETED"
+    },
+    {
+      "at": "2026-10-28T18:34:37.354886+00:00",
+      "id": "margin_high",
+      "reason": null,
+      "state": "ROUTING"
+    },
+    {
+      "at": "2026-10-28T18:37:53.631358+00:00",
+      "id": "margin_high",
+      "reason": null,
+      "state": "ROUTED"
+    },
+    {
+      "at": "2026-10-28T18:37:54.119491+00:00",
+      "id": "margin_high",
+      "reason": null,
+      "state": "EVALUATING"
+    },
+    {
+      "at": "2026-10-28T18:38:55.428433+00:00",
+      "id": "margin_high",
+      "reason": null,
+      "state": "COMPLETED"
+    }
+  ],
+  "experiments": {
+    "baseline": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "6072680e65e99171599466654ef921169b0d10651788176da6cb9e85772a105d",
+            "official_latest/invocation.json": "464fb04f040b5add9bb7e65acde7f13f66a8bf3c347e4c9ec0f5ffee26274c13",
+            "result.json": "36b6f70c03d737f60df186a8b707b216e43cfac16549b427583d322020a54d14",
+            "route.guide": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+            "run.json": "38c9bfdbe246b3d423b650a11c4248ca527429c12f6a1ae99b38d36fc083d6d2"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T17:59:14.575592+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__baseline_7623648c_a001_9ba494",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__baseline_7623648c_a001_9ba494",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793210462.892062,
+          "route_artifacts": {
+            "result.json": "36b6f70c03d737f60df186a8b707b216e43cfac16549b427583d322020a54d14",
+            "route.guide": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__baseline_7623648c_a001_9ba494",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\baseline.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:02:08.202204+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "congestion_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "fb32f436c664db751ce6a60c3c9edeaaf6d7c9e9d312137cf3aca4c94cb2248c",
+            "official_latest/invocation.json": "1d38ac3aa234190704a27af1fa4f5358779b2e4177aa87eb2e28ce2a1bb22e8f",
+            "result.json": "43bd4ab9206dc606ba07c0cfc8cd2bdf432f4c77598fad5091ceb1c8ce2fc6de",
+            "route.guide": "0eeb1e4caf6a2ee9f32d8ef707a0990ba74a8ce317af75fd2a8b8459221c8f49",
+            "run.json": "d706aca811467fb97a7459300eb8bde8f83179f96c6b05518fef2b53c0779c8b"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:13:52.325341+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__congestion_high_7623648c_a001_22341c",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__congestion_high_7623648c_a001_22341c",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211379.1992798,
+          "route_artifacts": {
+            "result.json": "43bd4ab9206dc606ba07c0cfc8cd2bdf432f4c77598fad5091ceb1c8ce2fc6de",
+            "route.guide": "0eeb1e4caf6a2ee9f32d8ef707a0990ba74a8ce317af75fd2a8b8459221c8f49"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__congestion_high_7623648c_a001_22341c",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\congestion_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:17:26.329248+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "congestion_low": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "4e23b7f6ddad48c1948b9793e56d0b2a4267a6f579b206faead8cc0d698c2483",
+            "official_latest/invocation.json": "9ac7dda195b99fd2d2a1b8f8943f561cde294d1442dab7cfba82ee8ea3576102",
+            "result.json": "bf653bd0b0c481b6bbe2d3d7faa81cf000f365b655aa2d4a10ae2bd4238edc39",
+            "route.guide": "2a54edd7c0abd4a628ca1916b3734789fe8c731d6c63672fab0ff1f860d2515e",
+            "run.json": "589b28e8f86ce68c7b585f3d5965e1b6736a150b1a149e829e4cadf0337a7d6d"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:11:22.368466+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__congestion_low_7623648c_a001_65d947",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__congestion_low_7623648c_a001_65d947",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211162.1272945,
+          "route_artifacts": {
+            "result.json": "bf653bd0b0c481b6bbe2d3d7faa81cf000f365b655aa2d4a10ae2bd4238edc39",
+            "route.guide": "2a54edd7c0abd4a628ca1916b3734789fe8c731d6c63672fab0ff1f860d2515e"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__congestion_low_7623648c_a001_65d947",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\congestion_low.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:13:50.440986+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "history_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "7e6ed31ab4e6c6021c7ef4e5df36596294d580f41279957f759ef077baf0c1c9",
+            "official_latest/invocation.json": "bea2bd1d39d29739ec0ff07ef6b552e393f7d37ca1e64cc0aca49372ecd24d5b",
+            "result.json": "fafe25aaf240496032992f65b2e3efe3d45f6213dfe6ac5a9e11ffa45566bb54",
+            "route.guide": "2efc5cbbf4917898ca09e5a34a615b3b55d4380086d0408a44f2a8d3f4fd35db",
+            "run.json": "e78eb5b1622b26644c700888b040dcc8a6a47fb78956eb3e3e11dd237b2d0ac5"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:20:32.069226+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__history_high_7623648c_a001_c09ddc",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__history_high_7623648c_a001_c09ddc",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211728.6966796,
+          "route_artifacts": {
+            "result.json": "fafe25aaf240496032992f65b2e3efe3d45f6213dfe6ac5a9e11ffa45566bb54",
+            "route.guide": "2efc5cbbf4917898ca09e5a34a615b3b55d4380086d0408a44f2a8d3f4fd35db"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__history_high_7623648c_a001_c09ddc",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\history_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:23:09.447284+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "history_low": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "24c98992f139abe847e363013eec8d55642b2ca8bf1b2cf838b43a94895e0495",
+            "official_latest/invocation.json": "18c51fbb118abefc133124fdbc1313cbcd95a035a1c15824b46fcd0051a417f5",
+            "result.json": "80133e46c8741c98ecce97d3b2b979ecd0a8d9754634004645ce23846f5c8f88",
+            "route.guide": "a8ca4bbd9ad1f3f04f291d2487a0ba9ae2dd2e7581fe556e9a78875f15496de2",
+            "run.json": "c2e07107583c29ae48c1407804f9a40db589155287696758ebcabc7f1ee87bda"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:17:27.949984+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__history_low_7623648c_a001_152b91",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__history_low_7623648c_a001_152b91",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211560.2490501,
+          "route_artifacts": {
+            "result.json": "80133e46c8741c98ecce97d3b2b979ecd0a8d9754634004645ce23846f5c8f88",
+            "route.guide": "a8ca4bbd9ad1f3f04f291d2487a0ba9ae2dd2e7581fe556e9a78875f15496de2"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__history_low_7623648c_a001_152b91",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\history_low.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:20:30.257467+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "iterations_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "c87cfce749487749c6d19004e536baf0960ba70ce2bb19aeb9d4dc1837e1c9c9",
+            "official_latest/invocation.json": "c5f387a558dff1d099a8d5c95aa485622ac20cbbc93e0982104a52e6754d6e10",
+            "result.json": "310d621fd38b20ff3ee0d8c73603a54d505ca55255c6cf31cd06def1d4e8d4b7",
+            "route.guide": "2f873f37cadf0197fce777147a4f1141e640f7fe3473cf4a7618f5e8442f0a27",
+            "run.json": "ab3dc9ce4ce01a97cc536b6ba694114098de255513322f8a3900402286332d49"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:30:26.740119+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__iterations_high_7623648c_a001_ab3da8",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__iterations_high_7623648c_a001_ab3da8",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793212414.9572303,
+          "route_artifacts": {
+            "result.json": "310d621fd38b20ff3ee0d8c73603a54d505ca55255c6cf31cd06def1d4e8d4b7",
+            "route.guide": "2f873f37cadf0197fce777147a4f1141e640f7fe3473cf4a7618f5e8442f0a27"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__iterations_high_7623648c_a001_ab3da8",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\iterations_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:34:35.631990+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "iterations_off": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "40bfa0d259805e775c14532971a559a61d23d84a83959ce40af9c733f1088bb9",
+            "official_latest/invocation.json": "1dbb562c8a927cf4ec836eccbe3f47b50499929b0461a560e9cc7d5e2b7cd183",
+            "result.json": "d318bc3f36e5e704bd6f1493af0f1fad8664361885e6a3c289dee788a52207da",
+            "route.guide": "8282aa4d43def3bb3a393252d781704ccd1cd8ab6092231cf30bb4e26ae4d387",
+            "run.json": "c8eb3deb16487a476781c78d0214b06b6dd967d1a30f758810a974bbfb7c77d0"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:28:51.929687+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793212164.4494092,
+          "route_artifacts": {
+            "result.json": "d318bc3f36e5e704bd6f1493af0f1fad8664361885e6a3c289dee788a52207da",
+            "route.guide": "8282aa4d43def3bb3a393252d781704ccd1cd8ab6092231cf30bb4e26ae4d387"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\iterations_off.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:30:25.077003+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "margin_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "0f657742268bd0406f8860de9330a009be1033b47c5d1c72e9e3b2f1c9871aac",
+            "official_latest/invocation.json": "a04bd30e0eb8a71593482b4da546a28c998aa45224cadd322f8593c45d822284",
+            "result.json": "1f78a11f4adf7dfe56c8d68c8e287fce1a594ed00ee2535ceac74deb27cda52d",
+            "route.guide": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+            "run.json": "872f2c7d7e6c4b9018c90735ac69795645cdb20aafceb5a225eb18571afd7a02"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:34:37.354857+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__margin_high_7623648c_a001_366f6b",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__margin_high_7623648c_a001_366f6b",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793212674.2117991,
+          "route_artifacts": {
+            "result.json": "1f78a11f4adf7dfe56c8d68c8e287fce1a594ed00ee2535ceac74deb27cda52d",
+            "route.guide": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__margin_high_7623648c_a001_366f6b",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\margin_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:38:55.428421+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "thermal_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "d09428f1dd12b335fbaaef775f5cbdafce45431eee045acc20c85d916e8dcea8",
+            "official_latest/invocation.json": "a582a05c6ba7aa118f25e6be74f3ce87cc769c80ad926203cd5a5cfa5a6c2ddc",
+            "result.json": "d7bbdddfc1e57423959b5f5970eef6eb835e1e4622d18ec1859cf8d4b755525b",
+            "route.guide": "6612e03a2e4d98af6e6fafa16e89f548bfa03292bca0a78e3861d7d936f07523",
+            "run.json": "fafdea5d5612612d9f476acab7c890bcd29eb545108ef52cf73063e853cdb92d"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:26:09.919956+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__thermal_high_7623648c_a001_556845",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__thermal_high_7623648c_a001_556845",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793212064.6652253,
+          "route_artifacts": {
+            "result.json": "d7bbdddfc1e57423959b5f5970eef6eb835e1e4622d18ec1859cf8d4b755525b",
+            "route.guide": "6612e03a2e4d98af6e6fafa16e89f548bfa03292bca0a78e3861d7d936f07523"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__thermal_high_7623648c_a001_556845",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\thermal_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:28:50.405144+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "thermal_off": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "812911288585277f00a4457f59e077b4b1de81160645a29262b026b201016a25",
+            "official_latest/invocation.json": "90570b92b909d43423da7957c6ebc88914ac63b185f9fbcc9407aeae15d51b35",
+            "result.json": "12ed9399f09475be03f5f8f436995d8f601ad1294633723dc9adaed8a80d69ce",
+            "route.guide": "a0b596c157f5a68829e29665b34573982a793a64c5d86dcc6686ddcb11a21249",
+            "run.json": "cccada2ed235283d4796d8dd26c3a928f0238f64641b782fbc14d053937cd020"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:23:11.124247+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__thermal_off_7623648c_a001_41b188",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__thermal_off_7623648c_a001_41b188",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211899.6010194,
+          "route_artifacts": {
+            "result.json": "12ed9399f09475be03f5f8f436995d8f601ad1294633723dc9adaed8a80d69ce",
+            "route.guide": "a0b596c157f5a68829e29665b34573982a793a64c5d86dcc6686ddcb11a21249"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__thermal_off_7623648c_a001_41b188",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\thermal_off.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:26:08.370468+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "via_high": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "5a8b0243044e13c9e842c9f25e7fc6529515a3e4f0042cf7b7e5b8ee0730c012",
+            "official_latest/invocation.json": "869b2ce42acd8581ae46471b679adf1fa67e960ca05e6b873faece5a31db5a25",
+            "result.json": "e49afc3d7ac028bd3de5f016a24223e03e59b1c71439f4bf3aafe579d82f418d",
+            "route.guide": "326a2cb25d1c20a20b06dc86fe6b2dcf26bb0613c4356608cc0489330a28d601",
+            "run.json": "dd192ec6c756c54d4702c8494420224df11f5016df94daf37bd98b028faf48f9"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:08:31.575191+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__via_high_7623648c_a001_880fa6",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__via_high_7623648c_a001_880fa6",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793211007.5691218,
+          "route_artifacts": {
+            "result.json": "e49afc3d7ac028bd3de5f016a24223e03e59b1c71439f4bf3aafe579d82f418d",
+            "route.guide": "326a2cb25d1c20a20b06dc86fe6b2dcf26bb0613c4356608cc0489330a28d601"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__via_high_7623648c_a001_880fa6",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\via_high.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:11:20.479255+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    },
+    "via_low": {
+      "attempts": [
+        {
+          "artifacts": {
+            "official_latest/evaluation_report.json": "da5877c9e9424513dc22136aa8c8c82231a7fe59e50ba0cce8f8818a4b14fe91",
+            "official_latest/invocation.json": "daf19d398ea34943be28b32f17ce3102af3d168cf2f31c626a24dc6396323220",
+            "result.json": "ba21ecbb722a0a3a29612d9da1778d8935f5d90a45e14d92d5be3fe07cc845d2",
+            "route.guide": "3aa6b8883c0e4467f25803a530509ecfdb291874aee5ce814641c1da99915555",
+            "run.json": "0110c863781e4cb31f6f1aaf1a16abe15b99677fe84dada789976879f0997bcf"
+          },
+          "attempt": 1,
+          "created_at": "2026-10-28T18:02:09.880160+00:00",
+          "evaluation_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\evaluate.py",
+            "--case",
+            "open_3d_case001",
+            "--label",
+            "tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa",
+            "--backend",
+            "wsl",
+            "--engine",
+            "latest",
+            "--timeout",
+            "600"
+          ],
+          "evaluation_helper_returncode": 0,
+          "label": "tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa",
+          "launch_failed": false,
+          "manager_source_sha256": {
+            "analysis.py": "0a1b8d1d3109050f61925ece87d9ef9e63795dc68cc6756e98c3b16075dbfd42",
+            "plotting.py": "f3603079e8c813843267149957b7821cadf2342a8a86b4d28fde636df53a65cc",
+            "records.py": "3fada665e134d6acb44844f7ff2a310bd6eeda6c2c0b94afa78477774b72d061",
+            "support.py": "131541bc964c75439605c8da0a724c22c5965413cbedaa1421336342587f745d",
+            "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
+          },
+          "process_pid": null,
+          "process_role": "evaluation",
+          "process_started_epoch": 1793210647.7401712,
+          "route_artifacts": {
+            "result.json": "ba21ecbb722a0a3a29612d9da1778d8935f5d90a45e14d92d5be3fe07cc845d2",
+            "route.guide": "3aa6b8883c0e4467f25803a530509ecfdb291874aee5ce814641c1da99915555"
+          },
+          "router_command": [
+            "C:\\Users\\scsm11\\miniconda3\\python.exe",
+            "-B",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\scripts\\run_case.py",
+            "--case",
+            "open_3d_case001",
+            "--backend",
+            "wsl",
+            "--label",
+            "tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa",
+            "--router",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\router",
+            "--config",
+            "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\parameter_tuning\\configs\\phase1_case001_v2_1\\via_low.json",
+            "--time-limit",
+            "600",
+            "--progress-every",
+            "1000",
+            "--monitor-interval",
+            "5",
+            "--heartbeat-interval",
+            "10",
+            "--stall-after",
+            "30"
+          ],
+          "router_helper_returncode": 0,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-28T18:05:25.927266+00:00"
+        }
+      ],
+      "state": "COMPLETED"
+    }
+  },
+  "plan_sha256": "62de02edc52278c4c9027dda59bc49c32f3d0525be7864cf351bab93fa22a033",
+  "schema_version": 1,
+  "updated_at": "2026-10-28T18:38:56.313610+00:00"
+}

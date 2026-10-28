@@ -1,0 +1,151 @@
+[HOST] elapsed=0.0s subprocess=LAUNCHING last_progress=N/A status=WAITING_FOR_ROUTER
+[HOST] elapsed=0.1s subprocess=RUNNING last_progress=N/A status=WAITING_FOR_ROUTER
+[HOST] elapsed=5.2s subprocess=RUNNING last_progress=1.0s ago status=RECENT
+[HOST] elapsed=10.2s subprocess=RUNNING last_progress=6.1s ago status=RECENT
+[HOST] elapsed=15.3s subprocess=RUNNING last_progress=4.9s ago status=RECENT
+[HOST] elapsed=20.4s subprocess=RUNNING last_progress=0.0s ago status=RECENT
+[HOST] elapsed=25.4s subprocess=RUNNING last_progress=5.1s ago status=RECENT
+[HOST] elapsed=30.5s subprocess=RUNNING last_progress=0.2s ago status=RECENT
+[HOST] elapsed=35.6s subprocess=RUNNING last_progress=1.9s ago status=RECENT
+[HOST] elapsed=40.6s subprocess=RUNNING last_progress=0.3s ago status=RECENT
+[HOST] elapsed=45.7s subprocess=RUNNING last_progress=5.4s ago status=RECENT
+[HOST] elapsed=50.8s subprocess=RUNNING last_progress=0.4s ago status=RECENT
+[HOST] elapsed=55.9s subprocess=RUNNING last_progress=5.6s ago status=RECENT
+[HOST] elapsed=61.0s subprocess=RUNNING last_progress=0.7s ago status=RECENT
+[HOST] elapsed=66.1s subprocess=RUNNING last_progress=0.5s ago status=RECENT
+[HOST] elapsed=71.2s subprocess=RUNNING last_progress=0.8s ago status=RECENT
+[HOST] elapsed=76.3s subprocess=RUNNING last_progress=6.0s ago status=RECENT
+[HOST] elapsed=81.5s subprocess=RUNNING last_progress=1.1s ago status=RECENT
+[HOST] elapsed=86.5s subprocess=RUNNING last_progress=6.2s ago status=RECENT
+[HOST] elapsed=91.6s subprocess=RUNNING last_progress=0.0s ago status=RECENT
+[HOST] elapsed=96.7s subprocess=RUNNING last_progress=5.0s ago status=RECENT
+[HOST] elapsed=101.8s subprocess=RUNNING last_progress=1.4s ago status=RECENT
+[HOST] elapsed=107.0s subprocess=RUNNING last_progress=6.6s ago status=RECENT
+[HOST] elapsed=112.0s subprocess=RUNNING last_progress=0.1s ago status=RECENT
+[HOST] elapsed=115.9s subprocess=EXITED last_progress=0.9s ago status=RECENT
+{
+  "schema_version": 1,
+  "run_id": "b11f9cafa6d64d3ea1e0714960670953",
+  "case": "open_3d_case001",
+  "dataset": "公开测试用例",
+  "label": "tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa",
+  "started_at": "2026-10-29T02:02:10+0800",
+  "backend": "wsl",
+  "inputs": {
+    "def": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.def",
+    "lef": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.input.lef",
+    "thermal": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\公开测试用例\\open_3d_case001\\open_3d_case001.thermal.input.json"
+  },
+  "input_sha256": {
+    "def": "4185c4df2a179ec3f115ccc12967d25af98773b7086d531173a5c4a702c26795",
+    "lef": "d44105a71d9aa2bedcc62754784f24d0ca922d555ff734d65cbb60e9dde2ad12",
+    "thermal": "07db896c3043a408a43b2855a1610aeb4d984487531d84fead85b75d7ffa47b5"
+  },
+  "config": {
+    "congestion": 4,
+    "history": 1,
+    "iterations": 2,
+    "margin": 8,
+    "search_limit": 1500000,
+    "stagnation": 2,
+    "thermal": 1,
+    "time_limit": 600,
+    "trace_mb": 32,
+    "tsv": 4,
+    "via": 0.25,
+    "wire": 1
+  },
+  "guide": "D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\outputs\\runs\\open_3d_case001\\tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa\\route.guide",
+  "trace": null,
+  "peak_memory_bytes": 135614464,
+  "official_status": "NOT_EVALUATED",
+  "command": [
+    "wsl",
+    "-d",
+    "Ubuntu",
+    "--",
+    "bash",
+    "-lc",
+    "timeout --signal=TERM --kill-after=5s 610.0s /usr/bin/time -v -o '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa/resource_usage.txt' python3 '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/scripts/linux_supervisor.py' --directory '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa' --run-id b11f9cafa6d64d3ea1e0714960670953 --interval 5.0 --lease-seconds 60 -- '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/router' --def '/mnt/d/我/大学/program/3DIC EDA/EDA/公开测试用例/open_3d_case001/open_3d_case001.input.def' --lef '/mnt/d/我/大学/program/3DIC EDA/EDA/公开测试用例/open_3d_case001/open_3d_case001.input.lef' --thermal-report '/mnt/d/我/大学/program/3DIC EDA/EDA/公开测试用例/open_3d_case001/open_3d_case001.thermal.input.json' --output '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa/route.guide' --metrics '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa/result.json' --config '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/parameter_tuning/configs/phase1_case001_v2_1/via_low.json' --time-limit 600.0 --progress-dir '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa' --progress-every 1000 --monitor-interval 5.0 --heartbeat-interval 10.0"
+  ],
+  "router_sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+  "source_sha256": {
+    "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+    "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+    "src\\router.cpp": "8e81f7b16c080a11b55d61c74d2887bd52ec52bb1e59ca0503771e7e88d3f12d",
+    "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+    "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+    "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+    "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+  },
+  "status": "ROUTED",
+  "process_status": "FINISHED",
+  "returncode": 0,
+  "runtime_seconds": 115.98810030001914,
+  "monitoring": {
+    "enabled": true,
+    "resource_mode": "linux_supervisor",
+    "sample_interval_seconds": 5.0,
+    "heartbeat_seconds": 10.0,
+    "progress_every": 1000,
+    "stall_after_seconds": 30.0
+  },
+  "failure_category": "SUCCESS",
+  "failure_evidence": [
+    {
+      "source": "router_exit.json",
+      "router_returncode": 0,
+      "router_signal": null
+    },
+    {
+      "source": "host",
+      "process_status": "FINISHED",
+      "returncode": 0
+    }
+  ],
+  "host_pid": 33896,
+  "subprocess_pid": 19976,
+  "host_forced_proxy_kill": false,
+  "monitor_errors": [],
+  "peak_memory_source": "gnu_time_command_tree",
+  "router_peak_rss_bytes": 135950336,
+  "last_phase": "COMPLETE",
+  "last_net_index": 3152,
+  "last_net": "net1",
+  "last_progress_seconds": 114.643576916,
+  "finished_at": "2026-10-28T18:04:06.262056+00:00",
+  "supervisor_exit": {
+    "run_id": "b11f9cafa6d64d3ea1e0714960670953",
+    "supervisor_pid": 1229,
+    "started_at": "2026-10-28T18:02:10.597013+00:00",
+    "router_returncode": 0,
+    "router_signal": null,
+    "router_pid": 1231,
+    "termination_requested_signal": null,
+    "termination_reason": null,
+    "resource_summary": {
+      "observed_router_peak_rss_bytes": 135950336,
+      "last_sample": {
+        "timestamp_utc": "2026-10-28T18:04:02.085626+00:00",
+        "elapsed_seconds": 111.42160806500002,
+        "pid": 1231,
+        "process_state": "D (disk sleep)",
+        "rss_bytes": 135950336,
+        "router_peak_rss_bytes": 135950336,
+        "mem_available_bytes": 9533943808,
+        "swap_free_bytes": 3221225472,
+        "cgroup_current_bytes": 157540352,
+        "cgroup_limit_bytes": null,
+        "cgroup_limit_unlimited": true,
+        "cgroup_oom_kill": 0,
+        "source": "proc_router_pid"
+      },
+      "cgroup_oom_kill_delta": 0,
+      "cgroup_scope": "shared_or_unknown; counters do not identify victim PID"
+    },
+    "finished_at": "2026-10-28T18:04:05.858840+00:00",
+    "runtime_seconds": 115.26196402799997,
+    "monitor_errors": []
+  },
+  "router_log_encoding": "raw bytes; WSL UTF-16LE and Router UTF-8 may coexist; no text matching used for classification"
+}

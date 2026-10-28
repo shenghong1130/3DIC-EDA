@@ -1,0 +1,80 @@
+{
+  "process_status": "FINISHED",
+  "returncode": 0,
+  "runtime_seconds": 58.72748679999495,
+  "status": "PASS",
+  "engine": "latest",
+  "evaluator_sha256": "4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a",
+  "peak_memory_bytes": 726618112,
+  "report": {
+    "status": "PASS",
+    "fidelity": {
+      "wirelength": "guide-rectangle Manhattan MST proxy",
+      "congestion": "GRT guide demand / merged DEF track capacity",
+      "drc": "not available; overflow entries are only a mock-DRT risk proxy",
+      "thermal": "external"
+    },
+    "inputs": {
+      "guide": "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4/route.guide",
+      "lefs": [
+        "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4/official_latest/inputs/open_3d_case001.input.lef"
+      ],
+      "defs": [
+        "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4/official_latest/inputs/open_3d_case001.input.def"
+      ],
+      "thermal_json": "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/runs/open_3d_case001/tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4/official_latest/inputs/open_3d_case001.thermal.input.json"
+    },
+    "grid": {
+      "dbu_per_micron": 2000.0,
+      "rows": 251,
+      "cols": 255,
+      "mapped_thermal_xy_nodes": 64005
+    },
+    "wirelength": {
+      "total_dbu": 838944000.0,
+      "total_um": 419472.0,
+      "guide_mst_proxy_dbu": 838944000.0,
+      "hpwl_reference_dbu": 545681923.0,
+      "normalized": 1.5374231115953607,
+      "tsv_count": 657,
+      "tsv_cost_dbu_each": 6.0
+    },
+    "congestion": {
+      "max_overflow": 7,
+      "average_overflow": 0.06050059456480757,
+      "total_overflow": 8344,
+      "used_layer_gcells": 137916,
+      "overflow_entries": 6090,
+      "mock_drt_risk_hotspots": 6090
+    },
+    "thermal_tsv": {
+      "synthetic": false,
+      "ambient_temperature": 25.0,
+      "tsv_points": 657,
+      "correlation_above_ambient": 0.0023210634780366566,
+      "saturation_gain": 11.684,
+      "saturation_gain_source": "def_alias:open_3d_case001.input.def->case001"
+    },
+    "score": {
+      "wirelength_score": 65.04390316874546,
+      "congestion_score": 78.02558410192562,
+      "thermal_score": 51.355632963695584,
+      "wirelength_quality": 0.6504390316874546,
+      "congestion_quality": 0.7802558410192562,
+      "thermal_quality": 0.5135563296369559,
+      "thermal_saturation_gain": 11.684,
+      "weights": {
+        "wirelength": 0.45,
+        "congestion": 0.3,
+        "thermal_tsv": 0.25
+      }
+    },
+    "warnings": []
+  },
+  "evaluated_input_sha256": {
+    "def": "4185c4df2a179ec3f115ccc12967d25af98773b7086d531173a5c4a702c26795",
+    "lef": "d44105a71d9aa2bedcc62754784f24d0ca922d555ff734d65cbb60e9dde2ad12",
+    "thermal": "07db896c3043a408a43b2855a1610aeb4d984487531d84fead85b75d7ffa47b5"
+  },
+  "fidelity": "Official provided evaluator; GRT guide metrics / mock-DRT proxy; no detailed-routing signoff."
+}

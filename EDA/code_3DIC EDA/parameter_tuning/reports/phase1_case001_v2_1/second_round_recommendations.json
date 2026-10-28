@@ -1,0 +1,77 @@
+[
+  {
+    "changes": {
+      "iterations": 4,
+      "margin": 16
+    },
+    "evidence": [
+      "margin_high",
+      "iterations_high"
+    ],
+    "parameters": [
+      "margin",
+      "iterations"
+    ],
+    "reason": "Both parameters showed an observed metric/Guide effect; test interaction under the same budget. No combined benefit has been measured."
+  },
+  {
+    "changes": {
+      "congestion": 8,
+      "margin": 16
+    },
+    "evidence": [
+      "margin_high",
+      "congestion_high"
+    ],
+    "parameters": [
+      "margin",
+      "congestion"
+    ],
+    "reason": "Both parameters showed an observed metric/Guide effect; test interaction under the same budget. No combined benefit has been measured."
+  },
+  {
+    "changes": {
+      "margin": 16,
+      "thermal": 3
+    },
+    "evidence": [
+      "margin_high",
+      "thermal_high"
+    ],
+    "parameters": [
+      "margin",
+      "thermal"
+    ],
+    "reason": "Both parameters showed an observed metric/Guide effect; test interaction under the same budget. No combined benefit has been measured."
+  },
+  {
+    "changes": {
+      "margin": 16,
+      "via": 1
+    },
+    "evidence": [
+      "margin_high",
+      "via_high"
+    ],
+    "parameters": [
+      "margin",
+      "via"
+    ],
+    "reason": "Both parameters showed an observed metric/Guide effect; test interaction under the same budget. No combined benefit has been measured."
+  },
+  {
+    "changes": {
+      "history": 2,
+      "margin": 16
+    },
+    "evidence": [
+      "margin_high",
+      "history_high"
+    ],
+    "parameters": [
+      "margin",
+      "history"
+    ],
+    "reason": "Both parameters showed an observed metric/Guide effect; test interaction under the same budget. No combined benefit has been measured."
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "result_sha256": "d318bc3f36e5e704bd6f1493af0f1fad8664361885e6a3c289dee788a52207da",
+  "summary": {
+    "iterations": [
+      {
+        "iteration": 0,
+        "overflow_local": 585256
+      }
+    ],
+    "metrics": {
+      "nets": 3152,
+      "official_status": "NOT_EVALUATED",
+      "overflow_local": 585256,
+      "routed_nets": 3152,
+      "runtime_seconds": 29.422117461,
+      "thermal_correlation_local": 0.127176346015687,
+      "tsv_count": 657,
+      "via_count": 36595,
+      "wirelength_dbu_local": 436626000
+    },
+    "net_count": 3152,
+    "schema_version": 1,
+    "source": "independent_cpp_router",
+    "tsv_density_sha256": "e2153349b4afbd5cb9056f1205541b7cdb93212f16d35daccbadb491ff5aa44e",
+    "tsv_mapping_sha256": "f08063974c8c612691e0470f68766f973de1edd922a3b34db6441046b3d41154"
+  }
+}
