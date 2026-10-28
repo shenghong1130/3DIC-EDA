@@ -42,17 +42,54 @@ def backend_command(args,backend,cwd=None,time_file=None,env=None,timeout=None):
     if time_file and os.name!='nt':args=['/usr/bin/time','-v','-o',str(time_file),*args]
     if timeout and os.name!='nt':args=['timeout','--signal=TERM','--kill-after=5s',str(timeout)+'s',*args]
     return list(map(str,args))
-def timed_process(args,log,timeout,cwd=None,env=None):
-    log=Path(log);log.parent.mkdir(parents=True,exist_ok=True);start=time.perf_counter();status='FINISHED';code=None
-    # A log file avoids unbounded in-memory subprocess output on large cases.
-    with log.open('wb') as out:
+def timed_process(args,log,timeout,cwd=None,env=None,monitor_dir=None,monitor_interval=5,stall_after=30,native_resources=False):
+    log=Path(log);log.parent.mkdir(parents=True,exist_ok=True)
+    start=time.perf_counter();status='FINISHED';code=None;proc=None;monitor=None;monitor_errors=[];forced=False
+    if monitor_dir is not None:
+        from diagnostics import HostMonitor,ResourceMonitor
+        try:monitor=HostMonitor(monitor_dir,monitor_interval,stall_after)
+        except OSError as e:monitor_errors.append(str(e))
+    # Preserve raw bytes, including mixed UTF-8/UTF-16LE WSL diagnostics.
+    with log.open('ab' if monitor_dir is not None else 'wb') as out:
         try:
             proc=subprocess.Popen(list(map(str,args)),cwd=cwd,stdout=out,stderr=subprocess.STDOUT,env=env)
-            try:code=proc.wait(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                status='TIMEOUT';proc.kill();proc.wait()
-        except OSError as e:out.write(str(e).encode('utf-8'));status='LAUNCH_ERROR'
-    return {'process_status':status,'returncode':code,'runtime_seconds':time.perf_counter()-start}
+            if monitor:
+                monitor.pid=proc.pid
+                if native_resources:
+                    try:monitor.native_resources=ResourceMonitor(Path(monitor_dir)/'resource_monitor.csv',proc.pid)
+                    except OSError as e:monitor_errors.append(str(e))
+                monitor.tick('RUNNING',force=True)
+            try:
+                if monitor_dir is None:code=proc.wait(timeout=timeout)
+                else:
+                    while True:
+                        code=proc.poll()
+                        if code is not None:break
+                        if time.perf_counter()-start>=timeout:raise subprocess.TimeoutExpired(args,timeout)
+                        if monitor:monitor.tick('RUNNING')
+                        time.sleep(.2)
+            except (subprocess.TimeoutExpired,KeyboardInterrupt) as e:
+                status='TIMEOUT' if isinstance(e,subprocess.TimeoutExpired) else 'INTERRUPTED'
+                if monitor:monitor.cancel(status);monitor.tick('CANCELLING',force=True)
+                # WSL supervisor receives cancellation via a Windows file; no
+                # extra WSL instances and no machine-wide wsl --shutdown.
+                try:code=proc.wait(timeout=7 if monitor_dir is not None and not native_resources else 0)
+                except subprocess.TimeoutExpired:
+                    forced=True;proc.kill();code=proc.wait(timeout=10)
+        except OSError as e:
+            out.write(str(e).encode('utf8'));out.flush();status='LAUNCH_ERROR';monitor_errors.append(str(e))
+        finally:
+            if proc and proc.poll() is None:
+                if monitor:monitor.cancel('HOST_CLEANUP')
+                proc.kill();proc.wait(timeout=10)
+            if monitor:
+                try:monitor.close('EXITED' if code is not None else status,code)
+                except OSError as e:monitor_errors.append(str(e))
+                monitor_errors.extend(monitor.errors)
+    result={'process_status':status,'returncode':code,'runtime_seconds':time.perf_counter()-start}
+    if monitor_dir is not None:result.update(host_pid=os.getpid(),subprocess_pid=proc.pid if proc else None,host_forced_proxy_kill=forced,monitor_errors=monitor_errors[:10])
+    return result
+
 def peak_rss(path):
     if not Path(path).exists():return None
     m=re.search(r'Maximum resident set size \(kbytes\):\s*(\d+)',Path(path).read_text(encoding='utf8',errors='replace'))

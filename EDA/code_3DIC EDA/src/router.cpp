@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 namespace gr {
-Router::Router(Design&design,Config c,Trace&t):d(design),cfg(c),trace(t),started(std::chrono::steady_clock::now()){
+Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace(t),started(std::chrono::steady_clock::now()),progress(p){
     auto lines=[&](char a,double lo,double hi){std::vector<double> v{lo,hi};for(double x:d.grid.at(a))if(x>lo&&x<hi)v.push_back(x);std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());return v;};
     xs=lines('X',d.die.x1,d.die.x2);ys=lines('Y',d.die.y1,d.die.y2);nx=int(xs.size())-1;ny=int(ys.size())-1;
     if(nx<1||ny<1||Id(nx)*ny>10000000)throw std::runtime_error("Unsupported GCell size (>10M cells)");
@@ -18,7 +18,7 @@ Id Router::pin_node(const Pin&p)const{return id(locate(xs,p.x),locate(ys,p.y),p.
 Rect Router::cell(Id v)const{int x,y,l;decode(v,x,y,l);return {xs.at(x),ys.at(y),xs.at(x+1),ys.at(y+1),l};}
 std::pair<double,double> Router::center(Id v)const{auto r=cell(v);return {(r.x1+r.x2)/2,(r.y1+r.y2)/2};}
 double Router::elapsed()const{return std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();}
-void Router::check_time()const{if(elapsed()>cfg.time_limit)throw std::runtime_error("Router time budget exceeded");}
+void Router::check_time()const{if(progress)progress->poll();if(elapsed()>cfg.time_limit)throw RouterTimeout();}
 static int count_tracks(const Track&t,double lo,double hi,bool last){double e=1e-8;int begin=std::max(0,int(std::ceil((lo-t.start)/t.step-e)));int end=std::min(t.count,int(std::ceil((hi-t.start)/t.step-(last?-e:e))));return std::max(0,end-begin);}
 int Router::capacity(Id v)const{auto r=cell(v);auto&l=d.layers.at(r.layer);char axis=l.direction=="HORIZONTAL"?'Y':'X';int c=0;for(auto&t:d.tracks)if(t.layer==r.layer&&t.axis==axis)c+=count_tracks(t,axis=='X'?r.x1:r.y1,axis=='X'?r.x2:r.y2,axis=='X'?r.x2==xs.back():r.y2==ys.back());return c;}
 Resource& Router::resource(Id v){auto [it,newentry]=resources.try_emplace(v);if(newentry)it->second.capacity=capacity(v);return it->second;}
@@ -48,6 +48,7 @@ void Router::build_fixed_demand(){
     trace.event("fixed_demand_built");
 }
 std::vector<Id> Router::search(Id start,Id goal,int lo,int hi,bool cross){
+    Progress::Scope log(progress,"A_STAR",true);
     if(start==goal)return {start};
     int ax,ay,al,bx,by,bl;decode(start,ax,ay,al);decode(goal,bx,by,bl);
     auto [gx,gy]=center(goal);auto heuristic=[&](Id v){auto [x,y]=center(v);int ix,iy,l;decode(v,ix,iy,l);return cfg.wire*(std::abs(x-gx)+std::abs(y-gy))/unit+cfg.via*std::abs(l-bl);};
@@ -79,12 +80,14 @@ std::vector<Id> Router::search(Id start,Id goal,int lo,int hi,bool cross){
     throw std::runtime_error("No legal path between GCells "+std::to_string(start)+" and "+std::to_string(goal));
 }
 std::vector<std::pair<int,int>> Router::mst(const std::vector<Id>&ps)const{
+    Progress::Scope log(progress,"MST",true);
     int n=int(ps.size());std::vector<double> best(n,1e100);std::vector<int> parent(n,-1);std::vector<bool> seen(n,false);std::vector<std::pair<int,int>> tree;if(n==0)return tree;best[0]=0;
-    for(int k=0;k<n;k++){int u=-1;for(int v=0;v<n;v++)if(!seen[v]&&(u==-1||best[v]<best[u]))u=v;seen[u]=true;if(parent[u]>=0)tree.emplace_back(parent[u],u);auto[a,b]=center(ps[u]);int x,y,l;decode(ps[u],x,y,l);
+    for(int k=0;k<n;k++){if(progress&&k%256==0)progress->poll();int u=-1;for(int v=0;v<n;v++)if(!seen[v]&&(u==-1||best[v]<best[u]))u=v;seen[u]=true;if(parent[u]>=0)tree.emplace_back(parent[u],u);auto[a,b]=center(ps[u]);int x,y,l;decode(ps[u],x,y,l);
         for(int v=0;v<n;v++)if(!seen[v]){auto[c,e]=center(ps[v]);int xx,yy,ll;decode(ps[v],xx,yy,ll);double w=cfg.wire*(std::abs(a-c)+std::abs(b-e))/unit+cfg.via*std::abs(l-ll);if(w<best[v]){best[v]=w;parent[v]=u;}}
     }return tree;
 }
 Id Router::select_tsv(const Net&n){
+    Progress::Scope log(progress,"TSV_SELECTION",true);
     if(!d.layers.count(10)||!d.layers.count(11)||!d.tsv_cut)throw std::runtime_error("Cross-die net requires M10/M11 and TSV CUT definition");
     std::set<std::pair<int,int>> low,up;std::vector<std::pair<int,int>> pins;int xl=nx-1,xh=0,yl=ny-1,yh=0;
     for(auto&p:n.pins){int x=locate(xs,p.x),y=locate(ys,p.y);pins.emplace_back(x,y);xl=std::min(xl,x);xh=std::max(xh,x);yl=std::min(yl,y);yh=std::max(yh,y);if(p.layer==10)low.insert({x,y});if(p.layer==11)up.insert({x,y});}
@@ -94,7 +97,7 @@ Id Router::select_tsv(const Net&n){
     double tmin=*std::min_element(heat.begin(),heat.end()),tmax=*std::max_element(heat.begin(),heat.end()),score=1e100;Id answer=0;
     int stride=std::max(1,int(std::ceil(std::sqrt(double((xh-xl+1)*(yh-yl+1))/4096))));
     std::set<std::pair<int,int>> candidates(pins.begin(),pins.end());for(int y=yl;y<=yh;y+=stride)for(int x=xl;x<=xh;x+=stride)candidates.insert({x,y});
-    for(auto[x,y]:candidates){double w=0;auto[cx,cy]=center(id(x,y,10));for(auto&p:n.pins)w+=(std::abs(p.x-cx)+std::abs(p.y-cy))/unit;w*=cfg.wire/std::max(size_t(1),n.pins.size());
+    size_t candidate_index=0;for(auto[x,y]:candidates){if(progress&&candidate_index++%256==0)progress->poll();double w=0;auto[cx,cy]=center(id(x,y,10));for(auto&p:n.pins)w+=(std::abs(p.x-cx)+std::abs(p.y-cy))/unit;w*=cfg.wire/std::max(size_t(1),n.pins.size());
         auto&a=resource(id(x,y,10));auto&b=resource(id(x,y,11));w+=cfg.tsv+cfg.congestion*(std::max(0,a.usage+a.fixed+2-a.capacity)+std::max(0,b.usage+b.fixed+2-b.capacity));
         // Nonnegative penalty for cold sites; positive heat/TSV correlation is desired.
         w+=cfg.thermal*(tmax>tmin?(tmax-heat[y*nx+x])/(tmax-tmin):0);
@@ -102,6 +105,7 @@ Id Router::select_tsv(const Net&n){
     }return answer;
 }
 Route Router::route(const Net&n){
+    Progress::Scope log(progress,"NET_ROUTE",true);
     Route r;r.cross=n.cross;Json sel=Json::object();sel["net"]=n.name;sel["pin_count"]=int(n.pins.size());trace.event("net_selected",sel);
     std::vector<Id> bottom,top;for(auto&p:n.pins){Id v=pin_node(p);(p.layer<=10?bottom:top).push_back(v);r.nodes.insert(v);}
     if(n.cross){r.tsv=select_tsv(n);bottom.push_back(r.tsv);int x,y,l;decode(r.tsv,x,y,l);Id v=id(x,y,11);top.push_back(v);r.nodes.insert(r.tsv);r.nodes.insert(v);r.edges.insert({r.tsv,v});}
@@ -114,6 +118,7 @@ void Router::occupy(const Route&r,int sign){for(Id v:r.nodes){auto&res=resource(
 long long Router::overflow()const{long long total=0;for(auto&[v,r]:resources)total+=std::max(0,r.fixed+r.usage-r.capacity);return total;}
 double Router::wirelength(const Route&r)const{double w=0;for(auto&e:r.edges){int ax,ay,al,bx,by,bl;decode(e.a,ax,ay,al);decode(e.b,bx,by,bl);if(al==bl){auto[x,y]=center(e.a);auto[u,v]=center(e.b);w+=std::abs(x-u)+std::abs(y-v);}}return w;}
 void Router::make_guides(Route&r)const{
+    Progress::Scope log(progress,"GUIDE_BUILD",true);
     // Interface-layer cells stay separate: never merge TSV candidates into long strips.
     std::set<Id> remaining=r.nodes;
     while(!remaining.empty()){Id a=*remaining.begin();remaining.erase(a);int x,y,l;decode(a,x,y,l);Rect box=cell(a);
@@ -130,18 +135,22 @@ void Router::validate(const Net&n,const Route&r)const{
     if(n.cross){int overlaps=0;for(Id a:r.nodes){int x,y,l;decode(a,x,y,l);if(l==10&&r.nodes.count(id(x,y,11)))overlaps++;}if(overlaps!=1)throw std::runtime_error("Nonunique TSV overlap: "+n.name);}
 }
 void Router::run(){
-    for(size_t i=0;i<d.nets.size();i++){check_time();try{routes[i]=route(d.nets[i]);occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
-    int stagnant=0;long long best=overflow();Json initial=Json::object();initial["iteration"]=0;initial["overflow_local"]=double(best);rounds.push_back(initial);trace.event("iteration_done",initial);
+    if(progress)progress->pass(d.nets.size(),0);
+    Progress::Scope routing_log(progress,"ROUTING");
+    for(size_t i=0;i<d.nets.size();i++){if(progress)progress->net(i+1,d.nets.size(),d.nets[i].name,0);check_time();try{routes[i]=route(d.nets[i]);occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}catch(const RouterTimeout&){throw;}catch(const std::bad_alloc&){throw;}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
+    int stagnant=0;long long best;{Progress::Scope overflow_log(progress,"OVERFLOW");best=overflow();}Json initial=Json::object();initial["iteration"]=0;initial["overflow_local"]=double(best);rounds.push_back(initial);trace.event("iteration_done",initial);
     for(int it=1;it<=cfg.iterations&&best>0&&stagnant<cfg.stagnation;it++){
+        if(progress)progress->pass(d.nets.size(),it);
+        Progress::Scope iteration_log(progress,"OPTIMIZATION");
         check_time();for(auto&[v,res]:resources)if(res.usage&&res.usage+res.fixed>res.capacity)res.history+=double(res.usage+res.fixed-res.capacity)/std::max(1,res.capacity);
         auto saved=routes;int rerouted=0;
-        for(size_t i=0;i<routes.size();i++){bool hot=false;for(Id v:routes[i].nodes){auto&res=resource(v);if(res.usage+res.fixed>res.capacity){hot=true;break;}}if(!hot)continue;
-            auto old=routes[i];occupy(old,-1);Json rem=Json::object();rem["net"]=d.nets[i].name;rem["iteration"]=it;trace.event("net_removed",rem);
+        for(size_t i=0;i<routes.size();i++){if(progress)progress->net(i+1,routes.size(),d.nets[i].name,it);bool hot=false;for(Id v:routes[i].nodes){auto&res=resource(v);if(res.usage+res.fixed>res.capacity){hot=true;break;}}if(!hot){if(progress)progress->completed();continue;}
+            Progress::Scope reroute_log(progress,"RIP_UP_REROUTE",true);auto old=routes[i];occupy(old,-1);Json rem=Json::object();rem["net"]=d.nets[i].name;rem["iteration"]=it;trace.event("net_removed",rem);
             try{routes[i]=route(d.nets[i]);}catch(...){occupy(old,1);routes[i]=old;trace.event("net_added",route_json(d.nets[i],old));throw;}
-            occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));rerouted++;
+            occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));rerouted++;if(progress)progress->completed();
         }
-        long long now=overflow();bool accepted=now<best;
-        if(!accepted){for(size_t i=0;i<routes.size();i++){occupy(routes[i],-1);Json rem=Json::object();rem["net"]=d.nets[i].name;trace.event("net_removed",rem);routes[i]=std::move(saved[i]);occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));}stagnant++;}else{best=now;stagnant=0;}
+        long long now;{Progress::Scope overflow_log(progress,"OVERFLOW");now=overflow();}bool accepted=now<best;
+        if(!accepted){Progress::Scope rollback_log(progress,"ROLLBACK");for(size_t i=0;i<routes.size();i++){if(progress)progress->net(i+1,routes.size(),d.nets[i].name,it);occupy(routes[i],-1);Json rem=Json::object();rem["net"]=d.nets[i].name;trace.event("net_removed",rem);routes[i]=std::move(saved[i]);occupy(routes[i],1);trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}stagnant++;}else{best=now;stagnant=0;}
         Json j=Json::object();j["iteration"]=it;j["candidate_overflow_local"]=double(now);j["overflow_local"]=double(best);j["accepted"]=accepted;j["rerouted_nets"]=rerouted;rounds.push_back(j);trace.event("iteration_done",j);
     }
     Json end=Json::object();end["overflow_local"]=double(overflow());end["runtime_seconds"]=elapsed();trace.event("routing_complete",end);

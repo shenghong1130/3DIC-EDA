@@ -1,14 +1,17 @@
 #pragma once
 #include "model.hpp"
+#include "progress.hpp"
 #include <functional>
 namespace gr {
+struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("Router time budget exceeded") {}};
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;};
 class Router {
 public:
     Design& d;Config cfg;Trace& trace;std::vector<double> xs,ys,heat,thermal_count;
     int nx=0,ny=0;double ambient=25,unit=1;std::unordered_map<Id,Resource> resources;
     std::vector<Route> routes;std::vector<Json> rounds;std::chrono::steady_clock::time_point started;
-    Router(Design&,Config,Trace&);
+    Progress* progress=nullptr;
+    Router(Design&,Config,Trace&,Progress* = nullptr);
     Id id(int x,int y,int l)const{return (Id(l)*ny+y)*nx+x;}
     void decode(Id v,int&x,int&y,int&l)const{x=int(v%nx);v/=nx;y=int(v%ny);l=int(v/ny);}
     int locate(const std::vector<double>& lines,double x)const;
