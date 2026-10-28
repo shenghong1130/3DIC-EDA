@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not matches:raise ValueError('请先运行该用例，以取得真实引脚、实例和网格信息。')
                 d=run_data(matches[-1]);metadata={n['net']:n for n in d['nets']};d['nets']=[{'net':n,'guides':gs,'pins':metadata.get(n,{}).get('pins',[]),'cross_die':len({g[4]<=10 for g in gs})>1,'edges':[],'nodes':[],'tsv_count':None,'status':'REFERENCE'} for n,gs in guide(c['reference']).items()]
                 d['source']='official_reference_guide';d['resources']=[];d['metrics']={k:None for k in d['metrics']};d['metrics']['nets']=len(d['nets']);d['metrics']['official_status']='NOT_EVALUATED';d['iterations']=[];d['tsv_density']=[];d['router_log']='官方参考 Guide，仅用于展示与对比。没有内部搜索路径与过程记录。';d.pop('official_latest',None);d.pop('official_legacy',None);d['reference_path']=c['reference'];return self.send(d)
-            names={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}
+            names={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/layers3d.js':'layers3d.js'}
             if u.path in names:
                 file=WEB/names[u.path];mime={'.html':'text/html','.js':'text/javascript','.css':'text/css'}[file.suffix];return self.send(file.read_bytes(),mime=mime+'; charset=utf-8')
             self.send({'error':'Not found'},404)

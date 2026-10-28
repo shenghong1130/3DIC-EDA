@@ -51,7 +51,7 @@ int main(int argc,char**argv){
         {Progress::Scope stage(&progress,"THERMAL");router.load_thermal(std::filesystem::u8path(opt["--thermal-report"]));}
         {Progress::Scope stage(&progress,"FIXED_DEMAND");router.build_fixed_demand();}
         router.run();
-        if(opt.count("--metrics")){Progress::Scope stage(&progress,"WRITE_RESULT");write_json(std::filesystem::u8path(opt["--metrics"]),router.result_json());}
+        if(opt.count("--metrics")){Progress::Scope stage(&progress,"WRITE_RESULT");router.write_result(std::filesystem::u8path(opt["--metrics"]));}
         {Progress::Scope stage(&progress,"WRITE_GUIDE");router.write_guide(output);}
         run_log.finish();progress.success();
         std::cout<<"ROUTED nets="<<d.nets.size()<<" overflow_local="<<router.overflow()<<" runtime_seconds="<<router.elapsed()<<'\n';return 0;

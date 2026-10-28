@@ -6,7 +6,8 @@ const S = {
     ghost:null, playing:null, zoom:1, panX:0, panY:0, loadId:0, traceRequest:0, selectionVersion:0,
     netMap:new Map(), allPins:[], pinIndex:new Map(), matches:[], allowed:new Set(),
     page:0, colors:new Map(), resourceMap:new Map(), stats:null, inspect:null,
-    choices:[], choicePage:0, loading:false, filterKey:null, filteredPins:[], frame:0
+    choices:[], choicePage:0, loading:false, filterKey:null, filteredPins:[], frame:0,
+    dimension:'2d', layerView3d:null, loader3d:null, fit3d:false
 };
 const PAGE_SIZE = 500, PIN_BUCKETS = 128, CHOICE_SIZE = 20;
 const esc = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -59,7 +60,7 @@ async function load(){
         S.data=data;S.fullTrace=tr.events;S.largeTrace=!!tr.requires_net;S.raw=null;S.colors=new Map();
         if(!await buildIndex(id))return;
         options($('layer'),[['all','全部金属层'],...data.layers.map(l=>[String(l.number),l.name+' · '+(l.direction==='HORIZONTAL'?'水平':'垂直')])]);
-        S.active=new Map(data.nets.map(n=>[n.net,n]));S.zoom=1;S.panX=0;S.panY=0;setNets(false);installTrace(S.fullTrace);
+        S.active=new Map(data.nets.map(n=>[n.net,n]));S.zoom=1;S.panX=0;S.panY=0;S.fit3d=false;S.layerView3d?.reset();setNets(false);installTrace(S.fullTrace);
         $('subtitle').textContent=$('case').value+' / '+(ref?'官方参考 Guide':data.run.label)+' · '+fmt(data.nets.length,0)+' Nets · '+(data.x_lines.length-1)+' × '+(data.y_lines.length-1)+' GCells';
         $('badge').textContent=ref?'REFERENCE · 仅展示':'官方 '+data.run.official_status;
         $('badge').classList.toggle('fail',!ref&&data.run.official_status!=='PASS');
@@ -117,7 +118,17 @@ async function selectNet(name,{autoFit=true,pin=null}={}){
 }
 function metrics(){const m=S.data.metrics;const rows=[['Net 总数',m.nets,'来自实际输入'],['已布线 Net',m.routed_nets,'自主路由结果'],['图边总线长',m.wirelength_dbu_local===null?null:m.wirelength_dbu_local/S.data.dbu_per_micron,'µm · 本地几何估计'],['Overflow',m.overflow_local,'本地近似 · 含 Pin/OBS'],['TSV 数量',m.tsv_count,'实际跨 Die 边'],['热相关 Pearson',m.thermal_correlation_local,'本地映射 · 非官方得分'],['算法运行时间',m.runtime_seconds,'s · 不含 WSL 启动']];$('metrics').innerHTML=rows.map(([k,v,desc])=>`<div class="metric"><small>${esc(k)}</small><strong>${fmt(v,3)}</strong><em>${esc(desc)}</em></div>`).join('');}
 function reports(){const d=S.data,r=d.official_latest;$('report').textContent=r?JSON.stringify(r,null,2):'Not Tested · 当前结果未执行新版官方评分。';$('logs').textContent=d.router_log;$('warnings').textContent=JSON.stringify({source:d.source,inputs:d.run.inputs,warnings:d.warnings,trace_truncated:d.trace_truncated},null,2);$('fidelity').textContent='官方工具评估 GRT Guide 的合法性、线长、拥塞与热指标；报告中的 mock-DRT / proxy 不代表详细布线 DRC 签核。';}
-function reportMetrics(d){const r=d.official_latest?.report;return [['本地图边线长 (DBU)',d.metrics.wirelength_dbu_local],['本地 Overflow',d.metrics.overflow_local],['TSV 数量',d.metrics.tsv_count],['本地 Pearson',d.metrics.thermal_correlation_local],['Router 时间 (s)',d.metrics.runtime_seconds],['峰值内存 (MiB)',d.run.peak_memory_bytes==null?null:d.run.peak_memory_bytes/1048576],['官方合法性',d.official_latest?.status??'Not Tested'],['官方 Wirelength 得分',r?.score?.wirelength_score],['官方 Congestion 得分',r?.score?.congestion_score],['官方 Thermal 得分',r?.score?.thermal_score]];}
+function officialTotalScore(official){
+    const r=official?.report,s=r?.score;
+    const total=[r?.total_score,r?.overall_score,r?.final_score,s?.total_score,s?.overall_score,s?.final_score,s].find(Number.isFinite);
+    if(total!==undefined)return total;
+    if(official?.status!=='PASS'||r?.status!=='PASS')return null;
+    const values=[s?.wirelength_score,s?.congestion_score,s?.thermal_score];
+    if(!values.every(Number.isFinite))return null;
+    // 比赛代码逻辑.md 11.2: single-case quality, not the platform's final ranking score.
+    return .45*values[0]+.30*values[1]+.25*values[2];
+}
+function reportMetrics(d){const r=d.official_latest?.report;return [['本地图边线长 (DBU)',d.metrics.wirelength_dbu_local],['本地 Overflow',d.metrics.overflow_local],['TSV 数量',d.metrics.tsv_count],['本地 Pearson',d.metrics.thermal_correlation_local],['Router 时间 (s)',d.metrics.runtime_seconds],['峰值内存 (MiB)',d.run.peak_memory_bytes==null?null:d.run.peak_memory_bytes/1048576],['官方合法性',d.official_latest?.status??'Not Tested'],['官方总分',officialTotalScore(d.official_latest)],['官方 Wirelength 得分',r?.score?.wirelength_score],['官方 Congestion 得分',r?.score?.congestion_score],['官方 Thermal 得分',r?.score?.thermal_score]];}
 async function compare(){if(!S.data)return;const current=S.data,key=$('compare').value;try{const b=key?await api('/api/run?id='+encodeURIComponent(key)):null;if(S.data!==current)return;const a=reportMetrics(current),bb=b?reportMetrics(b):[];$('comparetable').innerHTML=table(['指标',`A · ${current.source==='official_reference_guide'?'参考 Guide':current.run.label}`,b?`B · ${b.run.label}`:'B · 未选择'],a.map(([k,v],i)=>[k,fmt(v,4),fmt(bb[i]?.[1],4)]));}catch(e){error(e);}}
 function node(id){
     if(!S.data||!Number.isSafeInteger(id)||id<0)return null;
@@ -159,9 +170,10 @@ function visibleNets(){
     }
     const out=[];for(const n of S.active.values()){if(S.allowed.has(n.net))out.push(n);if(out.length>=150)break;}return out;
 }
-function fit(){S.zoom=1;S.panX=0;S.panY=0;draw();}
+function fit(){if(S.dimension==='3d'){S.layerView3d?.reset();return;}S.zoom=1;S.panX=0;S.panY=0;draw();}
 function fitNet(){
     if(!S.data||S.selected==='all')return;
+    if(S.dimension==='3d'){S.fit3d=true;draw();return;}
     const n=S.netMap.get(S.selected),current=S.active.get(S.selected);
     let xmin=Infinity,ymin=Infinity,xmax=-Infinity,ymax=-Infinity;
     const add=(x,y)=>{xmin=Math.min(xmin,x);ymin=Math.min(ymin,y);xmax=Math.max(xmax,x);ymax=Math.max(ymax,y);};
@@ -173,9 +185,50 @@ function fitNet(){
     S.zoom=Math.max(.3,Math.min(60,Math.min((r.width-90)/dx,(r.height-90)/dy)/base));
     S.panX=-((xmin+xmax-x1-x2)/2)*base*S.zoom;S.panY=((ymin+ymax-y1-y2)/2)*base*S.zoom;draw();
 }
+function setDimension(dimension){
+    if(dimension==='3d'&&S.dimension!=='3d'&&S.selected!=='all'&&S.layerView3d?.selection!==S.selected)S.fit3d=true;
+    S.dimension=dimension;$('tooltip').hidden=true;
+    document.querySelector('.canvases').hidden=dimension==='3d';$('layers3dPanel').hidden=dimension!=='3d';
+    for(const [id,value] of [['mode2d','2d'],['mode3d','3d']]){$(id).classList.toggle('active',dimension===value);$(id).setAttribute('aria-pressed',String(dimension===value));}
+    if(dimension==='3d'&&!S.layerView3d){
+        $('layers3dStats').textContent='加载离线 3D 查看器…';
+        if(!S.loader3d)S.loader3d=new Promise((resolve,reject)=>{
+            const script=document.createElement('script');script.src='/layers3d.js';
+            script.onload=resolve;script.onerror=()=>{script.remove();reject(Error('3D 模块加载失败；可返回 2D 后重试。'));};document.head.append(script);
+        });
+        S.loader3d.then(()=>{
+            if(!S.layerView3d)S.layerView3d=new window.LayerView3D($('layers3d'),{requestDraw:draw,hover:$('layers3dHover'),pickPin:pin=>selectNet(pin.net,{autoFit:false,pin}).catch(error)});
+            draw();
+        }).catch(e=>{S.loader3d=null;$('layers3dStats').textContent=e.message;error(e);});
+    }
+    draw();
+}
+function render3D(){
+    const viewer=S.layerView3d;
+    if(!S.data||S.loading){viewer?.clear();$('pinStats').textContent=S.loading?'正在读取真实数据…':'无可显示结果';$('layers3dStats').textContent=S.loading?'正在读取真实数据…':'无可显示结果；请先选择已有完整运行的 Case / Run。';$('process').innerHTML='';$('legend').textContent='';return;}
+    if(!viewer)return;
+    viewer.configure({spacing:+$('spacing3d').value/100,labels:$('labels3d').checked,onlyNetPins:$('onlyNetPins3d').checked});
+    const stats=viewer.render({data:S.data,pins:filteredPins(),active:S.active,allowed:S.allowed,nets:visibleNets(),selected:S.selected,index:S.index,
+        tier:$('tier').value,layer:$('layer').value,paths:$('paths').checked,overviewPaths:$('overviewPaths').checked,
+        tsvs:$('tsvs').checked,guides:$('guides').checked,grid:$('grid').checked,showPins:$('pins').checked,reference:reference(),ghost:S.ghost,node,color:netColor},S.fit3d);
+    S.fit3d=false;
+    $('overview').classList.toggle('active',S.selected==='all');$('focus').classList.toggle('active',S.selected!=='all');
+    $('focus').disabled=S.selected==='all';$('fitNet').disabled=S.selected==='all';$('onlyNetPins3d').disabled=S.selected==='all';
+    $('mst').disabled=true;$('mstnote').textContent='3D 仅绘制真实几何；MST 抽象拓扑请返回 2D 查看，原开关状态保留。';
+    $('viewnote').textContent='3D 分层 · '+(S.index<0?'最终接受的 Route':'真实 Trace 状态')+'。层高与 Die 间距是示意，不是工艺尺寸；透明层板用于观察内部连接。'+(reference()?'参考 Guide 只提供区域；Pin 使用已有自主运行元数据，不推断路径、Via 或 TSV。':'普通 Via 为灰色短柱，跨 Die TSV 为橙色粗柱；筛选隐藏另一端时只留可见端点。');
+    if(stats){
+        $('pinStats').textContent='3D · '+stats.layers+' 层 · '+fmt(stats.pins,0)+' Pin · 视口 '+fmt(stats.inView,0)+' Pin';
+        $('layers3dStats').textContent=stats.layers?'单 Pin 点 '+fmt(stats.points,0)+' · 聚合点 '+fmt(stats.clusters,0)+' · 同层边 '+fmt(stats.paths,0)+' · 普通 Via '+fmt(stats.vias,0)+' · TSV '+fmt(stats.tsvs,0)+' · Guide '+fmt(stats.guides,0)+(S.selected==='all'?'。总览路径沿用开关与 150 Net 上限；Pin 按当前筛选聚合显示。':'。仅绘制当前 Net 的路径，受路径 / TSV 开关控制；其他 Pin 弱化，可勾选“仅当前 Net 的 Pin”。')+(stats.invalidEdges?' · '+stats.invalidEdges+' 条不支持的跨层边未画。':''):'当前 Die / Metal Layer 筛选没有可显示的层。';
+    }
+    const items=[['layer3d-key','金属层示意平面'],['pin-key','Pin · 同 Net 同色'],['route-key','真实同层路径'],['via-key','普通 Via · 相邻层'],['tsv-key','TSV · M10 ↔ M11'],['guide-key','Guide 区域']];
+    if(viewer.scene?.ghost.length)items.push([S.ghost.remove?'removed-key':'added-key',S.ghost.remove?'本步移除边':'本步新增边']);
+    $('legend').innerHTML=items.map(([c,t])=>'<span><i class="'+c+'"></i>'+esc(t)+'</span>').join('');
+    processPanel(learning());
+}
 function heatColor(t){t=Math.max(0,Math.min(1,t));return 'rgb('+Math.round(52+193*t)+','+Math.round(139-64*t)+','+Math.round(213-130*t)+')';}
 function draw(){if(!S.frame)S.frame=requestAnimationFrame(()=>{S.frame=0;render();});}
 function render(){
+    if(S.dimension==='3d'){render3D();return;}
     const tier=$('tier').value;
     $('bottomPanel').hidden=S.view==='raw'?false:tier==='top';$('topPanel').hidden=S.view==='raw'?true:tier==='bottom';
     if(!S.data||S.loading){
@@ -488,8 +541,14 @@ $('netPrev').onclick=()=>{S.page--;netOptions();};$('netNext').onclick=()=>{S.pa
 $('choicePrev').onclick=()=>{S.choicePage--;choiceList();};$('choiceNext').onclick=()=>{S.choicePage++;choiceList();};
 $('choiceList').onclick=async e=>{const b=e.target.closest('[data-choice]');if(!b)return;const pin=S.choices[+b.dataset.choice],choices=S.choices,page=S.choicePage;if(!await selectNet(pin.net,{autoFit:false,pin}))return;S.choices=choices;S.choicePage=page;choiceList();};
 for(const id of ['tier','layer','guides','paths','overviewPaths','mst','pins','tsvs','grid','instances'])$(id).onchange=()=>{S.filterKey=null;draw();};
+$('mode2d').onclick=()=>setDimension('2d');$('mode3d').onclick=()=>setDimension('3d');
+$('reset3d').onclick=()=>S.layerView3d?.reset();
+document.querySelectorAll('[data-camera3d]').forEach(button=>button.onclick=()=>S.layerView3d?.reset(button.dataset.camera3d));
+$('spacing3d').oninput=()=>{$('spacing3dValue').textContent=(+$('spacing3d').value/100).toFixed(2)+'×';draw();};
+for(const id of ['labels3d','onlyNetPins3d'])$(id).onchange=draw;
 $('fit').onclick=fit;$('fitNet').onclick=fitNet;$('overview').onclick=()=>selectNet('all',{autoFit:false});$('focus').onclick=fitNet;
 $('compare').onchange=compare;$('prev').onclick=()=>{stop();seek(S.index<0?S.trace.length-1:S.index-1);};$('next').onclick=()=>{stop();seek(S.index+1);};$('play').onclick=play;
 $('speed').onchange=()=>{if(S.playing){stop();play();}};$('timeline').oninput=()=>{stop();seek(+$('timeline').value);};$('final').onclick=finalResult;
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=async()=>{S.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));if(S.view==='raw')await raw();draw();});
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=async()=>{setDimension('2d');S.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));if(S.view==='raw')await raw();draw();});
+new ResizeObserver(draw).observe($('layers3dPanel'));
 new ResizeObserver(draw).observe(document.querySelector('.canvases'));init();

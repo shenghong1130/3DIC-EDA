@@ -3,9 +3,34 @@
 #include <regex>
 #include <algorithm>
 #include <iostream>
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
 namespace gr {
 std::string read_file(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);if(!f)throw std::runtime_error("Cannot read: "+p.u8string());return std::string(std::istreambuf_iterator<char>(f),{});}
-void write_json(const std::filesystem::path&p,const Json&j){if(p.has_parent_path())std::filesystem::create_directories(p.parent_path());std::ofstream o(p);if(!o)throw std::runtime_error("Cannot write: "+p.u8string());j.write(o);o<<'\n';if(!o)throw std::runtime_error("JSON write failed");}
+void write_json(const std::filesystem::path&p,const std::function<void(std::ostream&)>&writer){
+    if(p.has_parent_path())std::filesystem::create_directories(p.parent_path());
+    auto temp=p;temp+=".tmp";
+    if(std::filesystem::exists(temp))throw std::runtime_error("Temporary JSON already exists; preserve it and use a new output: "+temp.u8string());
+    std::ofstream o(temp,std::ios::binary);if(!o)throw std::runtime_error("Cannot open temporary JSON: "+temp.u8string());
+    o.exceptions(std::ios::badbit|std::ios::failbit);
+    try{writer(o);o<<'\n';o.flush();o.close();}
+    catch(const std::ios_base::failure&e){
+        try{o.clear();o.flush();o.close();}catch(...){}
+        throw std::runtime_error("JSON output failed; temporary file retained at "+temp.u8string()+": "+e.what());
+    }catch(...){try{o.flush();o.close();}catch(...){}throw;}
+    // Rename replaces an old complete file atomically on Linux. Do not unlink
+    // the destination first: a failed publish must retain any previous result.
+#ifdef _WIN32
+    if(!MoveFileExW(temp.c_str(),p.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))
+        throw std::runtime_error("JSON publish failed (Windows error "+std::to_string(GetLastError())+"); temporary file retained at "+temp.u8string());
+#else
+    std::error_code error;std::filesystem::rename(temp,p,error);
+    if(error)throw std::runtime_error("JSON publish failed: "+error.message()+"; temporary file retained at "+temp.u8string());
+#endif
+}
+void write_json(const std::filesystem::path&p,const Json&j){write_json(p,[&](std::ostream&o){j.write(o);});}
 int layer_number(const std::string&s){std::smatch m;if(!std::regex_match(s,m,std::regex("(?:metal|m)([0-9]+)",std::regex::icase)))return 0;return std::stoi(m[1]);}
 struct Tokens {
     std::vector<std::string> t;std::size_t p=0;

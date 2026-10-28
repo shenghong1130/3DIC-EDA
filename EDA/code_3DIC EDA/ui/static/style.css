@@ -45,3 +45,21 @@
 @media(max-width:1200px){.process{grid-template-columns:repeat(2,minmax(0,1fr))}#pinStats{margin:0;flex-basis:100%}}
 @media(max-width:850px){.process{grid-template-columns:1fr 1fr}.viewmodes{padding:10px}.learning{padding:16px}canvas{height:420px}}
 @media(max-width:550px){.process{grid-template-columns:1fr}.controls{flex-wrap:wrap}.playhead{align-items:flex-start;gap:10px}.hint{display:none}}
+
+/* Optional layer-stack viewer; existing 2D Canvas styles stay unchanged. */
+.dimension-switch{display:flex;gap:2px;padding:3px;background:#f0f4f9;border-radius:8px;margin-right:8px}
+.dimension-switch button{border-color:transparent;background:transparent}
+.dimension-switch button.active{background:#fff;border-color:#ccdafa;color:var(--blue)}
+.layers3d-panel{background:#fcfdff;border-top:1px solid var(--border)}
+.layers3d-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 18px;background:#fff}
+.layers3d-controls button{font-size:11px;padding:7px 10px}
+.layers3d-controls .check{font-size:11px;margin:0 0 0 8px}
+.spacing3d{display:flex;align-items:center;gap:8px;font-size:11px;margin:0 8px}
+.spacing3d input[type=range]{width:115px;margin:0}.spacing3d output{font-size:10px;min-width:35px;color:#75869a}
+.layers3d-help{font-size:11px;line-height:1.8;color:#75869a;margin:0;padding:2px 18px 10px}
+.layers3d-stage{position:relative;border-top:1px solid #edf1f5;border-bottom:1px solid #edf1f5}
+#layers3d{height:560px;width:100%;touch-action:none;cursor:grab}#layers3d:active{cursor:grabbing}
+.layers3d-hover{position:absolute;left:16px;bottom:14px;padding:8px 12px;border:1px solid #dfe7f0;border-radius:7px;background:#fffffff2;color:#455e78;font-size:11px;pointer-events:none;max-width:calc(100% - 32px);overflow-wrap:anywhere}
+.layers3d-status{font-size:11px;color:#65768a;line-height:1.8;padding:10px 18px;margin:0}
+.legend .layer3d-key{background:#e5edf8;border:1px solid #89a4c4}
+@media(max-width:850px){#layers3d{height:500px}.spacing3d{margin:4px 0}.layers3d-controls{padding:10px;gap:6px}}

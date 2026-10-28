@@ -35,7 +35,8 @@ public:
     void make_guides(Route&)const;
     void validate(const Net&,const Route&)const;
     Json route_json(const Net&,const Route&)const;
-    Json result_json()const;
+    void result_json(std::ostream&)const;
+    void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 };
 }

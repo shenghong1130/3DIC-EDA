@@ -23,11 +23,13 @@ class Progress {
     int iteration_=0;double interval_=5,heartbeat_=10,stage_time_=0;
     bool enabled_=false,detail_=true,report_net_=true,external_=false;
     std::optional<double> rss_,peak_,available_,swap_;
-    void sample() noexcept {
-        if(!enabled_||external_)return;
+    std::string output_section_;size_t output_completed_=0,output_total_=0;
+    double output_bytes_=0,output_seconds_=0,memory_sample_seconds_=0;
+    void sample(bool force=false) noexcept {
+        if(!enabled_||(external_&&!force))return;
         try {
-            auto now=Clock::now();if(std::chrono::duration<double>(now-last_memory_).count()<interval_&&sampled_)return;
-            last_memory_=now;sampled_=true;
+            auto now=Clock::now();if(!force&&std::chrono::duration<double>(now-last_memory_).count()<interval_&&sampled_)return;
+            last_memory_=now;sampled_=true;memory_sample_seconds_=elapsed();
 #ifdef __linux__
             std::string line;std::ifstream status("/proc/self/status");
             while(std::getline(status,line)){std::istringstream in(line);std::string key;double kb;if(in>>key>>kb){if(key=="VmRSS:")rss_=kb*1024;else if(key=="VmHWM:")peak_=kb*1024;}}
@@ -42,6 +44,7 @@ class Progress {
     Frame enter(const char*phase,bool fine) noexcept {
         bool report=!fine||detail_||(report_net_&&std::string_view(phase)=="RIP_UP_REROUTE");
         Frame f{phase_,report?Clock::now():Clock::time_point{},report};phase_=phase;
+        if(std::string_view(phase)=="WRITE_RESULT"){output_section_.clear();output_completed_=output_total_=0;output_bytes_=output_seconds_=0;sample(true);}
         if(f.report)emit("phase_started","Started");
         return f;
     }
@@ -90,7 +93,12 @@ public:
             j["net_index"]=double(index_);j["total_nets"]=double(total_);j["completed_nets"]=double(completed_);j["iteration"]=iteration_;
             j["elapsed_seconds"]=elapsed();j["stage_seconds"]=stage_time_;j["message"]=std::string(message);j["error_kind"]=kind;
             j["progress_percent"]=total_?Json(100.0*completed_/total_):Json();j["pid"]=pid()?Json(double(pid())):Json();
-            j["resource_source"]=external_?"external_supervisor":"cooperative_proc_self";
+            j["resource_source"]=external_?(sampled_?"proc_self_output_checkpoint":"external_supervisor"):"cooperative_proc_self";
+            if(sampled_)j["resource_sample_elapsed_seconds"]=memory_sample_seconds_;
+            if(std::string_view(phase_)=="WRITE_RESULT"){
+                j["progress_kind"]="output";j["output_section"]=output_section_;j["output_completed"]=double(output_completed_);j["output_total"]=double(output_total_);
+                j["output_bytes"]=output_bytes_;j["output_elapsed_seconds"]=output_seconds_;
+            }
             auto field=[&](const char*k,auto v){j[k]=v?Json(*v):Json();};
             field("rss_bytes",rss_);field("router_peak_rss_bytes",peak_);field("mem_available_bytes",available_);field("swap_free_bytes",swap_);
             events_<<j.dump()<<'\n';events_.flush();
@@ -100,6 +108,14 @@ public:
         }catch(...){}
     }
     void poll() noexcept {if(!enabled_)return;auto now=Clock::now();if(std::chrono::duration<double>(now-last_heartbeat_).count()<heartbeat_)return;last_heartbeat_=now;emit("heartbeat","Execution checkpoint; not a completed Net");}
+    void output(const char*section,size_t completed,size_t total,double bytes,double seconds,const char*message="") noexcept {
+        if(!enabled_)return;
+        try{
+            output_section_=section;output_completed_=completed;output_total_=total;output_bytes_=bytes;output_seconds_=seconds;
+            sample(true);
+            emit("output_progress",std::string(section)+" "+std::to_string(completed)+"/"+std::to_string(total)+" "+message+" bytes="+std::to_string(bytes)+" output_seconds="+std::to_string(seconds));
+        }catch(...){}
+    }
     void pass(size_t total,int iteration) noexcept {if(!enabled_)return;total_=total;iteration_=iteration;index_=completed_=0;net_.clear();}
     void net(size_t index,size_t total,const std::string&name,int iteration) noexcept {
         if(!enabled_)return;

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <filesystem>
 #include <chrono>
+#include <functional>
 namespace gr {
 using Id=std::uint64_t;
 struct Rect {double x1=0,y1=0,x2=0,y2=0;int layer=0;};
@@ -26,6 +27,8 @@ struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;I
 struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;};
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);
+// Write a complete temporary file, then publish it; never reread the JSON.
+void write_json(const std::filesystem::path&p,const std::function<void(std::ostream&)>&writer);
 int layer_number(const std::string& s);
 std::pair<double,double> orient_point(double x,double y,double w,double h,const std::string& o);
 Rect placed_rect(const Rect&r,const Macro&m,const Instance&i,double dbu);

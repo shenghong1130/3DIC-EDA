@@ -85,18 +85,27 @@ def main():
         try:atomic_json(directory/'router_exit.json',record)
         except OSError as e:monitor_errors.append(str(e))
         if code==-signal.SIGKILL:record.update(kernel_oom(proc.pid,uptime))
-    except OSError as e:record['launch_error']=str(e)
+    except Exception as e:
+        record['launch_error' if proc is None else 'supervisor_error']=str(e)
     finally:
-        if proc and proc.poll() is None:
-            forward(signal.SIGTERM,'supervisor_cleanup')
-            try:proc.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                try:os.killpg(proc.pid,signal.SIGKILL)
-                except ProcessLookupError:pass
-                proc.wait(timeout=5)
+        try:
+            if proc and proc.poll() is None:
+                forward(signal.SIGTERM,'supervisor_cleanup')
+                try:proc.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    try:os.killpg(proc.pid,signal.SIGKILL)
+                    except ProcessLookupError:pass
+                    proc.wait(timeout=5)
+        except Exception as e:monitor_errors.append('cleanup: '+str(e))
+        # Cleanup can be the first place that observes waitpid (for example if
+        # sampling raised). Preserve that actual code instead of leaving null.
+        if proc and proc.returncode is not None:
+            code=proc.returncode
+            record.update(router_returncode=code,router_signal=-code if code<0 else None,
+                          termination_requested_signal=requested,termination_reason=reason)
         if monitor:
             try:record['resource_summary']=monitor.finish()
-            except OSError:pass
+            except Exception as e:monitor_errors.append('resource finalization: '+str(e))
         record.update(finished_at=utc(),runtime_seconds=time.monotonic()-started,monitor_errors=monitor_errors[:10])
         try:atomic_json(directory/'router_exit.json',record)
         except OSError as e:print('MONITOR_UNAVAILABLE: '+str(e),file=sys.stderr,flush=True)

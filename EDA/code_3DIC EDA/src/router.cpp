@@ -162,22 +162,79 @@ Json Router::route_json(const Net&n,const Route&r)const{
     Json ps=Json::array();for(auto&p:n.pins){Json v=Json::object();v["name"]=p.name;v["x"]=p.x;v["y"]=p.y;v["layer"]=p.layer;v["node"]=double(pin_node(p));ps.push(v);}j["pins"]=ps;
     j["wirelength_dbu_local"]=wirelength(r);j["via_count"]=vias;j["tsv_count"]=n.cross?1:0;j["tsv_node"]=n.cross?Json(double(r.tsv)):Json();j["status"]="ROUTED";return j;
 }
-Json Router::result_json()const{
-    Json j=Json::object();j["schema_version"]=1;j["source"]="independent_cpp_router";j["design"]=d.name;j["dbu_per_micron"]=d.dbu;j["die"]=numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2});j["x_lines"]=numbers(xs);j["y_lines"]=numbers(ys);
-    Json ls=Json::array();for(auto&[n,l]:d.layers){Json v=Json::object();v["number"]=n;v["name"]=l.name;v["tier"]=n<=10?"bottom":"top";v["direction"]=l.direction;ls.push(v);}j["layers"]=ls;
-    Json ns=Json::array();double length=0;int tsv=0,vias=0;for(size_t i=0;i<routes.size();i++){auto v=route_json(d.nets[i],routes[i]);length+=v.at("wirelength_dbu_local").number();tsv+=routes[i].cross;vias+=int(v.at("via_count").number());ns.push(v);}j["nets"]=ns;
-    Json ins=Json::array();for(auto&[name,i]:d.instances){auto&m=d.macros.at(i.macro);auto rect=placed_rect({0,0,m.width,m.height,0},m,i,d.dbu);Json v=Json::object();v["name"]=name;v["macro"]=i.macro;v["orientation"]=i.orient;v["box"]=numbers(std::vector<double>{rect.x1,rect.y1,rect.x2,rect.y2});std::set<int>tiers;for(auto&[pn,rs]:m.pins)for(auto&r:rs)tiers.insert(r.layer<=10?1:2);v["tiers"]=numbers(std::vector<int>(tiers.begin(),tiers.end()));ins.push(v);}j["instances"]=ins;
-    Json rs=Json::array();std::vector<Id> keys;for(auto&[v,r]:resources)if(r.usage||r.fixed)keys.push_back(v);std::sort(keys.begin(),keys.end());for(Id v:keys){auto&r=resources.at(v);rs.push(numbers(std::vector<double>{double(v),double(r.capacity),double(r.usage),double(r.fixed),double(std::max(0,r.usage+r.fixed-r.capacity))}));}j["resources"]=rs;
-    j["heat"]=numbers(heat);j["thermal_node_counts"]=numbers(thermal_count);j["ambient"]=ambient;
-    std::vector<double>density(heat.size(),0);for(auto&r:routes)if(r.cross){int x,y,l;decode(r.tsv,x,y,l);density[y*nx+x]++;}j["tsv_density"]=numbers(density);
-    double hm=0,tm=std::accumulate(density.begin(),density.end(),0.0)/density.size();for(double h:heat)hm+=std::max(0.0,h-ambient)/heat.size();double numerator=0,hh=0,tt=0;for(size_t i=0;i<heat.size();i++){double a=std::max(0.0,heat[i]-ambient)-hm,b=density[i]-tm;numerator+=a*b;hh+=a*a;tt+=b*b;}
-    Json metrics=Json::object();metrics["nets"]=int(d.nets.size());metrics["routed_nets"]=int(routes.size());metrics["wirelength_dbu_local"]=length;metrics["overflow_local"]=double(overflow());metrics["via_count"]=vias;metrics["tsv_count"]=tsv;metrics["thermal_correlation_local"]=hh>0&&tt>0?Json(numerator/std::sqrt(hh*tt)):Json();metrics["runtime_seconds"]=elapsed();metrics["official_status"]="NOT_EVALUATED";j["metrics"]=metrics;
-    Json rr=Json::array();for(auto&r:rounds)rr.push(r);j["iterations"]=rr;j["trace_truncated"]=trace.truncated;
-    Json warnings=Json::array();warnings.push("Local wirelength is graph-edge geometry; local congestion includes approximate rectangular pin/OBS track demand. Neither is an official score.");warnings.push("Grid clipped to DIEAREA. Official evaluator may retain out-of-die GCells; thermal correlation can differ.");warnings.push("First rectangular access shape per terminal is used; full pin-shape access optimization is not implemented.");j["warnings"]=warnings;return j;
+void Router::result_json(std::ostream&o)const{
+    const auto began=std::chrono::steady_clock::now();
+    auto seconds=[&]{return std::chrono::duration<double>(std::chrono::steady_clock::now()-began).count();};
+    auto checkpoint=[&](const char*section,size_t count,size_t total,const char*message=""){
+        o.flush();if(!o)throw std::runtime_error("Result JSON stream failed while writing "+std::string(section));
+        auto pos=o.tellp();if(progress)progress->output(section,count,total,pos<0?0:double(std::streamoff(pos)),seconds(),message);
+        check_time();
+    };
+    bool first=true;o<<'{';
+    auto key=[&](const char*name){if(!first)o<<',';first=false;o<<Json::quote(name)<<':';};
+    auto field=[&](const char*name,const Json&v){key(name);v.write(o);};
+    // One element at a time; no Json array mirrors a large design container.
+    auto array=[&](const char*name,const auto&values,const auto&make,const char*section){
+        check_time();key(name);o<<'[';size_t count=0;
+        for(const auto&value:values){
+            if(count)o<<',';
+            {auto item=make(value);item.write(o);}
+            ++count;if(count%1024==0)check_time();
+            if(count%10000==0&&count!=values.size())checkpoint(section,count,values.size());
+        }
+        o<<']';
+        // Small metadata arrays need no extra disk flush/log record. Large
+        // arrays and the required Instance/Resource milestones remain visible.
+        if(values.size()>=10000||std::string_view(section)=="Instances"||std::string_view(section)=="Resources")checkpoint(section,count,values.size(),"completed");
+        else check_time();
+    };
+    auto number=[](auto v){return Json(double(v));};
+    check_time();
+    field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
+    field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
+    array("x_lines",xs,number,"X lines");array("y_lines",ys,number,"Y lines");
+    array("layers",d.layers,[](const auto&entry){const auto&[n,l]=entry;Json v=Json::object();v["number"]=n;v["name"]=l.name;v["tier"]=n<=10?"bottom":"top";v["direction"]=l.direction;return v;},"Layers");
+    key("nets");o<<'[';double length=0;int tsv=0,vias=0;
+    for(size_t i=0;i<routes.size();i++){
+        check_time();if(i)o<<',';
+        {auto v=route_json(d.nets[i],routes[i]);length+=v.at("wirelength_dbu_local").number();tsv+=routes[i].cross;vias+=int(v.at("via_count").number());v.write(o);}
+        // The current Net's Json is destroyed before logging/sampling.
+        if((i+1)%1000==0&&i+1!=routes.size())checkpoint("Nets",i+1,routes.size());
+    }
+    o<<']';checkpoint("Nets",routes.size(),routes.size(),"completed");
+    array("instances",d.instances,[&](const auto&entry){
+        const auto&[name,i]=entry;auto&m=d.macros.at(i.macro);auto rect=placed_rect({0,0,m.width,m.height,0},m,i,d.dbu);
+        Json v=Json::object();v["name"]=name;v["macro"]=i.macro;v["orientation"]=i.orient;v["box"]=numbers(std::vector<double>{rect.x1,rect.y1,rect.x2,rect.y2});
+        std::set<int>tiers;for(auto&[pn,rs]:m.pins)for(auto&r:rs)tiers.insert(r.layer<=10?1:2);v["tiers"]=numbers(std::vector<int>(tiers.begin(),tiers.end()));return v;
+    },"Instances");
+    // Only compact IDs are retained to preserve the old sorted resource order.
+    std::vector<Id> keys;size_t scanned=0;for(auto&[v,r]:resources){if(r.usage||r.fixed)keys.push_back(v);if(++scanned%4096==0)check_time();}
+    if(keys.size()>=10000)checkpoint("Resource IDs",keys.size(),keys.size(),"sorting");
+    std::sort(keys.begin(),keys.end());check_time();
+    array("resources",keys,[&](Id v){auto&r=resources.at(v);return numbers(std::vector<double>{double(v),double(r.capacity),double(r.usage),double(r.fixed),double(std::max(0,r.usage+r.fixed-r.capacity))});},"Resources");
+    // Release IDs before allocating the one grid-sized density work vector.
+    std::vector<Id>().swap(keys);
+    array("heat",heat,number,"Heat");array("thermal_node_counts",thermal_count,number,"Thermal node counts");field("ambient",ambient);
+    std::vector<double>density(heat.size(),0);size_t scanned_routes=0;
+    for(auto&r:routes){if(r.cross){int x,y,l;decode(r.tsv,x,y,l);density[y*nx+x]++;}if(++scanned_routes%4096==0)check_time();}
+    array("tsv_density",density,number,"TSV density");
+    // Preserve summation order and the original Pearson/overflow definitions.
+    double hm=0,tm=std::accumulate(density.begin(),density.end(),0.0)/density.size();size_t index=0;
+    for(double h:heat){hm+=std::max(0.0,h-ambient)/heat.size();if(++index%4096==0)check_time();}
+    double numerator=0,hh=0,tt=0;for(size_t i=0;i<heat.size();i++){double a=std::max(0.0,heat[i]-ambient)-hm,b=density[i]-tm;numerator+=a*b;hh+=a*a;tt+=b*b;if(i%4096==0)check_time();}
+    Json metrics=Json::object();metrics["nets"]=int(d.nets.size());metrics["routed_nets"]=int(routes.size());metrics["wirelength_dbu_local"]=length;metrics["overflow_local"]=double(overflow());metrics["via_count"]=vias;metrics["tsv_count"]=tsv;metrics["thermal_correlation_local"]=hh>0&&tt>0?Json(numerator/std::sqrt(hh*tt)):Json();metrics["runtime_seconds"]=elapsed();metrics["official_status"]="NOT_EVALUATED";field("metrics",metrics);check_time();
+    array("iterations",rounds,[](const Json&r){return r;},"Iterations");field("trace_truncated",trace.truncated);
+    Json warnings=Json::array();warnings.push("Local wirelength is graph-edge geometry; local congestion includes approximate rectangular pin/OBS track demand. Neither is an official score.");warnings.push("Grid clipped to DIEAREA. Official evaluator may retain out-of-die GCells; thermal correlation can differ.");warnings.push("First rectangular access shape per terminal is used; full pin-shape access optimization is not implemented.");field("warnings",warnings);
+    o<<'}';checkpoint("JSON",1,1,"flushed");
+}
+void Router::write_result(const std::filesystem::path&p)const{
+    auto began=std::chrono::steady_clock::now();double bytes=0;
+    write_json(p,[&](std::ostream&o){result_json(o);auto pos=o.tellp();bytes=pos<0?0:double(std::streamoff(pos))+1;});
+    if(progress)progress->output("Published",1,1,bytes,std::chrono::duration<double>(std::chrono::steady_clock::now()-began).count(),"result file closed and renamed");
 }
 void Router::write_guide(const std::filesystem::path&p)const{
     if(p.has_parent_path())std::filesystem::create_directories(p.parent_path());
     auto temp=p;temp+=".tmp";std::ofstream o(temp);if(!o)throw std::runtime_error("Cannot open guide output");
-    for(size_t i=0;i<d.nets.size();i++){validate(d.nets[i],routes[i]);o<<d.nets[i].name<<"\n(\n";for(auto&r:routes[i].guides)o<<std::llround(r.x1)<<' '<<std::llround(r.y1)<<' '<<std::llround(r.x2)<<' '<<std::llround(r.y2)<<' '<<d.layers.at(r.layer).name<<'\n';o<<")\n";}o.close();if(!o)throw std::runtime_error("Guide write failed");if(std::filesystem::exists(p))std::filesystem::remove(p);std::filesystem::rename(temp,p);
+    for(size_t i=0;i<d.nets.size();i++){check_time();validate(d.nets[i],routes[i]);o<<d.nets[i].name<<"\n(\n";for(auto&r:routes[i].guides)o<<std::llround(r.x1)<<' '<<std::llround(r.y1)<<' '<<std::llround(r.x2)<<' '<<std::llround(r.y2)<<' '<<d.layers.at(r.layer).name<<'\n';o<<")\n";}o.close();if(!o)throw std::runtime_error("Guide write failed");if(std::filesystem::exists(p))std::filesystem::remove(p);std::filesystem::rename(temp,p);
 }
 }

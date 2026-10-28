@@ -101,6 +101,27 @@ class RouterProgressTests(unittest.TestCase):
 
 @unittest.skipUnless(sys.platform.startswith('linux'),'requires actual Linux waitpid/proc/timeout')
 class LinuxSupervisionTests(unittest.TestCase):
+    def test_sampling_exception_still_records_reaped_router_exit(self):
+        # Exercise the supervisor's cleanup path without real OOM/WSL failure.
+        with tempfile.TemporaryDirectory() as tmp:
+            d=Path(tmp)
+            script="""import sys
+from pathlib import Path
+import linux_supervisor as s
+class BrokenMonitor:
+    def __init__(self,*args):pass
+    def sample(self):raise RuntimeError('injected sampler failure')
+    def finish(self):return {}
+s.ResourceMonitor=BrokenMonitor
+raise SystemExit(s.main())
+"""
+            env=os.environ.copy();env['PYTHONPATH']=str(PROJECT/'scripts')
+            run=subprocess.run([sys.executable,'-B','-c',script,'--directory',str(d),'--run-id','test','--',sys.executable,'-c','import time;time.sleep(30)'],env=env,capture_output=True,timeout=10)
+            record=json.loads((d/'router_exit.json').read_text())
+            self.assertIn('supervisor_error',record)
+            self.assertEqual(record['router_signal'],15);self.assertEqual(record['router_returncode'],-15)
+            self.assertEqual(run.returncode,143)
+            self.assertFalse(Path('/proc',str(record['router_pid'])).exists())
     def supervised(self,code,timeout=False,lease=60):
         with tempfile.TemporaryDirectory(prefix='router_monitor_') as tmp:
             d=Path(tmp);atomic_json(d/'host_heartbeat.json',{'alive':True})
