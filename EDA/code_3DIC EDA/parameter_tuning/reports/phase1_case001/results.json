@@ -7,9 +7,9 @@
     "tune_parameters.py": "5afe850db8bd16799b91e51c9e7a390e21b14c6162d553b047d3b3e4347e9c63"
   },
   "case": "open_3d_case001",
-  "comparable": true,
+  "comparable": false,
   "experiment": "phase1_case001",
-  "generated_at": "2026-10-28T16:02:38.558929+00:00",
+  "generated_at": "2026-10-28T17:37:03.379406+00:00",
   "leaders": {
     "congestion_score": null,
     "router_peak_rss_bytes": null,
@@ -24,10 +24,13 @@
   "pareto_dimensions": [],
   "pareto_ids": [],
   "plan_sha256": "24cc34861bae49f3c0ade321be1b13ea7b4982c1a0642f4fd5633e7ceb84a1fe",
-  "problems": [],
+  "problems": [
+    "Changed SHA256: D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\include\\router.hpp",
+    "Changed SHA256: D:\\我\\大学\\program\\3DIC EDA\\EDA\\code_3DIC EDA\\src\\router.cpp"
+  ],
   "rows": [
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {},
       "config_sha256": "35f2b88dab1d5fae491c3aa82211771f795e5002e77f11f496861b03d8e65336",
@@ -109,7 +112,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "via": 0.25
@@ -193,7 +196,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "via": 1
@@ -277,7 +280,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "congestion": 2
@@ -361,7 +364,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "congestion": 8
@@ -445,7 +448,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "history": 0.5
@@ -529,7 +532,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "history": 2
@@ -613,7 +616,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "thermal": 0
@@ -697,7 +700,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "thermal": 3
@@ -781,7 +784,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "iterations": 0
@@ -865,7 +868,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "iterations": 4
@@ -949,7 +952,7 @@
       "wirelength_um": null
     },
     {
-      "batch_comparable": true,
+      "batch_comparable": false,
       "case": "open_3d_case001",
       "changes": {
         "margin": 16

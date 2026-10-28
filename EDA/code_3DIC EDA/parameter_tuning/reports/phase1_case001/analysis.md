@@ -2,11 +2,11 @@
 
 ## 1. 实验概览
 
-- 实验：`phase1_case001`；Case：`open_3d_case001`；状态：`PENDING`。
+- 实验：`phase1_case001`；Case：`open_3d_case001`；状态：`BLOCKED`。
 - Router SHA256：`70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423`。
 - Evaluator：`latest`；SHA256：`4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a`。
 - JSON time_limit：600 秒；生效 CLI Router 预算：600 秒；评分预算：600 秒。
-- 后端：wsl；监控：`{"heartbeat_interval": 10, "monitor_interval": 5, "progress_every": 1000, "stall_after": 30}`；可比较性：True。
+- 后端：wsl；监控：`{"heartbeat_interval": 10, "monitor_interval": 5, "progress_every": 1000, "stall_after": 30}`；可比较性：False。
 - 输入与工具/源码/环境详见 experiment_plan.json；完整配置、命令、状态和运行记录均保留。
 - 官方总分只读取报告中的明确字段；当前评分器报告没有总分时显示 N/A，不使用 weights 合成。
 
@@ -145,6 +145,8 @@ Pareto 候选：N/A；共同完整的目标：无。
 - 本地指标与官方指标严格分开；PASS 是本地官方工具通过，不保证正式隐藏用例。Proxy / mock-DRT 不是实际详细布线 sign-off。
 - 总分缺失不设为零；排名不混用引擎或版本；搜索上限/超时失败属于不可完成配置，不是合法低分。
 - 所有未执行候选为 PENDING；不借用其他批次旧运行作为本批实测。
+- 可比较性问题：Changed SHA256: D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\include\router.hpp
+- 可比较性问题：Changed SHA256: D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA\src\router.cpp
 
 ## 9. 下一阶段建议
 
