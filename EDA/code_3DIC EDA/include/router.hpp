@@ -3,6 +3,7 @@
 #include "progress.hpp"
 #include <functional>
 #include <array>
+#include <unordered_set>
 namespace gr {
 struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("Router time budget exceeded") {}};
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;};
@@ -19,6 +20,7 @@ public:
         std::uint64_t sparse_attempts=0,dense_attempts=0,max_workspace_bytes=0,margin_attempts=0;
         std::uint64_t capacity_calls=0,capacity_cache_hits=0,resource_insertions=0,tsv_calls=0,tsv_candidates=0,heat_values_scanned=0;
         std::uint64_t rerouted_nets=0,route_copy_count=0,route_move_count=0,rollback_nets=0,route_json_calls=0;
+        std::uint64_t tree_searches=0,tree_target_nodes_max=0,tree_terminal_skips=0;
         double astar_seconds=0,tsv_seconds=0,heat_scan_seconds=0,backup_seconds=0,rollback_seconds=0,reroute_seconds=0;
     } mutable profile;
     ~Router() noexcept;
@@ -37,6 +39,7 @@ public:
     void load_thermal(const std::filesystem::path&);
     void build_fixed_demand();
     std::vector<Id> search(Id,Id,int,int,bool);
+    std::vector<Id> search_to_tree(Id,const std::unordered_set<Id>&,int,int,bool);
     std::vector<std::pair<int,int>> mst(const std::vector<Id>&)const;
     Id select_tsv(const Net&);
     Route route(const Net&);
@@ -51,6 +54,21 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+    struct TreeTarget {
+        std::unordered_set<Id> nodes;
+        int xl=0,xh=0,yl=0,yh=0,ll=0,lh=0;
+    };
+    void add_target(TreeTarget&,Id)const;
+    std::vector<Id> search_impl(Id,Id,int,int,bool,const TreeTarget*);
+    std::vector<size_t> initial_order()const;
+    std::vector<size_t> reroute_order()const;
+    double congestion_penalty(const Resource&,int demand=1)const;
+    std::pair<long long,int> guarded_reroute_pass(int,long long);
+    struct RerouteBudget : std::runtime_error {RerouteBudget():std::runtime_error("Reroute pass budget") {}};
+    double reroute_deadline_seconds_=0,routing_wire_reference_=0;
+    bool rerouting_=false;
+    std::vector<int> reroute_cooldown_;
+    Json last_reroute_diagnostics_;
     struct SearchInfo {double g=0;Id parent=0;};
     struct SearchCell {SearchInfo info;std::uint32_t generation=0;};
     // At most 8192 local states (~192 KiB), never nx*ny*20. Larger

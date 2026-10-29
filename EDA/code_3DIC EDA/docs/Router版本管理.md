@@ -8,7 +8,9 @@
 |---|---|---|---|---|
 | V1 | `build/router_v1` | `build/router_baseline` | `024d648dae3fe9051e336b8928502de09bf0654b` | 性能优化前的独立 Router：Prim MST、A*、唯一 TSV、热感知、拥塞重布与 Guide 验证 |
 | V2 | `build/router_v2` | `build/router_optimized` | `a0f8e717ebbeca32ef999c8caf398fec46ba41c2`（version2） | 有界 A* 状态/几何缓存、TSV 热图与候选复用、容量/临时对象优化、增量重布备份和回滚 |
-| V3 | **NOT_BUILT** | 无 | 未登记 | 未来开发，不复制 V2 冒充 V3 |
+| V3 | 正式 `build/router_v3` 未构建/登记 | 候选 `build/router_v3_candidate` | 工作区候选，待用户提交 | 可选 Net Ordering、Tree-Aware A*、拥塞重布排序；不冒充正式注册版本 |
+
+V3 的实现、候选 SHA256、对照数据及局限见主目录 [算法版本迭代说明](../../../算法版本迭代说明.md)。登记 JSON 中的 V3 状态仍描述正式版本；本轮没有手改登记或覆盖 V1/V2。
 
 V1 SHA256：`70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423`。
 

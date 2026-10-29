@@ -1,0 +1,17 @@
+{
+  "wire": 1,
+  "via": 0.5,
+  "tsv": 4,
+  "congestion": 4,
+  "history": 1,
+  "thermal": 1,
+  "iterations": 2,
+  "stagnation": 2,
+  "margin": 8,
+  "search_limit": 1500000,
+  "time_limit": 600,
+  "trace_mb": 32,
+  "net_order_mode": 0,
+  "tree_route_mode": 0,
+  "reroute_priority_mode": 0
+}
