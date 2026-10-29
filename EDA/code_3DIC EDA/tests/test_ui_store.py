@@ -28,6 +28,13 @@ class UIStoreTests(unittest.TestCase):
         page=s.search({'q':'%_','limit':'1'});self.assertEqual(page['total'],1);self.assertEqual(page['items'][0]['net'],self.nets[0]['net'])
         self.assertEqual(len(s.search({'offset':'2','limit':'1'})['items']),1)
         self.assertEqual(self.result.read_bytes(),self.original)
+    def test_optional_v3_metadata_preserves_full_geometry(self):
+        modes={'net_order_mode':2,'tree_route_mode':1,'reroute_priority_mode':1,'routing_strategy':'tree_aware'}
+        self.data['algorithm']=modes;self.result.write_text(json.dumps(self.data,ensure_ascii=False),encoding='utf8')
+        before=self.result.read_bytes();store=self.store()
+        self.assertEqual(store.summary()['algorithm'],modes)
+        for net in self.nets:self.assertEqual(store.net(net['net']),net)
+        self.assertEqual(self.result.read_bytes(),before)
     def test_aggregation_exact_pin_pages_and_filters(self):
         s=self.store();overview=s.pins({});self.assertEqual(overview['total'],4)
         self.assertEqual(sum(p.get('count',1) for p in overview['items']),4)

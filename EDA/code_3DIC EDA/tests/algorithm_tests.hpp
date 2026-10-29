@@ -5,6 +5,8 @@ struct RouterTestAccess {
     static size_t workspace(const Router&r){return r.search_cells_.size();}
     static void frozen_capacity(Router&r,bool enabled){r.refresh_layers();r.refresh_capacities();r.static_frozen_=enabled;}
     static std::pair<long long,int> pass(Router&r,int iteration,long long best){return r.reroute_pass(iteration,best);}
+    static std::vector<size_t> order(const Router&r){return r.initial_order();}
+    static std::vector<size_t> priority(const Router&r){return r.reroute_order();}
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){

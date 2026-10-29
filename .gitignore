@@ -21,3 +21,7 @@ Thumbs.db
 
 # Local 3DIC development orchestration
 /.routing_work/
+
+# Local official evaluator archives exceed GitHub's regular Git file limit.
+/EDA/补充资料/score-0.4.0-linux-x86_64-public.zip
+/EDA/补充资料/score-0.5.0官方对齐版.zip

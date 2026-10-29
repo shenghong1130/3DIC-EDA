@@ -40,6 +40,25 @@ class ParserIntegration(unittest.TestCase):
         self.assertEqual(state['n']['edges'],d['nets'][0]['edges'])
     def test_missing_pin_fails_without_guide(self):
         self.de.write_text(self.de.read_text().replace('( u1 A )','( u1 missing )'),encoding='utf8');p=self.run_router();self.assertNotEqual(p.returncode,0);self.assertIn(b'Undefined macro pin',p.stderr);self.assertFalse((self.dir/'route.guide').exists())
+    def test_tree_modes_preserve_schema_and_truthful_trace(self):
+        config=self.dir/'tree.json';config.write_text('{"net_order_mode":2,"tree_route_mode":1,"reroute_priority_mode":1}',encoding='utf8')
+        p=self.run_router('--config',str(config));self.assertEqual(p.returncode,0,p.stderr.decode(errors='replace'))
+        data=json.loads((self.dir/'result.json').read_text(encoding='utf8'))
+        self.assertEqual(data['algorithm']['routing_strategy'],'tree_aware')
+        self.assertEqual(len(data['nets']),1);self.assertTrue(data['nets'][0]['pins']);self.assertTrue(data['nets'][0]['edges'])
+        events=[json.loads(line) for line in (self.dir/'trace.jsonl').read_text(encoding='utf8').splitlines()]
+        topologies=[e for e in events if e['event']=='topology']
+        self.assertTrue(topologies)
+        self.assertTrue(all(e['strategy']=='tree_aware' and e['mst_edges']==[] for e in topologies))
+        paths=[e for e in events if e['event']=='path_found']
+        self.assertTrue(paths);self.assertTrue(all(e['to']==e['nodes'][-1] for e in paths))
+    def test_strategy_modes_reject_invalid_numeric_values(self):
+        for key,values in [('net_order_mode',[-1,3,.5]),('tree_route_mode',[-1,2,.5]),('reroute_priority_mode',[-1,2,.5])]:
+            for value in values:
+                with self.subTest(key=key,value=value):
+                    config=self.dir/'invalid_mode.json';config.write_text(json.dumps({key:value}),encoding='utf8')
+                    p=self.run_router('--config',str(config));self.assertNotEqual(p.returncode,0)
+                    self.assertIn(b'Invalid numeric strategy mode',p.stderr);self.assertFalse((self.dir/'route.guide').exists())
     def test_invalid_layer_geometry_fails(self):
         self.lef.write_text(self.lef.read_text().replace('RECT 0.1 0.2 0.3 0.4','POLYGON 0.1 0.2 0.3 0.4'),encoding='utf8');p=self.run_router();self.assertNotEqual(p.returncode,0);self.assertFalse((self.dir/'route.guide').exists())
     def test_negative_config_rejected(self):

@@ -447,7 +447,7 @@ function processPanel(learn){
     const cards=[
         ['Net Selected','选择网络',counts.net_selected?'Trace · net_selected × '+counts.net_selected:reference()?'参考 Guide 无 Trace':no],
         ['TSV Selection','跨 Die 选址',!n.cross_die?'Die 内 Net · 不适用':'无独立选址事件；仅 Route 记录 TSV 位置，'+no],
-        ['MST Topology','端点连接拓扑',learn.topologies.length?'Trace · '+learn.topologies.map(t=>t.tier+': '+t.terminal_nodes.length+' 端点 / '+t.mst_edges.length+' 边').join('；'):no],
+        [learn.topologies.some(t=>t.strategy==='tree_aware')?'Tree-Aware Growth':'MST Topology','端点连接拓扑',learn.topologies.length?'Trace · '+learn.topologies.map(t=>t.tier+': '+t.terminal_nodes.length+' 端点 / '+(t.strategy==='tree_aware'?'已有树增量连接':t.mst_edges.length+' MST 边')).join('；'):no],
         ['A* Search','实际路径搜索',counts.search_started||counts.path_found?'Trace · search_started '+(counts.search_started||0)+' / path_found '+(counts.path_found||0)+'；不含 Open Set 扩展':!reference()?'仅最终 Route；'+no:no],
         ['Route Accepted','提交路径与资源',counts.net_added?'Trace · net_added × '+counts.net_added+'（优化轮次可能回滚）':!reference()?'最终 Route 存在；'+no:no],
         ['Guide Generated','生成 Guide',reference()?'仅官方参考 Guide':S.index>=0?'无独立生成事件；在 net_added 前构建':'最终 Guide 已保存；无独立生成事件']
@@ -485,7 +485,7 @@ function applyEvent(e){
         const all=S.pending.get(e.net)||[];for(const edge of edges)all.push(edge);S.pending.set(e.net,all);S.ghost={net:e.net,edges,remove:false};
     }
 }
-const eventNames={parse_started:'开始解析输入',parse_complete:'输入解析完成',graph_built:'建立 Routing Graph',thermal_mapped:'热数据映射',fixed_demand_built:'固定需求统计',net_selected:'选择 Net',topology:'生成 MST 拓扑',search_started:'开始 A* 路径搜索',path_found:'找到真实路径',net_added:'提交路径与容量',net_removed:'拆除旧路径',iteration_done:'优化轮次完成',routing_complete:'完成布线',trace_truncated:'Trace 达到大小上限'};
+const eventNames={parse_started:'开始解析输入',parse_complete:'输入解析完成',graph_built:'建立 Routing Graph',thermal_mapped:'热数据映射',fixed_demand_built:'固定需求统计',net_selected:'选择 Net',topology:'建立连接拓扑 / 树种子',search_started:'开始 A* 路径搜索',path_found:'找到真实路径',net_added:'提交路径与容量',net_removed:'拆除旧路径',iteration_done:'优化轮次完成',routing_complete:'完成布线',trace_truncated:'Trace 达到大小上限'};
 function seek(index){
     if(!S.trace.length)return;index=Math.max(0,Math.min(S.trace.length-1,index));
     if(S.index<0||index<S.index){S.active=new Map();S.pending=new Map();S.ghost=null;S.index=-1;}

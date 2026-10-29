@@ -24,7 +24,10 @@ struct Design {
 };
 struct Edge {Id a,b;bool operator<(const Edge&e)const{return a<e.a||(a==e.a&&b<e.b);}};
 struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;};
-struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;};
+struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;
+    // All zero preserves V2 routing. Numeric modes are validated by main.cpp.
+    int net_order_mode=0,tree_route_mode=0,reroute_priority_mode=0;
+};
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);
 // Write a complete temporary file, then publish it; never reread the JSON.

@@ -29,7 +29,11 @@ int main(int argc,char**argv){
         output=std::filesystem::u8path(opt.at("--output"));
         for(auto k:{"--def","--lef","--thermal-report"})if(std::filesystem::weakly_canonical(output)==std::filesystem::weakly_canonical(std::filesystem::u8path(opt.at(k))))throw std::runtime_error("Output aliases an input");
         if(output.extension()!=".guide")throw std::runtime_error("Output must have .guide extension");
-        if(opt.count("--config")){auto j=Json::parse(read_file(std::filesystem::u8path(opt["--config"])));for(auto&[k,v]:j.obj){double n=v.number();if(k=="wire")c.wire=n;else if(k=="via")c.via=n;else if(k=="tsv")c.tsv=n;else if(k=="congestion")c.congestion=n;else if(k=="history")c.history=n;else if(k=="thermal")c.thermal=n;else if(k=="iterations")c.iterations=int(n);else if(k=="stagnation")c.stagnation=int(n);else if(k=="margin")c.margin=int(n);else if(k=="search_limit")c.search_limit=size_t(n);else if(k=="time_limit")c.time_limit=n;else if(k=="trace_mb")c.trace_mb=size_t(n);else throw std::runtime_error("Unknown config key: "+k);}}
+        if(opt.count("--config")){auto j=Json::parse(read_file(std::filesystem::u8path(opt["--config"])));for(auto&[k,v]:j.obj){double n=v.number();if(k=="wire")c.wire=n;else if(k=="via")c.via=n;else if(k=="tsv")c.tsv=n;else if(k=="congestion")c.congestion=n;else if(k=="history")c.history=n;else if(k=="thermal")c.thermal=n;else if(k=="iterations")c.iterations=int(n);else if(k=="stagnation")c.stagnation=int(n);else if(k=="margin")c.margin=int(n);else if(k=="search_limit")c.search_limit=size_t(n);else if(k=="time_limit")c.time_limit=n;else if(k=="trace_mb")c.trace_mb=size_t(n);else if(k=="net_order_mode"||k=="tree_route_mode"||k=="reroute_priority_mode"){
+            int maximum=k=="net_order_mode"?2:1;
+            if(!std::isfinite(n)||n<0||n>maximum||std::floor(n)!=n)throw std::runtime_error("Invalid numeric strategy mode: "+k);
+            if(k=="net_order_mode")c.net_order_mode=int(n);else if(k=="tree_route_mode")c.tree_route_mode=int(n);else c.reroute_priority_mode=int(n);
+        }else throw std::runtime_error("Unknown config key: "+k);}}
         if(opt.count("--time-limit"))c.time_limit=std::stod(opt["--time-limit"]);
         if(opt.count("--iterations"))c.iterations=std::stoi(opt["--iterations"]);
         if(opt.count("--trace-limit-mb"))c.trace_mb=std::stoull(opt["--trace-limit-mb"]);
