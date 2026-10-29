@@ -62,6 +62,13 @@ private:
     std::vector<Id> search_impl(Id,Id,int,int,bool,const TreeTarget*);
     std::vector<size_t> initial_order()const;
     std::vector<size_t> reroute_order()const;
+    double congestion_penalty(const Resource&,int demand=1)const;
+    std::pair<long long,int> guarded_reroute_pass(int,long long);
+    struct RerouteBudget : std::runtime_error {RerouteBudget():std::runtime_error("Reroute pass budget") {}};
+    double reroute_deadline_seconds_=0,routing_wire_reference_=0;
+    bool rerouting_=false;
+    std::vector<int> reroute_cooldown_;
+    Json last_reroute_diagnostics_;
     struct SearchInfo {double g=0;Id parent=0;};
     struct SearchCell {SearchInfo info;std::uint32_t generation=0;};
     // At most 8192 local states (~192 KiB), never nx*ny*20. Larger

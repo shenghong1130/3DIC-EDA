@@ -7,6 +7,9 @@ struct RouterTestAccess {
     static std::pair<long long,int> pass(Router&r,int iteration,long long best){return r.reroute_pass(iteration,best);}
     static std::vector<size_t> order(const Router&r){return r.initial_order();}
     static std::vector<size_t> priority(const Router&r){return r.reroute_order();}
+    static double penalty(const Router&r,const Resource&s,int demand=1){return r.congestion_penalty(s,demand);}
+    static void expire_pass(Router&r){r.reroute_deadline_seconds_=r.elapsed()/2;}
+    static void phase(Router&r,bool enabled){r.rerouting_=enabled;}
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){
@@ -18,7 +21,14 @@ double path_cost(Router&r,const std::vector<Id>&p){
         else require(r.d.vias.count({std::min(l,ll),std::max(l,ll)}),"Absent search via");
         auto&a=r.resource(p[i]);double u=std::max(0.0,double(a.usage+a.fixed+1-a.capacity))/std::max(1,a.capacity);
         auto[cx,cy]=r.center(p[i-1]);auto[tx,ty]=r.center(p[i]);
-        cost+=(l==ll?r.cfg.wire*(std::abs(cx-tx)+std::abs(cy-ty))/r.unit:r.cfg.via)+r.cfg.congestion*u*u+r.cfg.history*a.history;
+        double penalty=r.cfg.congestion*u*u+r.cfg.history*a.history;
+        if(r.cfg.congestion_cost_mode){
+            double before=double(a.usage)+a.fixed,after=before+1;
+            double delta=std::max(0.0,after-a.capacity)-std::max(0.0,before-a.capacity);
+            if(r.cfg.congestion_cost_mode==1)penalty=r.cfg.congestion*delta+r.cfg.history*a.history;
+            else{double utilization=std::min(1.0,std::max(0.0,after/std::max(1,a.capacity)));penalty=r.cfg.congestion*(.25*delta+.05*std::pow(utilization,4)+u*u)+r.cfg.history*a.history;}
+        }
+        cost+=(l==ll?r.cfg.wire*(std::abs(cx-tx)+std::abs(cy-ty))/r.unit:r.cfg.via)+penalty;
     }return cost;
 }
 // Dijkstra over the complete small test graph, independent of A* workspace.

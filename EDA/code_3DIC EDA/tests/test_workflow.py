@@ -28,6 +28,14 @@ class ParserIntegration(unittest.TestCase):
     def run_router(self,*extra):
         args=[str(self.exe),'--def',str(self.de),'--lef',str(self.lef),'--thermal-report',str(self.thermal),'--output',str(self.dir/'route.guide'),'--metrics',str(self.dir/'result.json'),'--trace',str(self.dir/'trace.jsonl'),'--iterations','0',*extra]
         return subprocess.run(args,capture_output=True,timeout=30)
+    def test_congestion_strategy_config_and_invalid_values(self):
+        for mode in [0,1,2]:
+            config=self.dir/'cost.json';config.write_text(json.dumps({'congestion_cost_mode':mode,'reroute_policy_mode':1,'reroute_max_nets':2,'reroute_pass_seconds':1,'reroute_wire_growth':0}),encoding='utf8')
+            p=self.run_router('--config',str(config));self.assertEqual(p.returncode,0,p.stderr.decode(errors='replace'))
+            data=json.loads((self.dir/'result.json').read_text(encoding='utf8'))
+            self.assertEqual(data['congestion_strategy']['cost_mode'],mode)
+        for key,value in [('congestion_cost_mode',3),('congestion_cost_mode',.5),('reroute_policy_mode',2),('reroute_max_nets',0),('reroute_max_nets',1.5),('reroute_pass_seconds',0),('reroute_wire_growth',-.1),('reroute_wire_growth',.2),('congestion_scope_mode',2),('congestion_scope_mode',.5)]:
+            config.write_text(json.dumps({key:value}),encoding='utf8');p=self.run_router('--config',str(config));self.assertNotEqual(p.returncode,0,(key,value))
     def test_units_orientation_io_thermal_trace(self):
         p=self.run_router();self.assertEqual(p.returncode,0,p.stderr.decode(errors='replace'));d=json.loads((self.dir/'result.json').read_text(encoding='utf8'));pins={p['name']:p for p in d['nets'][0]['pins']}
         self.assertAlmostEqual(pins['u1.A']['x'],1200);self.assertAlmostEqual(pins['u1.A']['y'],5700);self.assertEqual(pins['PIN.io']['layer'],2);self.assertEqual(d['dbu_per_micron'],1000)

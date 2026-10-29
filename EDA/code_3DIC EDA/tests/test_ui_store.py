@@ -35,6 +35,13 @@ class UIStoreTests(unittest.TestCase):
         self.assertEqual(store.summary()['algorithm'],modes)
         for net in self.nets:self.assertEqual(store.net(net['net']),net)
         self.assertEqual(self.result.read_bytes(),before)
+    def test_optional_congestion_strategy_preserves_full_geometry(self):
+        modes={'cost_mode':2,'scope_mode':1,'reroute_policy_mode':1,'reroute_max_nets':512,'reroute_pass_seconds':20,'reroute_wire_growth':.005}
+        self.data['congestion_strategy']=modes;self.result.write_text(json.dumps(self.data,ensure_ascii=False),encoding='utf8')
+        before=self.result.read_bytes();store=self.store()
+        self.assertEqual(store.summary()['congestion_strategy'],modes)
+        for net in self.nets:self.assertEqual(store.net(net['net']),net)
+        self.assertEqual(self.result.read_bytes(),before)
     def test_aggregation_exact_pin_pages_and_filters(self):
         s=self.store();overview=s.pins({});self.assertEqual(overview['total'],4)
         self.assertEqual(sum(p.get('count',1) for p in overview['items']),4)

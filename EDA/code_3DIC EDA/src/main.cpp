@@ -33,11 +33,17 @@ int main(int argc,char**argv){
             int maximum=k=="net_order_mode"?2:1;
             if(!std::isfinite(n)||n<0||n>maximum||std::floor(n)!=n)throw std::runtime_error("Invalid numeric strategy mode: "+k);
             if(k=="net_order_mode")c.net_order_mode=int(n);else if(k=="tree_route_mode")c.tree_route_mode=int(n);else c.reroute_priority_mode=int(n);
-        }else throw std::runtime_error("Unknown config key: "+k);}}
+        }else if(k=="congestion_cost_mode"||k=="reroute_policy_mode"||k=="reroute_max_nets"||k=="congestion_scope_mode"){
+            int maximum=k=="congestion_cost_mode"?2:k=="reroute_max_nets"?1000000:1;
+            if(!std::isfinite(n)||n<0||n>maximum||std::floor(n)!=n||(k=="reroute_max_nets"&&n<1))throw std::runtime_error("Invalid congestion strategy setting: "+k);
+            if(k=="congestion_cost_mode")c.congestion_cost_mode=int(n);else if(k=="reroute_policy_mode")c.reroute_policy_mode=int(n);else if(k=="congestion_scope_mode")c.congestion_scope_mode=int(n);else c.reroute_max_nets=int(n);
+        }else if(k=="reroute_pass_seconds")c.reroute_pass_seconds=n;else if(k=="reroute_wire_growth")c.reroute_wire_growth=n;
+        else throw std::runtime_error("Unknown config key: "+k);}}
         if(opt.count("--time-limit"))c.time_limit=std::stod(opt["--time-limit"]);
         if(opt.count("--iterations"))c.iterations=std::stoi(opt["--iterations"]);
         if(opt.count("--trace-limit-mb"))c.trace_mb=std::stoull(opt["--trace-limit-mb"]);
         if(!(c.wire>0&&c.via>0&&c.tsv>=0&&c.congestion>=0&&c.history>=0&&c.thermal>=0&&c.time_limit>0&&c.iterations>=0&&c.iterations<=100&&c.stagnation>0&&c.margin>0&&c.search_limit>0&&c.trace_mb>0))throw std::runtime_error("Invalid router configuration");
+        if(!std::isfinite(c.reroute_pass_seconds)||c.reroute_pass_seconds<=0||!std::isfinite(c.reroute_wire_growth)||c.reroute_wire_growth<0||c.reroute_wire_growth>0.1)throw std::runtime_error("Invalid guarded reroute budget");
         size_t progress_every=opt.count("--progress-every")?std::stoull(opt["--progress-every"]):1000;
         double monitor_interval=opt.count("--monitor-interval")?std::stod(opt["--monitor-interval"]):5,heartbeat_interval=opt.count("--heartbeat-interval")?std::stod(opt["--heartbeat-interval"]):10;
         if(!progress_every||!std::isfinite(monitor_interval)||monitor_interval<=0||!std::isfinite(heartbeat_interval)||heartbeat_interval<=0)throw std::runtime_error("Invalid monitoring interval");

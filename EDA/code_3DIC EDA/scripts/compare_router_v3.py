@@ -13,6 +13,11 @@ VARIANTS=[('v2','build/router_v2','default'),('legacy',None,'v3_legacy'),
           ('net_order',None,'v3_net_order'),('tree_aware',None,'v3_tree_aware'),
           ('congestion',None,'v3_congestion'),('combined',None,'v3_combined')]
 MODES=['net_order_mode','tree_route_mode','reroute_priority_mode']
+CONGESTION_VARIANTS=[('v2','build/router_v2','default'),('legacy',None,'v3_congestion_legacy'),
+    ('incremental',None,'v3_cost_incremental'),('hybrid',None,'v3_cost_hybrid'),
+    ('guarded',None,'v3_reroute_guarded'),('congestion_combined',None,'v3_congestion_candidate')]
+CONGESTION_KEYS=['congestion_cost_mode','reroute_policy_mode','reroute_max_nets','reroute_pass_seconds','reroute_wire_growth','congestion_scope_mode']
+SCOPED_VARIANTS=[CONGESTION_VARIANTS[0],CONGESTION_VARIANTS[1],('scoped',None,'v3_congestion_reroute_only')]
 
 
 def read(path):return json.loads(Path(path).read_text(encoding='utf8'))
@@ -52,6 +57,7 @@ def main(argv=None):
     p.add_argument('--router-budget',type=int,default=180)
     p.add_argument('--evaluation-budget',type=int,default=120)
     p.add_argument('--no-score',action='store_true')
+    p.add_argument('--suite',choices=['tree','congestion','congestion_scoped'],default='tree')
     a=p.parse_args(argv);safe_label(a.experiment)
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
     candidate=a.candidate.resolve()
@@ -60,19 +66,21 @@ def main(argv=None):
     # Always finish small correctness runs before case001.
     cases=sorted(set(cases),key=['toy','sample001','open_3d_case001'].index)
     base=read(PROJECT/'configs/default.json')
-    for _,_,config in VARIANTS[1:]:
+    variants=SCOPED_VARIANTS if a.suite=='congestion_scoped' else CONGESTION_VARIANTS if a.suite=='congestion' else VARIANTS
+    for _,_,config in variants[1:]:
         values=read(PROJECT/'configs'/f'{config}.json')
-        if {k:v for k,v in values.items() if k not in MODES}!=base:raise RuntimeError('Shared parameters differ: '+config)
+        if {k:v for k,v in values.items() if k not in MODES+CONGESTION_KEYS}!=base:raise RuntimeError('Shared parameters differ: '+config)
+        if a.suite.startswith('congestion') and (values.get('net_order_mode') or values.get('tree_route_mode')):raise RuntimeError('Congestion ablation must disable ordering and Tree-Aware')
     report=OUTPUTS/'reports/v3_algorithm'/a.experiment/'comparisons'
     report.mkdir(parents=True,exist_ok=False)
-    pinned={str(path):sha256(path) for path in [candidate,PROJECT/'build/router_v2',PROJECT/'configs/default.json',*[PROJECT/'configs'/f'{v[2]}.json' for v in VARIANTS[1:]]]}
+    pinned={str(path):sha256(path) for path in [candidate,PROJECT/'build/router_v2',PROJECT/'configs/default.json',*[PROJECT/'configs'/f'{v[2]}.json' for v in variants[1:]]]}
     plan={'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),
           'git_dirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=PROJECT)),
           'cases':cases,'router_budget':a.router_budget,'evaluation_budget':a.evaluation_budget,'pinned':pinned,
-          'candidate_status':'UNREGISTERED_CANDIDATE','score_enabled':not a.no_score,'records':[]}
+          'candidate_status':'UNREGISTERED_CANDIDATE','suite':a.suite,'score_enabled':not a.no_score,'records':[]}
     write_new(report/'plan.json',plan);rows=[];sequence=0
     for case in cases:
-        for variant,binary,config in VARIANTS:
+        for variant,binary,config in variants:
             if any(sha256(Path(path))!=expected for path,expected in pinned.items()):raise RuntimeError('Pinned executable/config changed; experiment stopped')
             sequence+=1;label=safe_label(f'v3_{a.experiment}_{variant}')
             directory=OUTPUTS/'runs'/case/label
@@ -96,6 +104,7 @@ def main(argv=None):
             if run.get('status')=='ROUTED' and run_call.returncode==0 and run.get('returncode')==0:
                 data=read(directory/'result.json');row.update(metrics=data['metrics'],cpp_runtime_seconds=data['metrics'].get('runtime_seconds'),net_count=len(data['nets']),layers=len(data['layers']),
                     guide_sha256=sha256(directory/'route.guide'),normalized_json_sha256=normalized(data))
+                row.update(congestion_strategy=data.get('congestion_strategy'),iterations=data.get('iterations'))
                 if case!='open_3d_case001':row['trace_replay']=replay(directory,data)
                 if not a.no_score:
                     evaluation=[sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case',case,'--label',label,'--backend','wsl','--engine','latest','--timeout',str(a.evaluation_budget)]

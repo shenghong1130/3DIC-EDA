@@ -37,6 +37,8 @@ Router::~Router() noexcept {
 #endif
 Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace(t),started(std::chrono::steady_clock::now()),progress(p){
     if(c.net_order_mode<0||c.net_order_mode>2||c.tree_route_mode<0||c.tree_route_mode>1||c.reroute_priority_mode<0||c.reroute_priority_mode>1)throw std::runtime_error("Invalid V3 strategy mode");
+    if(c.congestion_cost_mode<0||c.congestion_cost_mode>2||c.reroute_policy_mode<0||c.reroute_policy_mode>1||c.reroute_max_nets<1||!std::isfinite(c.reroute_pass_seconds)||c.reroute_pass_seconds<=0||!std::isfinite(c.reroute_wire_growth)||c.reroute_wire_growth<0||c.reroute_wire_growth>0.1)throw std::runtime_error("Invalid congestion strategy configuration");
+    if(c.congestion_scope_mode<0||c.congestion_scope_mode>1)throw std::runtime_error("Invalid congestion scope mode");
     auto lines=[&](char a,double lo,double hi){std::vector<double> v{lo,hi};for(double x:d.grid.at(a))if(x>lo&&x<hi)v.push_back(x);std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());return v;};
     xs=lines('X',d.die.x1,d.die.x2);ys=lines('Y',d.die.y1,d.die.y2);nx=int(xs.size())-1;ny=int(ys.size())-1;
     if(nx<1||ny<1||Id(nx)*ny>10000000)throw std::runtime_error("Unsupported GCell size (>10M cells)");
@@ -59,7 +61,19 @@ void Router::refresh_heat_stats(){
     heat_min_=*std::min_element(heat.begin(),heat.end());heat_max_=*std::max_element(heat.begin(),heat.end());
 }
 double Router::elapsed()const{return std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();}
-void Router::check_time()const{if(progress)progress->poll();if(elapsed()>cfg.time_limit)throw RouterTimeout();}
+void Router::check_time()const{if(progress)progress->poll();double seconds=elapsed();if(seconds>cfg.time_limit)throw RouterTimeout();if(reroute_deadline_seconds_>0&&seconds>=reroute_deadline_seconds_)throw RerouteBudget();}
+double Router::congestion_penalty(const Resource&r,int demand)const{
+    double cap=std::max(1,r.capacity),before=double(r.usage)+r.fixed;
+    int mode=cfg.congestion_scope_mode==1&&!rerouting_?0:cfg.congestion_cost_mode;
+    // Mode 0 is bit-for-bit the original one-unit proxy, including TSV access.
+    double overload=std::max(0.0,before+1-r.capacity)/cap;
+    if(mode==0)return cfg.congestion*(overload*overload)+cfg.history*r.history;
+    double after=before+demand,increment=std::max(0.0,after-r.capacity)-std::max(0.0,before-r.capacity);
+    if(mode==1)return cfg.congestion*increment+cfg.history*r.history;
+    double utilization=std::min(1.0,std::max(0.0,after/cap));
+    overload=std::max(0.0,after-r.capacity)/cap;
+    return cfg.congestion*(0.25*increment+0.05*std::pow(utilization,4)+overload*overload)+cfg.history*r.history;
+}
 static int count_tracks(const Track&t,double lo,double hi,bool last){double e=1e-8;int begin=std::max(0,int(std::ceil((lo-t.start)/t.step-e)));int end=std::min(t.count,int(std::ceil((hi-t.start)/t.step-(last?-e:e))));return std::max(0,end-begin);}
 void Router::refresh_capacities(){
     // Capacity depends on one axis per layer, not on every 3D grid node.
@@ -171,9 +185,8 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 Id v=id(xx,yy,ll);bool planar=l==ll;
                 if(!planar){bool via=l>=1&&l<=20&&ll>=1&&ll<=20?(ll>l?via_up_[l]:via_down_[l]):d.vias.count({std::min(l,ll),std::max(l,ll)});if(!via)return;}
                 if(planar&&cross&&(l==10||l==11))return; // Only access cells on interface layers.
-                auto&res=resource(v);double cap=std::max(1,res.capacity),demand=res.usage+res.fixed+1;
-                double overload=std::max(0.0,demand-res.capacity)/cap;
-                double penalty=cfg.congestion*(overload*overload)+cfg.history*res.history;
+                auto&res=resource(v);
+                double penalty=congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
                 double cost=cur.g+base+penalty;bool improved=false;
                 if(dense){auto&entry=search_cells_[slot(xx,yy,ll)];if(entry.generation!=search_generation_||cost+1e-10<entry.info.g){if(entry.generation!=search_generation_)++discovered;entry.info={cost,cur.v};entry.generation=search_generation_;improved=true;}}
@@ -309,12 +322,15 @@ std::vector<size_t> Router::initial_order()const{
 }
 std::vector<size_t> Router::reroute_order()const{
     std::vector<size_t> order(routes.size());std::iota(order.begin(),order.end(),0);
-    if(!cfg.reroute_priority_mode)return order;
+    if(!cfg.reroute_priority_mode&&!cfg.reroute_policy_mode)return order;
     struct Priority {long long marginal=0;double severity=0;size_t hot=0;};
     std::vector<Priority> keys(routes.size());size_t scanned=0;
     for(size_t i=0;i<routes.size();i++){
         check_time();auto&r=routes[i];int x,y,l;decode(r.tsv,x,y,l);Id upper=id(x,y,11);
+        std::unordered_set<Id> mandatory;
+        if(cfg.reroute_policy_mode)for(const auto&p:d.nets[i].pins)mandatory.insert(pin_node(p));
         for(Id v:r.nodes){
+            if(mandatory.count(v))continue;
             auto it=resources.find(v);if(it==resources.end())continue;const auto&res=it->second;
             long long excess=std::max(0LL,static_cast<long long>(res.usage)+res.fixed-res.capacity);
             if(excess){keys[i].marginal+=std::min(excess,r.cross&&(v==r.tsv||v==upper)?2LL:1LL);keys[i].severity+=double(excess)/std::max(1,res.capacity);keys[i].hot++;}
@@ -330,8 +346,82 @@ std::vector<size_t> Router::reroute_order()const{
         return a<b;
     });check_time();return order;
 }
+std::pair<long long,int> Router::guarded_reroute_pass(int iteration,long long best){
+    auto order=reroute_order();
+    if(reroute_cooldown_.size()!=routes.size())reroute_cooldown_.assign(routes.size(),0);
+    double total_wire=0;for(const auto&r:routes)total_wire+=wirelength(r);
+    if(routing_wire_reference_==0)routing_wire_reference_=total_wire;
+    const double wire_limit=routing_wire_reference_*(1+cfg.reroute_wire_growth);
+    const double previous_deadline=reroute_deadline_seconds_;
+    struct DeadlineReset {double&value;double previous;~DeadlineReset(){value=previous;}} reset{reroute_deadline_seconds_,previous_deadline};
+    reroute_deadline_seconds_=elapsed()+cfg.reroute_pass_seconds;
+    struct Backup {size_t index;Route old;bool replacement=false,detached=true;};
+    std::vector<Backup> saved;
+    int attempted=0,accepted=0,rejected=0,skipped=0;std::string stop="candidates_exhausted";
+    auto demand=[&](const Route&r,Id v){int x,y,l;decode(r.tsv,x,y,l);return r.cross&&(v==r.tsv||v==id(x,y,11))?2LL:1LL;};
+    auto removal=[&](const Route&r){long long value=0;for(Id v:r.nodes){const auto&s=resources.at(v);value+=std::min(std::max(0LL,static_cast<long long>(s.usage)+s.fixed-s.capacity),demand(r,v));}return value;};
+    auto insertion=[&](const Route&r){long long value=0;for(Id v:r.nodes){const auto&s=resources.at(v);long long u=static_cast<long long>(s.usage)+s.fixed-s.capacity;value+=std::max(0LL,u+demand(r,v))-std::max(0LL,u);}return value;};
+    auto restore=[&](Backup&b){if(!b.detached)return;if(b.replacement)occupy(routes[b.index],-1);routes[b.index]=std::move(b.old);occupy(routes[b.index],1);b.detached=false;};
+    auto trace_restored=[&](size_t i){if(trace.out&&!trace.truncated){Json rem=Json::object();rem["net"]=d.nets[i].name;trace.event("net_removed",rem);trace.event("net_added",route_json(d.nets[i],routes[i]));}};
+    try{
+        for(size_t position=0;position<order.size();position++){
+            // The soft per-pass deadline stops A* as well as this outer loop.
+            // The global Router budget always takes precedence and propagates.
+            if(elapsed()>cfg.time_limit)throw RouterTimeout();
+            if(elapsed()>=reroute_deadline_seconds_){stop="time_budget";break;}
+            if(attempted>=cfg.reroute_max_nets){stop="net_budget";break;}
+            size_t i=order[position];
+            if(progress)progress->net(position+1,routes.size(),d.nets[i].name,iteration);
+            if(reroute_cooldown_[i]>=iteration){++skipped;continue;}
+            std::unordered_set<Id> mandatory;for(const auto&p:d.nets[i].pins)mandatory.insert(pin_node(p));
+            bool avoidable=false;for(Id v:routes[i].nodes){const auto&s=resources.at(v);if(!mandatory.count(v)&&s.usage+s.fixed>s.capacity){avoidable=true;break;}}
+            if(!avoidable){++skipped;continue;}
+            long long removed=removal(routes[i]);double old_wire=wirelength(routes[i]);
+            saved.push_back({i,{}});auto&backup=saved.back();backup.old=std::move(routes[i]);routes[i]=Route{};
+            occupy(backup.old,-1);++attempted;GR_COUNT(rerouted_nets,1);
+            if(trace.out&&!trace.truncated){Json rem=Json::object();rem["net"]=d.nets[i].name;rem["iteration"]=iteration;trace.event("net_removed",rem);}
+            bool exhausted=false,failed=false;
+            try{routes[i]=route(d.nets[i]);}
+            catch(const RouterTimeout&){throw;}
+            catch(const RerouteBudget&){exhausted=true;}
+            catch(const std::bad_alloc&){throw;}
+            catch(const std::runtime_error&e){std::string message=e.what();if(message.find("A* expansion limit")==0||message.find("No legal path between GCells")==0)failed=true;else throw;}
+            if(!exhausted&&!failed){
+                long long added=insertion(routes[i]);double new_wire=wirelength(routes[i]);
+                // Exact union-of-Net occupancy delta; fixed demand cancels.
+                // Require both a local overflow gain and bounded wire growth.
+                if(added<removed&&new_wire<=old_wire*(1+cfg.reroute_wire_growth)+1e-8&&total_wire-old_wire+new_wire<=wire_limit+1e-8){
+                    occupy(routes[i],1);backup.replacement=true;total_wire+=new_wire-old_wire;++accepted;
+                    if(trace.out&&!trace.truncated)trace.event("net_added",route_json(d.nets[i],routes[i]));
+                    if(progress)progress->completed();
+                    continue;
+                }
+            }
+            restore(backup);saved.pop_back();++rejected;reroute_cooldown_[i]=iteration+1;trace_restored(i);
+            if(progress)progress->completed();
+            if(exhausted){stop="time_budget";break;}
+        }
+        long long now=overflow();
+        if(now>=best){
+            for(auto it=saved.rbegin();it!=saved.rend();++it){restore(*it);trace_restored(it->index);}
+            saved.clear();accepted=0;
+        }
+        last_reroute_diagnostics_=Json::object();
+        last_reroute_diagnostics_["policy"]="guarded_contribution";last_reroute_diagnostics_["attempted"]=attempted;
+        last_reroute_diagnostics_["accepted_nets"]=accepted;last_reroute_diagnostics_["rejected_nets"]=rejected;
+        last_reroute_diagnostics_["skipped_nets"]=skipped;last_reroute_diagnostics_["stop_reason"]=stop;
+        last_reroute_diagnostics_["wire_limit_dbu_local"]=wire_limit;
+        return {now,attempted};
+    }catch(...){
+        for(auto it=saved.rbegin();it!=saved.rend();++it)restore(*it);
+        throw;
+    }
+}
 std::pair<long long,int> Router::reroute_pass(int it,long long best){
     check_time();for(auto&[v,res]:resources)if(res.usage&&res.usage+res.fixed>res.capacity)res.history+=double(res.usage+res.fixed-res.capacity)/std::max(1,res.capacity);
+    bool previous=rerouting_;rerouting_=true;
+    struct PhaseReset {bool&value;bool previous;~PhaseReset(){value=previous;}} phase{rerouting_,previous};
+    if(cfg.reroute_policy_mode)return guarded_reroute_pass(it,best);
     struct Backup {size_t index;Route old;bool detached=false,replacement=false;};
     std::vector<Backup> saved;int rerouted=0;auto order=reroute_order();
     // All old/new nodes already have resources. Restoring valid committed
@@ -395,7 +485,7 @@ void Router::run(){
         Progress::Scope iteration_log(progress,"OPTIMIZATION");
         auto[now,rerouted]=reroute_pass(it,best);bool accepted=now<best;
         if(!accepted)stagnant++;else{best=now;stagnant=0;}
-        Json j=Json::object();j["iteration"]=it;j["candidate_overflow_local"]=double(now);j["overflow_local"]=double(best);j["accepted"]=accepted;j["rerouted_nets"]=rerouted;rounds.push_back(j);trace.event("iteration_done",j);
+        Json j=Json::object();j["iteration"]=it;j["candidate_overflow_local"]=double(now);j["overflow_local"]=double(best);j["accepted"]=accepted;j["rerouted_nets"]=rerouted;if(cfg.reroute_policy_mode)j["reroute_diagnostics"]=last_reroute_diagnostics_;rounds.push_back(j);trace.event("iteration_done",j);
     }
     Json end=Json::object();end["overflow_local"]=double(overflow());end["runtime_seconds"]=elapsed();trace.event("routing_complete",end);
 }
@@ -437,6 +527,7 @@ void Router::result_json(std::ostream&o)const{
     check_time();
     field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
     if(cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
+    if(cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
     field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
     array("x_lines",xs,number,"X lines");array("y_lines",ys,number,"Y lines");
     array("layers",d.layers,[](const auto&entry){const auto&[n,l]=entry;Json v=Json::object();v["number"]=n;v["name"]=l.name;v["tier"]=n<=10?"bottom":"top";v["direction"]=l.direction;return v;},"Layers");
