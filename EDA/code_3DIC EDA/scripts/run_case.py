@@ -31,7 +31,7 @@ def main():
     output=(a.output or target/'route.guide').resolve()
     if not output.is_relative_to(OUTPUTS.resolve()):p.error('Local helper outputs must be under project outputs/')
     if target.exists() or output.exists():p.error('Run/output already exists; use a new --label (partial logs are history too)')
-    config=a.config.resolve();cfg=json.loads(config.read_text(encoding='utf8'))
+    config=resolve_config(a.config);cfg=json.loads(config.read_text(encoding='utf8'))
     exe=(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe')).resolve()
     binary_hash=optional_hash(exe);version=identify_router(binary_hash)
     conv=linux_path if a.backend=='wsl' else lambda x:str(Path(x).resolve())

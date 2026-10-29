@@ -24,6 +24,15 @@ def catalog():
 def safe_label(value):
     if not re.fullmatch(r'[A-Za-z0-9_.-]{1,80}',value) or value in {'.','..'}:raise ValueError('Label must contain ASCII letters/numbers/_.- only')
     return value
+
+def resolve_config(path):
+    """Resolve an archived V3 config without rewriting historical run records."""
+    path=Path(path).resolve()
+    if path.is_file():return path
+    if path.parent==(PROJECT/'configs').resolve() and path.name.startswith('v3_') and path.name!='v3_final.json':
+        archived=path.parent/'archive'/path.name
+        if archived.is_file():return archived
+    return path
 def run_dir(case,label):return OUTPUTS/'runs'/safe_label(case)/safe_label(label)
 def save(path,value):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

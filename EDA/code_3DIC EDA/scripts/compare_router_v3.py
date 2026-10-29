@@ -5,9 +5,9 @@ Production binaries are never built or replaced here. Scores come exclusively
 from evaluate.py and its actual report. Existing experiments cannot be resumed
 or overwritten. Large Cases are deliberately not accepted by this command.
 """
-import argparse,csv,datetime,hashlib,json,subprocess,sys,time
+import argparse,csv,datetime,hashlib,json,subprocess,sys,time,os
 from pathlib import Path
-from common import PROJECT,OUTPUTS,sha256,safe_label
+from common import PROJECT,OUTPUTS,sha256,safe_label,resolve_config
 
 VARIANTS=[('v2','build/router_v2','default'),('legacy',None,'v3_legacy'),
           ('net_order',None,'v3_net_order'),('tree_aware',None,'v3_tree_aware'),
@@ -21,6 +21,7 @@ SCOPED_VARIANTS=[CONGESTION_VARIANTS[0],CONGESTION_VARIANTS[1],('scoped',None,'v
 
 
 def read(path):return json.loads(Path(path).read_text(encoding='utf8'))
+def config_file(name):return resolve_config(PROJECT/'configs'/f'{name}.json')
 
 
 def write_new(path,value):
@@ -51,29 +52,30 @@ def replay(directory,data):
 
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--candidate',type=Path,required=True)
+    p.add_argument('--candidate',type=Path,default=PROJECT/'build/router_v3_final',help='Validated Final entry by default; temporary binary only during internal validation')
     p.add_argument('--experiment',required=True)
     p.add_argument('--case',choices=['toy','sample001','open_3d_case001'],action='append')
     p.add_argument('--router-budget',type=int,default=180)
     p.add_argument('--evaluation-budget',type=int,default=120)
     p.add_argument('--no-score',action='store_true')
-    p.add_argument('--suite',choices=['tree','congestion','congestion_scoped'],default='tree')
+    p.add_argument('--suite',choices=['final','tree','congestion','congestion_scoped'],default='final')
     a=p.parse_args(argv);safe_label(a.experiment)
+    backend='wsl' if os.name=='nt' else 'native'
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
     candidate=a.candidate.resolve()
     if not candidate.is_file():p.error('Candidate binary not found')
     cases=a.case or ['toy','sample001','open_3d_case001']
     # Always finish small correctness runs before case001.
     cases=sorted(set(cases),key=['toy','sample001','open_3d_case001'].index)
-    base=read(PROJECT/'configs/default.json')
-    variants=SCOPED_VARIANTS if a.suite=='congestion_scoped' else CONGESTION_VARIANTS if a.suite=='congestion' else VARIANTS
+    base=read(config_file('v3_final' if a.suite=='final' else 'default'))
+    variants=[('v2','build/router_v2','v3_final'),('v3',None,'v3_final')] if a.suite=='final' else SCOPED_VARIANTS if a.suite=='congestion_scoped' else CONGESTION_VARIANTS if a.suite=='congestion' else VARIANTS
     for _,_,config in variants[1:]:
-        values=read(PROJECT/'configs'/f'{config}.json')
+        values=read(config_file(config))
         if {k:v for k,v in values.items() if k not in MODES+CONGESTION_KEYS}!=base:raise RuntimeError('Shared parameters differ: '+config)
         if a.suite.startswith('congestion') and (values.get('net_order_mode') or values.get('tree_route_mode')):raise RuntimeError('Congestion ablation must disable ordering and Tree-Aware')
-    report=OUTPUTS/'reports/v3_algorithm'/a.experiment/'comparisons'
+    report=OUTPUTS/('reports/v3_final' if a.suite=='final' else 'reports/v3_algorithm')/a.experiment/'comparisons'
     report.mkdir(parents=True,exist_ok=False)
-    pinned={str(path):sha256(path) for path in [candidate,PROJECT/'build/router_v2',PROJECT/'configs/default.json',*[PROJECT/'configs'/f'{v[2]}.json' for v in variants[1:]]]}
+    pinned={str(path):sha256(path) for path in [candidate,PROJECT/'build/router_v2',config_file('v3_final' if a.suite=='final' else 'default'),*[config_file(v[2]) for v in variants[1:]]]}
     plan={'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),
           'git_dirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=PROJECT)),
           'cases':cases,'router_budget':a.router_budget,'evaluation_budget':a.evaluation_budget,'pinned':pinned,
@@ -85,8 +87,8 @@ def main(argv=None):
             sequence+=1;label=safe_label(f'v3_{a.experiment}_{variant}')
             directory=OUTPUTS/'runs'/case/label
             if directory.exists():raise RuntimeError('Historical Label already exists: '+label)
-            executable=PROJECT/binary if binary else candidate;config_path=PROJECT/'configs'/f'{config}.json'
-            cmd=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--backend','wsl','--router',str(executable),'--config',str(config_path),'--time-limit',str(a.router_budget)]
+            executable=PROJECT/binary if binary else candidate;config_path=config_file(config)
+            cmd=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--backend',backend,'--router',str(executable),'--config',str(config_path),'--time-limit',str(a.router_budget)]
             if case!='open_3d_case001':cmd+=['--trace']
             prefix=report/f'{sequence:02d}_{case}_{variant}'
             print(f'[{sequence}] {case} / {variant}',flush=True)
@@ -105,9 +107,12 @@ def main(argv=None):
                 data=read(directory/'result.json');row.update(metrics=data['metrics'],cpp_runtime_seconds=data['metrics'].get('runtime_seconds'),net_count=len(data['nets']),layers=len(data['layers']),
                     guide_sha256=sha256(directory/'route.guide'),normalized_json_sha256=normalized(data))
                 row.update(congestion_strategy=data.get('congestion_strategy'),iterations=data.get('iterations'))
+                if a.suite=='final' and variant=='v3':
+                    row['v3_final']=data.get('v3_final')
+                    if not row['v3_final'] or row['v3_final'].get('strategy')!='v3_final_guide_guard':raise RuntimeError('Binary did not execute the fixed V3 Final strategy')
                 if case!='open_3d_case001':row['trace_replay']=replay(directory,data)
                 if not a.no_score:
-                    evaluation=[sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case',case,'--label',label,'--backend','wsl','--engine','latest','--timeout',str(a.evaluation_budget)]
+                    evaluation=[sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case',case,'--label',label,'--backend',backend,'--engine','latest','--timeout',str(a.evaluation_budget)]
                     with prefix.with_suffix('.evaluation.log').open('xb') as log:
                         call=subprocess.run(evaluation,cwd=PROJECT,stdout=log,stderr=subprocess.STDOUT,timeout=a.evaluation_budget+75)
                     inv=read(directory/'official_latest/invocation.json');official=inv.get('report',{})

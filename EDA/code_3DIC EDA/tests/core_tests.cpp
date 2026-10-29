@@ -10,10 +10,12 @@ Design tiny(){Design d;d.name="synthetic";d.version="5.8";d.dbu=1000;d.die={100,
 #include "algorithm_tests.hpp"
 #include "tree_aware_tests.hpp"
 #include "congestion_tests.hpp"
+#include "guide_quality_tests.hpp"
 int main(){try{
  algorithm_tests();
  tree_aware_tests();
  congestion_tests();
+ guide_quality_tests();
  auto j=Json::parse("{\"a\":[1,true,null,\"\\u4e2d\"]}");require(j.at("a").arr[3].string()=="中","JSON unicode");require(Json::parse(j.dump()).at("a").arr.size()==4,"JSON roundtrip");bool failed=false;try{Json::parse("[1,]");}catch(...){failed=true;}require(failed,"Invalid JSON accepted");
  auto check=[](const std::string&o,double ex,double ey){auto[x,y]=orient_point(2,3,10,20,o);require(x==ex&&y==ey,"Orientation transform");};check("N",2,3);check("S",8,17);check("W",17,2);check("E",3,8);check("FN",8,3);check("FS",2,17);check("FW",17,8);check("FE",3,2);
  Design d=tiny();Config c;c.iterations=1;Trace t("",1);Router r(d,c,t);require(r.locate(r.xs,5100)==4,"Boundary GCell");require(r.locate(r.xs,1100)==1,"Half-open GCell");

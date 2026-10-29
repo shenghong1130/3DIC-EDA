@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | V1 | `build/router_v1` | `build/router_baseline` | `024d648dae3fe9051e336b8928502de09bf0654b` | 性能优化前的独立 Router：Prim MST、A*、唯一 TSV、热感知、拥塞重布与 Guide 验证 |
 | V2 | `build/router_v2` | `build/router_optimized` | `a0f8e717ebbeca32ef999c8caf398fec46ba41c2`（version2） | 有界 A* 状态/几何缓存、TSV 热图与候选复用、容量/临时对象优化、增量重布备份和回滚 |
-| V3 | 正式 `build/router_v3` 未构建/登记 | 候选 `build/router_v3_candidate` | 工作区候选，待用户提交 | 可选 Net Ordering、Tree-Aware A*、拥塞重布排序；不冒充正式注册版本 |
+| V3 Final | 唯一入口 `build/router_v3_final`；登记须另行核验 | 旧候选保留作历史证据 | 本轮基点 `410a512`，新修改待用户提交 | 固定配置、V2 安全重布与 Guide 质量保护；发布结果见主目录第 13 章 |
 
 V3 的实现、候选 SHA256、对照数据及局限见主目录 [算法版本迭代说明](../../../算法版本迭代说明.md)。登记 JSON 中的 V3 状态仍描述正式版本；本轮没有手改登记或覆盖 V1/V2。
 
@@ -91,24 +91,32 @@ python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/r
 
 不加 `--router` 的 WSL 命令仍执行根目录 `router`，不会自动替换成最新版本。评分器/UI 仍读取相同 Guide、结果与原有清单字段。参数实验脚本接口保持兼容，不修改旧计划/结果；如果旧批次冻结了 `run_case.py` 哈希，本次新增记录功能会触发其原有版本保护，应使用新 Experiment ID，或在原工具环境续跑，不篡改旧指纹。
 
-## 6. 未来 V3、V4 等版本
+## 6. V3 Final 构建与后续版本
 
-完成算法与必要验证后，由用户保存 Git 源码提交。下面配方只适用于现有三个生产编译单元和原编译选项；如果新增编译单元/依赖/选项，先审查配方，不用手改 JSON 绕过来源检查。
+日常 V3 只使用 `build/router_v3_final + configs/v3_final.json`。旧 V3 配置原样归档到 `configs/archive/`，旧候选仍保留原路径；`run_case.py` 可解析缺失的旧 V3 配置路径到归档文件，既存运行清单不改写。
+
+`validate_v3_final.py` 在临时目录以 `-DGR_V3_FINAL` 编译当前源码，执行核心及工作流测试，再以同一配置实际比较 V2/Final 的 toy、sample001、case001。只有全部官方 PASS、各分项无退步、case001 线长或 Overflow 严格改善，`--apply` 才独占发布唯一 Final 文件。失败保留报告，不发布或留下永久候选；已存在的 Final 不自动覆盖。
+
+```powershell
+python scripts/validate_v3_final.py --experiment final_check_01 --apply
+```
+
+实验 ID 必须未占用；此命令不运行 case003/005。CMake 另提供 `router_v3_final` 目标，但自行构建不代替质量验证。原 `build.sh` 不带 Final 构建标志，仍覆盖根目录研究 Router，不用于发布 Final。
+
+通过本地发布后，仍须由用户保存对应 Git 源码提交，再进行正式登记。不要对未提交的源码声称已完成版本注册：
 
 ```powershell
 $sourceCommit = (git rev-parse HEAD).Trim()
-wsl -d Ubuntu -- bash -lc "cd '/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA' && test ! -e build/router_v3_candidate && g++ -std=c++17 -O3 -DNDEBUG -Wall -Wextra -I include src/main.cpp src/parser.cpp src/router.cpp -o build/router_v3_candidate"
-if ($LASTEXITCODE -ne 0) { throw '编译未成功，不能注册版本' }
-python scripts/manage_router_versions.py --register v3 --source build/router_v3_candidate --git-commit $sourceCommit --description 'V3：填写已完成的算法改动'
+python scripts/manage_router_versions.py --register v3 --final-entry --source build/router_v3_final --git-commit $sourceCommit --description 'V3 Final：固定配置与 Guide 质量保护'
 python scripts/manage_router_versions.py --verify
 ```
 
-注册是显式操作，会独立重建声明提交的生产源码，比对候选二进制 SHA256、验证 `--help` 后，以排他方式复制为 `router_v3`；不更改当前工作区、不执行 Git commit/push、不启动布线。如果候选来自未提交修改、其他编译器/选项、测试/Profile 配方而不能精确重建，拒绝注册，保持 UNKNOWN。如果源码/字节与已登记版本相同，也拒绝把 V2 登记为 V3。版本文件或标签已存在时永不覆盖；本地/文档登记不一致时停止并要求检查。
+`--final-entry` 仅用于 V3：独立提取声明提交的三个生产编译单元，以相同编译选项和 `-DGR_V3_FINAL` 重建，比对 SHA256、验证 `--help`；已有的同一 Final 只核验，不复制覆盖。登记记录 `build_variant=v3_final`，以后 `--verify --rebuild` 复用相同标志。不更改当前工作区、不执行 Git commit/push、不启动布线。未提交源码、不同编译器/选项或不能精确重建时拒绝登记，保持 UNKNOWN。版本标签已存在、文件冲突或登记副本不一致时停止，不覆盖历史版本。
 
-目前未创建 `router_v3`。仅在未来注册成功、`--verify` 通过后，才能使用：
+本地验证发布与正式登记是两个步骤。发布后可以运行下列命令；未登记时 UNKNOWN 是正确状态，不表示文件名已经证明版本身份：
 
 ```powershell
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v3 --label case001_v3_default01 --config configs/default.json --time-limit 600
+python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v3_final --label case001_final_study01 --config configs/v3_final.json --time-limit 600
 ```
 
-V4、V5 使用相同方法替换版本号与候选名。新配置参数不等于新算法版本；同一二进制可搭配多套配置，运行记录分别保存版本、配置和实际预算。不要覆盖旧文件，否则历史记录的哈希和复现实验条件会失效。
+后续 V4/V5 仍使用原有显式版本登记流程；本轮不增加其他永久 V3 配置和候选。具体测试、SHA256、性能及发布判定见主目录 [算法版本迭代说明第 13 章](../../../算法版本迭代说明.md#version-13)。

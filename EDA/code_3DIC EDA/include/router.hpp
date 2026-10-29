@@ -46,6 +46,9 @@ public:
     void occupy(const Route&,int);
     long long overflow()const;
     double wirelength(const Route&)const;
+    double guide_wirelength(const Route&)const;
+    void build_guide_model();
+    int guide_fixed_demand(Id);
     void run();
     void make_guides(Route&)const;
     void validate(const Net&,const Route&)const;
@@ -69,6 +72,11 @@ private:
     bool rerouting_=false;
     std::vector<int> reroute_cooldown_;
     Json last_reroute_diagnostics_;
+    std::map<std::pair<int,int>,std::vector<std::pair<double,double>>> fixed_intervals_;
+    bool guide_model_ready_=false;
+    size_t guide_interval_count_=0;
+    Json final_prune_stats_;
+    void prune_routes();
     struct SearchInfo {double g=0;Id parent=0;};
     struct SearchCell {SearchInfo info;std::uint32_t generation=0;};
     // At most 8192 local states (~192 KiB), never nx*ny*20. Larger
