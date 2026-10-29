@@ -3,6 +3,7 @@ import argparse,json,os,sys,time,uuid,math
 from pathlib import Path
 from common import *
 from diagnostics import atomic_json,progress_tail,json_file,classify,utc
+from router_versions import identify_router,display_path
 
 def optional_hash(path):
     try:return sha256(path)
@@ -32,6 +33,7 @@ def main():
     if target.exists() or output.exists():p.error('Run/output already exists; use a new --label (partial logs are history too)')
     config=a.config.resolve();cfg=json.loads(config.read_text(encoding='utf8'))
     exe=(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe')).resolve()
+    binary_hash=optional_hash(exe);version=identify_router(binary_hash)
     conv=linux_path if a.backend=='wsl' else lambda x:str(Path(x).resolve())
     args=[conv(exe),'--def',conv(paths[0]),'--lef',conv(paths[1]),'--thermal-report',conv(paths[2]),'--output',conv(output),'--metrics',conv(target/'result.json'),'--config',conv(config),'--time-limit',str(a.time_limit)]
     if a.trace:args+=['--trace',conv(target/'trace.jsonl')]
@@ -46,12 +48,23 @@ def main():
     except FileExistsError:p.error('Label was reserved concurrently; use a new --label')
     result={'schema_version':1,'run_id':run_id,'case':case,'dataset':c.get('dataset','custom'),'label':a.label,'started_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'backend':a.backend,
             'inputs':dict(zip(['def','lef','thermal'],map(str,paths))),'input_sha256':dict(zip(['def','lef','thermal'],map(sha256,paths))),'config':cfg,'guide':str(output),'trace':str(target/'trace.jsonl') if a.trace else None,
-            'peak_memory_bytes':None,'official_status':'NOT_EVALUATED','command':cmd,'router_sha256':optional_hash(exe),
+            'peak_memory_bytes':None,'official_status':'NOT_EVALUATED','command':cmd,'router_sha256':binary_hash,
+            **version,'router_binary':display_path(exe),'config_path':display_path(config),
+            'config_overrides':{'time_limit':a.time_limit},'effective_time_limit_seconds':a.time_limit,
             'source_sha256':{str(f.relative_to(PROJECT)):sha256(f) for folder in ['src','include'] for f in (PROJECT/folder).glob('*') if f.is_file()},
             'status':'RUNNING','process_status':'RUNNING','returncode':None,'runtime_seconds':None,
             'monitoring':{'enabled':monitored,'resource_mode':'linux_supervisor' if linux_supervised else 'native_host' if monitored else 'disabled','sample_interval_seconds':a.monitor_interval,'heartbeat_seconds':a.heartbeat_interval,'progress_every':a.progress_every,'stall_after_seconds':a.stall_after},
             'failure_category':None,'failure_evidence':[]}
     atomic_json(target/'run.json',result)
+    # Identity is determined from the selected bytes, never a filename. Persist
+    # it before launching so failures/timeouts keep the same provenance.
+    for key,value in [('Router Version',version['router_version'].upper()),('Router Binary',result['router_binary']),
+                      ('Router SHA256',binary_hash or 'UNAVAILABLE'),('Version Status',version['router_version_status']),
+                      ('Version Detail',version['router_version_reason']),('Config File',result['config_path']),
+                      ('Config Params',json.dumps(cfg,ensure_ascii=False,sort_keys=True)),
+                      ('CLI Overrides',json.dumps(result['config_overrides'])),
+                      ('Case',case),('Label',a.label),('Results',display_path(target))]:
+        print(f'{key:15}: {value}',flush=True)
     if c.get('warning'):print(c['warning'],file=sys.stderr)
     env=os.environ.copy()
     if monitored and not linux_supervised:env['GR_EXTERNAL_RESOURCE_MONITOR']='1'

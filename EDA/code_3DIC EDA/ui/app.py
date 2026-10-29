@@ -24,6 +24,8 @@ def attach_reports(r,d):
         else:
             report=d/('official_'+engine)/'evaluation_report.json'
             if report.exists():r['official_'+engine]={'status':'REPORT_'+load(report).get('status','UNKNOWN')+' / invocation incomplete','report':load(report),'warning':'官方报告存在，但本地调用元数据未完整写出；不能据此证明进程与资源验证完成。'}
+    # Scoring no longer rewrites immutable Router manifests.
+    if 'official_latest' in r:r['run']['official_status']=r['official_latest'].get('status','NOT_EVALUATED')
     r['router_log']=tail_text(d/'router.log');return r
 
 def store(key):
@@ -32,7 +34,9 @@ def load(path):return json.loads(Path(path).read_text(encoding='utf8'))
 def runs():
     out={}
     for p in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
-        r=load(p);key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':result.is_file() and result.stat().st_size>LARGE_BYTES}
+        r=load(p);inv=p.parent/'official_latest/invocation.json'
+        if inv.is_file():r['official_status']=load(inv).get('status','NOT_EVALUATED')
+        key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':result.is_file() and result.stat().st_size>LARGE_BYTES}
     return out
 def selected(run):
     if len(run.split('/'))!=2:raise ValueError('Unknown run')

@@ -61,26 +61,26 @@ def cgroup_snapshot(directory):
     out['cgroup_oom_kill']=_numbers(directory/'memory.events').get('oom_kill')
     return out
 
-RESOURCE_FIELDS=['timestamp_utc','elapsed_seconds','pid','process_state','rss_bytes','router_peak_rss_bytes','mem_available_bytes','swap_free_bytes','cgroup_current_bytes','cgroup_limit_bytes','cgroup_limit_unlimited','cgroup_oom_kill','source']
+RESOURCE_FIELDS=['timestamp_utc','elapsed_seconds','pid','process_state','rss_bytes','router_peak_rss_bytes','process_peak_rss_bytes','mem_available_bytes','swap_free_bytes','cgroup_current_bytes','cgroup_limit_bytes','cgroup_limit_unlimited','cgroup_oom_kill','source']
 
 class ResourceMonitor:
-    def __init__(self,path,pid):
-        self.pid=pid;self.start=time.monotonic();self.directory=cgroup_dir(pid) if sys.platform.startswith('linux') else None
+    def __init__(self,path,pid,role='router'):
+        self.pid=pid;self.role=role;self.start=time.monotonic();self.directory=cgroup_dir(pid) if sys.platform.startswith('linux') else None
         self.initial=cgroup_snapshot(self.directory);self.last={};self.peak=None
         self.file=Path(path).open('x',encoding='utf8',newline='')
         self.writer=csv.DictWriter(self.file,fieldnames=RESOURCE_FIELDS);self.writer.writeheader();self.file.flush()
     def sample(self):
         row={key:None for key in RESOURCE_FIELDS}
-        row.update(timestamp_utc=utc(),elapsed_seconds=time.monotonic()-self.start,pid=self.pid,source='proc_router_pid' if sys.platform.startswith('linux') else 'linux_metrics_unsupported_on_host')
+        row.update(timestamp_utc=utc(),elapsed_seconds=time.monotonic()-self.start,pid=self.pid,source='proc_'+self.role+'_pid' if sys.platform.startswith('linux') else 'linux_metrics_unsupported_on_host')
         if sys.platform.startswith('linux'):
             status=_numbers(Path('/proc',str(self.pid),'status'));mem=_numbers('/proc/meminfo')
-            row.update(rss_bytes=status.get('VmRSS'),router_peak_rss_bytes=status.get('VmHWM'),mem_available_bytes=mem.get('MemAvailable'),swap_free_bytes=mem.get('SwapFree'))
+            row.update(rss_bytes=status.get('VmRSS'),router_peak_rss_bytes=status.get('VmHWM') if self.role=='router' else None,process_peak_rss_bytes=status.get('VmHWM'),mem_available_bytes=mem.get('MemAvailable'),swap_free_bytes=mem.get('SwapFree'))
             try:
                 state=next(line for line in Path('/proc',str(self.pid),'status').read_text().splitlines() if line.startswith('State:'))
                 row['process_state']=state.partition(':')[2].strip()
             except (OSError,StopIteration):pass
             row.update(cgroup_snapshot(self.directory))
-        peak=row['router_peak_rss_bytes']
+        peak=row['process_peak_rss_bytes']
         if peak is not None:self.peak=max(self.peak or 0,peak)
         self.writer.writerow({k:('N/A' if v is None else v) for k,v in row.items()});self.file.flush();self.last=row
         return row
@@ -88,7 +88,7 @@ class ResourceMonitor:
         final=cgroup_snapshot(self.directory)
         initial=self.initial.get('cgroup_oom_kill');end=final.get('cgroup_oom_kill')
         self.file.close()
-        return {'observed_router_peak_rss_bytes':self.peak,'last_sample':self.last,'cgroup_oom_kill_delta':end-initial if end is not None and initial is not None else None,'cgroup_scope':'shared_or_unknown; counters do not identify victim PID'}
+        return {'observed_'+self.role+'_peak_rss_bytes':self.peak,'last_sample':self.last,'cgroup_oom_kill_initial':initial,'cgroup_oom_kill_final':end,'cgroup_oom_kill_delta':end-initial if end is not None and initial is not None else None,'cgroup_scope':'shared_or_unknown; counters do not identify victim PID'}
 
 def classify(result,progress,supervisor,run_id,backend,success):
     evidence=[];error=progress.get('error',{})
@@ -127,8 +127,8 @@ def classify(result,progress,supervisor,run_id,backend,success):
 
 class HostMonitor:
     """Runs in the launching Python process. Never starts WSL probes."""
-    def __init__(self,directory,interval=5,stall_after=30,lease_seconds=60):
-        self.directory=Path(directory);self.interval=interval;self.stall_after=stall_after
+    def __init__(self,directory,interval=5,stall_after=30,lease_seconds=60,role='router'):
+        self.directory=Path(directory);self.interval=interval;self.stall_after=stall_after;self.role=role
         self.start=time.monotonic();self.next=0;self.pid=None;self.errors=[];self.native_resources=None
         self.file=(self.directory/'host_monitor.jsonl').open('x',encoding='utf8',newline='\n')
         self.tick('LAUNCHING',force=True)
@@ -139,12 +139,17 @@ class HostMonitor:
         if not force and now<self.next:return
         self.next=now+self.interval
         try:
-            path=self.directory/'progress.jsonl'
+            path=self.directory/('evaluator.log' if self.role=='evaluator' else 'progress.jsonl')
             age=max(0,time.time()-path.stat().st_mtime) if path.exists() else None
             elapsed=now-self.start
             item={'timestamp_utc':utc(),'elapsed_seconds':elapsed,'subprocess_pid':self.pid,'subprocess_status':state,'returncode':returncode,
                   'last_progress_age_seconds':age,'progress_status':'NO_PROGRESS' if (age if age is not None else elapsed)>self.stall_after else 'RECENT' if age is not None else 'WAITING_FOR_ROUTER',
                   'router_liveness':'UNKNOWN_TO_HOST; recent file writes do not prove algorithm progress'}
+            if self.role=='evaluator':
+                item.pop('router_liveness')
+                item.update(process_role='evaluator',activity_source='evaluator.log mtime; may be buffered',
+                            evaluator_liveness='UNKNOWN_TO_HOST; log activity is not proof of forward progress')
+                if item['progress_status']=='WAITING_FOR_ROUTER':item['progress_status']='WAITING_FOR_EVALUATOR'
             self.file.write(json.dumps(item,ensure_ascii=False)+'\n');self.file.flush()
             atomic_json(self.directory/'host_heartbeat.json',{'timestamp_utc':utc(),'elapsed_seconds':elapsed})
             if self.native_resources:self.native_resources.sample()

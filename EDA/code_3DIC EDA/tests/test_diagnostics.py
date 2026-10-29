@@ -122,15 +122,15 @@ raise SystemExit(s.main())
             self.assertEqual(record['router_signal'],15);self.assertEqual(record['router_returncode'],-15)
             self.assertEqual(run.returncode,143)
             self.assertFalse(Path('/proc',str(record['router_pid'])).exists())
-    def supervised(self,code,timeout=False,lease=60):
+    def supervised(self,code,timeout=False,lease=60,kind='router'):
         with tempfile.TemporaryDirectory(prefix='router_monitor_') as tmp:
             d=Path(tmp);atomic_json(d/'host_heartbeat.json',{'alive':True})
-            args=[sys.executable,str(PROJECT/'scripts/linux_supervisor.py'),'--directory',str(d),'--run-id','test','--interval','.05','--lease-seconds',str(lease),'--',sys.executable,'-c',code]
+            args=[sys.executable,str(PROJECT/'scripts/linux_supervisor.py'),'--directory',str(d),'--run-id','test','--interval','.05','--lease-seconds',str(lease),'--process-kind',kind,'--',sys.executable,'-c',code]
             if timeout:args=['timeout','--signal=TERM','--kill-after=5s','.4s',*args]
             run=subprocess.run(args,capture_output=True,timeout=10)
             deadline=time.monotonic()+3
-            while not (d/'router_exit.json').exists() and time.monotonic()<deadline:time.sleep(.05)
-            record=json.loads((d/'router_exit.json').read_text())
+            while not (d/(kind+'_exit.json')).exists() and time.monotonic()<deadline:time.sleep(.05)
+            record=json.loads((d/(kind+'_exit.json')).read_text())
             self.assertTrue((d/'resource_monitor.csv').is_file())
             return run,record
     def test_real_sigkill_is_not_automatically_oom(self):
@@ -143,6 +143,11 @@ raise SystemExit(s.main())
         self.assertEqual(run.returncode,124);self.assertEqual(record['termination_reason'],'wrapper_signal')
         category,_=classify({'process_status':'FINISHED','returncode':124},{},record,'test','native',False)
         self.assertEqual(category,'TIMEOUT')
+    def test_evaluator_gnu_timeout_signal_provenance(self):
+        from evaluator_diagnostics import classify_evaluator
+        run,record=self.supervised('import time;time.sleep(30)',timeout=True,kind='evaluator')
+        self.assertEqual(record['evaluator_signal'],15)
+        self.assertEqual(classify_evaluator({'process_status':'FINISHED','returncode':run.returncode},record,'test',{},'MISSING','native')[0],'TIMEOUT')
     def test_proc_metrics_and_cgroup_unknowns(self):
         with tempfile.TemporaryDirectory() as tmp:
             monitor=ResourceMonitor(Path(tmp)/'resource.csv',os.getpid());row=monitor.sample();monitor.finish()
@@ -159,4 +164,197 @@ raise SystemExit(s.main())
         self.assertFalse(Path('/proc',str(record['router_pid'])).exists())
         category,_=classify({'process_status':'FINISHED','returncode':run.returncode},{},record,'test','wsl',False)
         self.assertEqual(category,'UNKNOWN')
+class EvaluatorEvidenceTests(unittest.TestCase):
+    def test_evaluator_categories_require_process_evidence(self):
+        from evaluator_diagnostics import classify_evaluator
+        base={'run_id':'test','evaluator_returncode':0}
+        host={'process_status':'FINISHED','returncode':0}
+        def category(record=None,report=None,state='MISSING',raw=None,after=None):
+            return classify_evaluator(raw or host,record or {},'test',report or {},state,'wsl',after)[0]
+        for rc in (1,124,137):
+            self.assertEqual(category(raw={**host,'returncode':rc}),'UNKNOWN')
+        self.assertEqual(category(base),'REPORT_MISSING')
+        self.assertEqual(category(base,state='INVALID'),'REPORT_INVALID')
+        self.assertEqual(category(base,{'status':'PASS'},'PRESENT'),'SUCCESS')
+        self.assertEqual(category({**base,'evaluator_returncode':1}),'EVALUATOR_EXIT_ERROR')
+        self.assertEqual(category({**base,'evaluator_returncode':1},{'status':'FAIL'},'PRESENT'),'OFFICIAL_FAIL')
+        for sig in (9,15,11):
+            r={**base,'evaluator_returncode':-sig,'evaluator_signal':sig}
+            self.assertEqual(category(r),'EVALUATOR_SIGNAL')
+        self.assertEqual(category({**base,'evaluator_returncode':-9,'evaluator_signal':9,'resource_summary':{'cgroup_oom_kill_delta':1}}),'OOM_SUSPECTED')
+        self.assertEqual(category({**base,'oom_confirmed_for_pid':True}),'OOM_CONFIRMED')
+        self.assertEqual(category({**base,'run_id':'old'}),'UNKNOWN')
+        self.assertEqual(category({**base,'evaluator_returncode':None,'boot_id':'before'},after={'boot_id':'after'}),'WSL_RESTART_OBSERVED')
+        self.assertEqual(category(base,raw={**host,'returncode':1}),'WSL_EXIT_ERROR')
+        self.assertEqual(category(raw={**host,'process_status':'TIMEOUT'}),'TIMEOUT')
+        self.assertEqual(category(raw={**host,'process_status':'INTERRUPTED'}),'INTERRUPTED')
+        self.assertEqual(category(raw={**host,'process_status':'LAUNCH_ERROR'}),'LAUNCH_ERROR')
+        r={**base,'evaluator_returncode':-15,'evaluator_signal':15,'termination_reason':'wrapper_signal','termination_requested_signal':15}
+        self.assertEqual(category(r,raw={**host,'returncode':124}),'TIMEOUT')
+
+    def test_bounded_mixed_log_and_report_parse(self):
+        from evaluator_diagnostics import log_tail,read_report
+        with tempfile.TemporaryDirectory(dir=PROJECT) as tmp:
+            d=Path(tmp);p=d/'mixed.log'
+            raw='wsl: \u8b66\u544a proxy\r\n'.encode('utf-16le')+'\u8bc4\u5206 congestion\n'.encode()
+            p.write_bytes(raw)
+            text=log_tail(p)
+            self.assertIn('wsl: \u8b66\u544a proxy',text);self.assertIn('\u8bc4\u5206 congestion',text)
+            self.assertNotIn('\x00',text);self.assertEqual(p.read_bytes(),raw)
+            p.write_bytes(b'x'*100000+b'tail');self.assertEqual(log_tail(p,16),'x'*12+'tail')
+            report=d/'report.json';self.assertEqual(read_report(report)[1],'MISSING')
+            for data in ('{','[]','{}'):
+                report.write_text(data);self.assertTrue(read_report(report)[1].startswith('INVALID'))
+
+    def test_vm_loss_recovers_only_flushed_resource_samples(self):
+        from evaluator_diagnostics import resource_tail
+        with tempfile.TemporaryDirectory(dir=PROJECT) as tmp:
+            p=Path(tmp)/'resource.csv'
+            p.write_bytes(b'pid,process_peak_rss_bytes,source\n'+b'42,123,proc_evaluator_pid\n'*10000+b'42,456,proc_evaluator_pid\n42,999999,proc_eval')
+            data=resource_tail(p,1024)
+            self.assertEqual(data['observed_peak_rss_bytes'],456)
+            self.assertEqual(data['last_sample']['pid'],'42')
+
+
+class EvaluatorWorkflowTests(unittest.TestCase):
+    """Synthetic evaluator only. Every fixture/attempt belongs to TemporaryDirectory."""
+    def setUp(self):
+        from unittest import mock
+        import evaluate
+        self.e=evaluate;self.mock=mock
+        self.tmp=tempfile.TemporaryDirectory(prefix='evaluator_verify_',dir=PROJECT)
+        self.addCleanup(self.tmp.cleanup)
+        self.d=Path(self.tmp.name)/'\u6d4b\u8bd5 path';self.d.mkdir()
+        self.target=self.d/'run';self.target.mkdir()
+        self.guide=self.target/'route.guide';self.guide.write_text('synthetic guide; not an official result')
+        (self.target/'result.json').write_text('{"fixture":true}')
+        inputs={}
+        for key in ('def','lef','thermal'):
+            path=self.d/('input.'+key);path.write_text('synthetic '+key);inputs[key]=str(path)
+        from common import sha256
+        self.run={'status':'ROUTED','returncode':0,'guide':str(self.guide),'inputs':inputs,
+                  'input_sha256':{k:sha256(v) for k,v in inputs.items()}}
+        atomic_json(self.target/'run.json',self.run)
+        self.old=self.target/'official_latest';self.old.mkdir();(self.old/'marker').write_text('historical failure: keep')
+        self.protected={p:p.read_bytes() for p in self.target.rglob('*') if p.is_file()}
+        tool=self.d/'\u8bc4\u4f30\u7a0b\u5e8f';tool.mkdir()
+        for name in ('score','POST9.dat','POWV9.dat'):(tool/name).write_text('synthetic evaluator')
+        for name,value in [('EDA',self.d),('run_dir',lambda *args:self.target),('wsl_snapshot',lambda:{}),('windows_events',lambda *args:{})]:
+            patch=mock.patch.object(evaluate,name,value);patch.start();self.addCleanup(patch.stop)
+        self.output=io.StringIO()
+
+    def tearDown(self):
+        for path,data in self.protected.items():self.assertEqual(path.read_bytes(),data,str(path))
+
+    def arguments(self,attempt='diagnostic',backend='wsl'):
+        return ['--case','toy','--label','existing','--backend',backend,'--timeout','3','--attempt',attempt]
+
+    def invoke_mock(self,report=None,code=0,score_code=0,exit_record=True):
+        def process(cmd,log,timeout,**kwargs):
+            directory=Path(log).parent;run_id=json.loads((directory/'invocation.json').read_text(encoding='utf8'))['run_id']
+            Path(log).write_bytes(b'mock evaluator, not an official score\n')
+            (directory/'resource_monitor.csv').write_text('pid,process_peak_rss_bytes,source\n42,789,proc_evaluator_pid\n',encoding='utf8')
+            if report is not None:atomic_json(directory/'evaluation_report.json',report)
+            if exit_record:atomic_json(directory/'evaluator_exit.json',{'run_id':run_id,'evaluator_returncode':score_code,'child_peak_rss_bytes':12345})
+            self.assertIn('--process-kind evaluator',cmd[-1])
+            self.assertIn("'",cmd[-1]);self.assertEqual(kwargs['process_role'],'evaluator')
+            return {'process_status':'FINISHED','returncode':code}
+        with self.mock.patch.object(self.e,'timed_process',process),contextlib.redirect_stdout(self.output):
+            rc=self.e.main(self.arguments())
+        return rc,json.loads((self.target/'official_latest_attempts/diagnostic/invocation.json').read_text(encoding='utf8'))
+
+    def test_mock_pass_and_immutable_history(self):
+        rc,inv=self.invoke_mock({'status':'PASS'})
+        self.assertEqual(rc,0);self.assertEqual(inv['status'],'PASS');self.assertEqual(inv['peak_memory_bytes'],12345)
+        self.assertEqual(inv['evaluator_returncode'],0);self.assertEqual(inv['returncode_layer'],'wsl.exe')
+
+    def test_mock_official_fail_requires_report(self):
+        rc,inv=self.invoke_mock({'status':'FAIL'},1,1)
+        self.assertEqual(rc,1);self.assertEqual(inv['official_status'],'FAIL');self.assertEqual(inv['failure_category'],'OFFICIAL_FAIL')
+
+    def test_mock_transport_loss_is_not_official_fail(self):
+        rc,inv=self.invoke_mock(code=1,exit_record=False)
+        self.assertEqual(rc,1);self.assertEqual(inv['status'],'ERROR');self.assertEqual(inv['official_status'],'NOT_EVALUATED')
+        self.assertEqual(inv['failure_category'],'UNKNOWN');self.assertEqual(inv['report'],{})
+        self.assertEqual(inv['peak_memory_bytes'],789);self.assertIn('lower bound',inv['peak_memory_source'])
+
+    def test_missing_report_after_clean_exit(self):
+        rc,inv=self.invoke_mock()
+        self.assertEqual(inv['failure_category'],'REPORT_MISSING');self.assertEqual(inv['status'],'ERROR')
+
+    def test_existing_attempt_and_default_directory_refused(self):
+        self.invoke_mock({'status':'PASS'})
+        before=(self.target/'official_latest_attempts/diagnostic/invocation.json').read_bytes()
+        for args in (self.arguments(),self.arguments()[:-2]):
+            with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit) as error:self.e.main(args)
+            self.assertEqual(error.exception.code,2)
+        self.assertEqual((self.target/'official_latest_attempts/diagnostic/invocation.json').read_bytes(),before)
+
+    def test_changed_input_refused_before_attempt_created(self):
+        Path(self.run['inputs']['def']).write_text('changed')
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):self.e.main(self.arguments())
+        self.assertFalse((self.target/'official_latest_attempts').exists())
+
+    def test_ui_reads_verdict_without_mutating_manifest(self):
+        import importlib.util
+        sys.path.insert(0,str(PROJECT/'ui'))
+        spec=importlib.util.spec_from_file_location('evaluator_ui_compat',PROJECT/'ui/app.py')
+        ui=importlib.util.module_from_spec(spec);spec.loader.exec_module(ui)
+        root=self.d/'ui_outputs';d=root/'runs/toy/existing';d.mkdir(parents=True)
+        manifest=d/'run.json'
+        atomic_json(manifest,{**self.run,'case':'toy','label':'existing','official_status':'NOT_EVALUATED'})
+        before=manifest.read_bytes();(d/'official_latest').mkdir()
+        atomic_json(d/'official_latest/invocation.json',{'status':'PASS','report':{'status':'PASS'}})
+        with self.mock.patch.object(ui,'OUTPUTS',root):
+            self.assertEqual(ui.runs()['toy/existing']['official_status'],'PASS')
+            self.assertEqual(ui.attach_reports({},d)['run']['official_status'],'PASS')
+        self.assertEqual(manifest.read_bytes(),before)
+
+    @unittest.skipUnless(os.name=='nt' and os.environ.get('RUN_WSL_EVALUATOR_TESTS')=='1','opt-in Windows -> WSL mock integration')
+    def test_windows_to_wsl_unicode_paths_and_real_supervision(self):
+        tool=self.d/'\u8bc4\u4f30\u7a0b\u5e8f/score'
+        tool.write_bytes(b'#!/usr/bin/python3\nimport sys,time\nfrom pathlib import Path\n'
+                         b'out=sys.argv[sys.argv.index("--output-dir")+1]\n'
+                         b'print("synthetic evaluator only",flush=True)\ntime.sleep(.4)\n'
+                         b'Path(out).joinpath("evaluation_report.json").write_text(\'{"status":"PASS"}\')\n')
+        with contextlib.redirect_stdout(self.output):rc=self.e.main(self.arguments('wsl_real'))
+        directory=self.target/'official_latest_attempts/wsl_real'
+        inv=json.loads((directory/'invocation.json').read_text(encoding='utf8'))
+        self.assertEqual(rc,0,inv);self.assertEqual(inv['evaluator_returncode'],0)
+        self.assertEqual(inv['failure_category'],'SUCCESS');self.assertGreater(inv['peak_memory_bytes'],0)
+        self.assertTrue(inv['supervisor']['boot_id']);self.assertGreater((directory/'resource_monitor.csv').stat().st_size,0)
+        records=[json.loads(line) for line in (directory/'host_monitor.jsonl').read_text(encoding='utf8').splitlines()]
+        self.assertTrue(all(row['process_role']=='evaluator' for row in records))
+
+    @unittest.skipUnless(sys.platform.startswith('linux'),'actual Linux evaluator subprocess chain')
+    def test_real_linux_mock_signals_timeout_and_resource_collection(self):
+        tool=self.d/'\u8bc4\u4f30\u7a0b\u5e8f/score'
+        scenarios=[('pass',"Path(out).joinpath('evaluation_report.json').write_text('{\"status\":\"PASS\"}')",'SUCCESS',0),
+                   ('fail',"Path(out).joinpath('evaluation_report.json').write_text('{\"status\":\"FAIL\"}');sys.exit(1)",'OFFICIAL_FAIL',1),
+                   ('nonzero','sys.exit(23)','EVALUATOR_EXIT_ERROR',23),
+                   ('term','os.kill(os.getpid(),signal.SIGTERM)','EVALUATOR_SIGNAL',-15),
+                   ('kill','os.kill(os.getpid(),signal.SIGKILL)','EVALUATOR_SIGNAL',-9),
+                   ('missing','pass','REPORT_MISSING',0),
+                   ('timeout','time.sleep(30)','TIMEOUT',-15),
+                   ('forced','signal.signal(signal.SIGTERM,signal.SIG_IGN);time.sleep(30)','TIMEOUT',-9)]
+        for name,body,category,score_code in scenarios:
+            with self.subTest(name=name):
+                tool.write_text('#!'+sys.executable+'\nimport os,signal,sys,time\nfrom pathlib import Path\nout=sys.argv[sys.argv.index("--output-dir")+1]\n'+body+'\n')
+                tool.chmod(0o700)
+                args=self.arguments(name,'native')
+                args[args.index('--timeout')+1]='.8' if name in ('timeout','forced') else '5'
+                with contextlib.redirect_stdout(self.output):rc=self.e.main(args)
+                directory=self.target/'official_latest_attempts'/name
+                inv=json.loads((directory/'invocation.json').read_text(encoding='utf8'))
+                self.assertEqual(inv['failure_category'],category,inv)
+                self.assertEqual(inv['evaluator_returncode'],score_code,inv)
+                self.assertEqual(rc,0 if name=='pass' else 1)
+                if category=='TIMEOUT':self.assertEqual(inv['process_status'],'TIMEOUT')
+                self.assertGreater(inv['peak_memory_bytes'],0)
+                self.assertTrue(inv['supervisor']['boot_id'])
+                self.assertFalse(Path('/proc',str(inv['supervisor']['evaluator_pid'])).exists())
+                self.assertGreater((directory/'resource_monitor.csv').stat().st_size,0)
+                self.assertGreater((directory/'host_monitor.jsonl').stat().st_size,0)
+                self.assertGreater((directory/'resource_usage.txt').stat().st_size,0)
+
 if __name__=='__main__':unittest.main()

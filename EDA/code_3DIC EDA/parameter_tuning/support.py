@@ -188,7 +188,7 @@ def fingerprints(case, backend, engine, router, probe=True):
     tool = EDA / ('评估程序' if engine == 'latest' else 'eda-elite-challenge/eda-elite-challenge2026/evaluator')
     tools = ([tool / n for n in ['score','POST9.dat','POWV9.dat']] if engine == 'latest' else
         [p for p in tool.iterdir() if p.suffix in {'.py','.so','.dat'} or '.so.' in p.name])
-    scripts = [PROJECT/'scripts'/n for n in ['run_case.py','evaluate.py','common.py','diagnostics.py','linux_supervisor.py']]
+    scripts = [PROJECT/'scripts'/n for n in ['run_case.py','evaluate.py','common.py','diagnostics.py','evaluator_diagnostics.py','linux_supervisor.py']]
     sources = sorted(p for folder in ['src','include'] for p in (PROJECT/folder).glob('*') if p.is_file())
     files = [Path(source[k]) for k in ['def','lef','thermal']] + [Path(router), PROJECT/'configs/default.json', *tools, *scripts, *sources, PROJECT/'ui/result_store.py']
     try:

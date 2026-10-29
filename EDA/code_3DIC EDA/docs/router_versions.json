@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "versions": {
+    "v1": {
+      "path": "build/router_v1",
+      "source": "build/router_baseline",
+      "git_commit": "024d648dae3fe9051e336b8928502de09bf0654b",
+      "sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+      "description": "V1: original independent C++ Router before phase-two performance changes",
+      "verified": true,
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "compiler_target": "x86_64-linux-gnu",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/candidate"
+      ],
+      "verification": {
+        "method": "independent_git_rebuild_sha256_and_cli_help",
+        "rebuilt_sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+        "source_sha256": {
+          "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+          "include/model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+          "include/progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+          "include/router.hpp": "488423392e343662868a730483a16cef6e2e75a91dcebe8988c9a5479ffec05b",
+          "src/main.cpp": "382ac8cddd31c69d50540f42bdeed15755e3c8e5bc20a47a330fabe2e1247442",
+          "src/parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+          "src/router.cpp": "bc1e3ce584e5e55a30b7352586c2edcba69c2144c7532fa5515a1f507e3939a6"
+        },
+        "cli_help_returncode": 0,
+        "cli_required_options_verified": true,
+        "cli_help": "router --def input.def --lef input.lef --thermal-report thermal.json --output output.guide [--metrics result.json] [--trace trace.jsonl] [--config config.json] [--time-limit seconds] [--iterations N] [--progress-dir directory] [--progress-every 1000] [--monitor-interval 5] [--heartbeat-interval 10]\n",
+        "build_stdout": "",
+        "build_stderr": "w\u0000s\u0000l\u0000:\u0000 \u0000A\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000y\u0000 \u0000c\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000a\u0000t\u0000i\u0000o\u0000n\u0000 \u0000w\u0000a\u0000s\u0000 \u0000d\u0000e\u0000t\u0000e\u0000c\u0000t\u0000e\u0000d\u0000 \u0000b\u0000u\u0000t\u0000 \u0000n\u0000o\u0000t\u0000 \u0000m\u0000i\u0000r\u0000r\u0000o\u0000r\u0000e\u0000d\u0000 \u0000i\u0000n\u0000t\u0000o\u0000 \u0000W\u0000S\u0000L\u0000.\u0000 \u0000W\u0000S\u0000L\u0000 \u0000i\u0000n\u0000 \u0000N\u0000A\u0000T\u0000 \u0000m\u0000o\u0000d\u0000e\u0000 \u0000d\u0000o\u0000e\u0000s\u0000 \u0000n\u0000o\u0000t\u0000 \u0000s\u0000u\u0000p\u0000p\u0000o\u0000r\u0000t\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000i\u0000e\u0000s\u0000.\u0000\r\u0000\n\u0000",
+        "verified_at": "2026-10-28T19:36:20.649232+00:00"
+      }
+    },
+    "v2": {
+      "path": "build/router_v2",
+      "source": "build/router_optimized",
+      "git_commit": "a0f8e717ebbeca32ef999c8caf398fec46ba41c2",
+      "sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+      "description": "V2: bounded A-star caches, thermal/TSV reuse, reduced temporary memory and incremental reroute rollback",
+      "verified": true,
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "compiler_target": "x86_64-linux-gnu",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/candidate"
+      ],
+      "verification": {
+        "method": "independent_git_rebuild_sha256_and_cli_help",
+        "rebuilt_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+        "source_sha256": {
+          "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+          "include/model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+          "include/progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+          "include/router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112",
+          "src/main.cpp": "382ac8cddd31c69d50540f42bdeed15755e3c8e5bc20a47a330fabe2e1247442",
+          "src/parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+          "src/router.cpp": "88015107874bef961182d44462572f7bcb58d83fc2b38d7669b1dff9ba985a6d"
+        },
+        "cli_help_returncode": 0,
+        "cli_required_options_verified": true,
+        "cli_help": "router --def input.def --lef input.lef --thermal-report thermal.json --output output.guide [--metrics result.json] [--trace trace.jsonl] [--config config.json] [--time-limit seconds] [--iterations N] [--progress-dir directory] [--progress-every 1000] [--monitor-interval 5] [--heartbeat-interval 10]\n",
+        "build_stdout": "",
+        "build_stderr": "w\u0000s\u0000l\u0000:\u0000 \u0000A\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000y\u0000 \u0000c\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000a\u0000t\u0000i\u0000o\u0000n\u0000 \u0000w\u0000a\u0000s\u0000 \u0000d\u0000e\u0000t\u0000e\u0000c\u0000t\u0000e\u0000d\u0000 \u0000b\u0000u\u0000t\u0000 \u0000n\u0000o\u0000t\u0000 \u0000m\u0000i\u0000r\u0000r\u0000o\u0000r\u0000e\u0000d\u0000 \u0000i\u0000n\u0000t\u0000o\u0000 \u0000W\u0000S\u0000L\u0000.\u0000 \u0000W\u0000S\u0000L\u0000 \u0000i\u0000n\u0000 \u0000N\u0000A\u0000T\u0000 \u0000m\u0000o\u0000d\u0000e\u0000 \u0000d\u0000o\u0000e\u0000s\u0000 \u0000n\u0000o\u0000t\u0000 \u0000s\u0000u\u0000p\u0000p\u0000o\u0000r\u0000t\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000i\u0000e\u0000s\u0000.\u0000\r\u0000\n\u0000",
+        "verified_at": "2026-10-28T19:37:10.782026+00:00"
+      }
+    }
+  }
+}
