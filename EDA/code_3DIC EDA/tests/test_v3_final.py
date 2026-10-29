@@ -34,11 +34,14 @@ class FinalEntry(unittest.TestCase):
         f=self.fixture;config=f.dir/'final.json';config.write_text(json.dumps({'wire':1,'via':1,'thermal':3}),encoding='utf8')
         run=f.run_router('--config',str(config));self.assertEqual(run.returncode,0,run.stderr.decode(errors='replace'))
         data=json.loads((f.dir/'result.json').read_text(encoding='utf8'))
-        self.assertEqual(data['v3_final']['strategy'],'v3_final_guide_guard')
+        self.assertEqual(data['v3_final']['strategy'],'v3_steiner_negotiated_global')
+        self.assertEqual(data['v3_algorithm']['stage'],3)
+        self.assertEqual(data['v3_algorithm']['generation'],'steiner_negotiated_tsv_research')
+        self.assertGreater(data['v3_algorithm']['counters'].get('steiner_route_attempts',0),0)
         self.assertEqual(data['algorithm']['tree_route_mode'],0)
         self.assertEqual(data['algorithm']['net_order_mode'],0)
         self.assertEqual(data['congestion_strategy']['reroute_policy_mode'],0)
-        self.assertEqual(data['v3_final']['optimization'],'v2_safe_reroute_then_occupied_graph_prune')
+        self.assertEqual(data['v3_final']['optimization'],'bounded_hanan_exact_target_price_tsv')
         config.write_text('{"tree_route_mode":1}',encoding='utf8')
         self.assertNotEqual(f.run_router('--config',str(config)).returncode,0)
 
@@ -54,3 +57,13 @@ class ReleaseGate(unittest.TestCase):
         rows[-1]['wirelength_score']=49;self.assertFalse(quality_gate(rows)[0]);rows[-1]['wirelength_score']=50
         rows[-1]['official_overflow']=3;self.assertFalse(quality_gate(rows)[0]);rows[-1]['official_overflow']=2
         rows[-1]['official_status']='NOT_EVALUATED';self.assertFalse(quality_gate(rows)[0])
+
+    def test_existing_final_is_a_required_control_when_present(self):
+        from validate_v3_final import quality_gate
+        rows=[]
+        for case in ['toy','sample001','open_3d_case001']:
+            for variant in ['v2','old_final','v3']:
+                rows.append(dict(case=case,variant=variant,status='ROUTED',official_status='PASS',wirelength_dbu=10 if variant=='v2' else 9,official_overflow=2,wirelength_score=50,congestion_score=50,thermal_score=50))
+        self.assertTrue(quality_gate(rows)[0])
+        rows[-2]['wirelength_dbu']=8
+        self.assertFalse(quality_gate(rows)[0])

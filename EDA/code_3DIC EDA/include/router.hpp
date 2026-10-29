@@ -4,6 +4,8 @@
 #include <functional>
 #include <array>
 #include <unordered_set>
+#include <memory>
+#include "v3_algorithms.hpp"
 namespace gr {
 struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("Router time budget exceeded") {}};
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;};
@@ -40,6 +42,7 @@ public:
     void build_fixed_demand();
     std::vector<Id> search(Id,Id,int,int,bool);
     std::vector<Id> search_to_tree(Id,const std::unordered_set<Id>&,int,int,bool);
+    std::vector<Id> search_multi(Id,const std::unordered_set<Id>&,int,int,bool);
     std::vector<std::pair<int,int>> mst(const std::vector<Id>&)const;
     Id select_tsv(const Net&);
     Route route(const Net&);
@@ -47,6 +50,7 @@ public:
     long long overflow()const;
     double wirelength(const Route&)const;
     double guide_wirelength(const Route&)const;
+    double guide_grid_cost(const Route&)const;
     void build_guide_model();
     int guide_fixed_demand(Id);
     void run();
@@ -60,6 +64,7 @@ private:
     struct TreeTarget {
         std::unordered_set<Id> nodes;
         int xl=0,xh=0,yl=0,yh=0,ll=0,lh=0;
+        std::shared_ptr<const L1TargetIndex> exact;
     };
     void add_target(TreeTarget&,Id)const;
     std::vector<Id> search_impl(Id,Id,int,int,bool,const TreeTarget*);
@@ -77,6 +82,28 @@ private:
     size_t guide_interval_count_=0;
     Json final_prune_stats_;
     void prune_routes();
+    struct V3Budget : std::runtime_error {V3Budget():std::runtime_error("V3 per-net search budget") {}};
+    struct V3Topology {std::vector<Id> points,steiner;std::vector<std::pair<int,int>> edges;double cost=0;};
+    V3Topology steiner_topology(const std::vector<Id>&,int,int);
+    Route route_steiner(const Net&);
+    Json v3_metadata()const;
+    void negotiated_round(int);
+    void optimize_tsv_global();
+    void build_v3_thermal(const Json&);
+    size_t v3_thermal_cell(Id)const;
+    double v3_penalty(Id,int);
+    double v3_marginal(const Route&,int uncertainty=0);
+    int v3_fixed(Id);
+    std::map<std::string,long long> v3_counts_,v3_fallbacks_;
+    std::unordered_map<Id,int> v3_fixed_cache_;
+    std::vector<int> v3_cooldown_;
+    std::vector<Json> v3_rounds_;
+    bool v3_legacy_route_=false;
+    Id v3_forced_tsv_=0;
+    double v3_route_deadline_=0,v3_present_=1;
+    std::vector<double> v3_thermal_xs_,v3_thermal_ys_,v3_thermal_rise_;
+    bool v3_thermal_ready_=false;
+    Json v3_global_tsv_stats_;
     struct SearchInfo {double g=0;Id parent=0;};
     struct SearchCell {SearchInfo info;std::uint32_t generation=0;};
     // At most 8192 local states (~192 KiB), never nx*ny*20. Larger

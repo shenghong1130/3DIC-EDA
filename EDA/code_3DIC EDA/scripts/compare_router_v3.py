@@ -69,6 +69,9 @@ def main(argv=None):
     cases=sorted(set(cases),key=['toy','sample001','open_3d_case001'].index)
     base=read(config_file('v3_final' if a.suite=='final' else 'default'))
     variants=[('v2','build/router_v2','v3_final'),('v3',None,'v3_final')] if a.suite=='final' else SCOPED_VARIANTS if a.suite=='congestion_scoped' else CONGESTION_VARIANTS if a.suite=='congestion' else VARIANTS
+    release=PROJECT/'build/router_v3_final'
+    if a.suite=='final' and release.is_file() and sha256(release)!=sha256(candidate):
+        variants.insert(1,('old_final','build/router_v3_final','v3_final'))
     for _,_,config in variants[1:]:
         values=read(config_file(config))
         if {k:v for k,v in values.items() if k not in MODES+CONGESTION_KEYS}!=base:raise RuntimeError('Shared parameters differ: '+config)
@@ -76,6 +79,7 @@ def main(argv=None):
     report=OUTPUTS/('reports/v3_final' if a.suite=='final' else 'reports/v3_algorithm')/a.experiment/'comparisons'
     report.mkdir(parents=True,exist_ok=False)
     pinned={str(path):sha256(path) for path in [candidate,PROJECT/'build/router_v2',config_file('v3_final' if a.suite=='final' else 'default'),*[config_file(v[2]) for v in variants[1:]]]}
+    if any(v[0]=='old_final' for v in variants):pinned[str(release)]=sha256(release)
     plan={'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),
           'git_dirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=PROJECT)),
           'cases':cases,'router_budget':a.router_budget,'evaluation_budget':a.evaluation_budget,'pinned':pinned,
@@ -109,7 +113,11 @@ def main(argv=None):
                 row.update(congestion_strategy=data.get('congestion_strategy'),iterations=data.get('iterations'))
                 if a.suite=='final' and variant=='v3':
                     row['v3_final']=data.get('v3_final')
-                    if not row['v3_final'] or row['v3_final'].get('strategy')!='v3_final_guide_guard':raise RuntimeError('Binary did not execute the fixed V3 Final strategy')
+                    row['v3_algorithm']=data.get('v3_algorithm')
+                    strategy=(row['v3_final'] or {}).get('strategy')
+                    if strategy=='v3_steiner_negotiated_global':
+                        if not row['v3_algorithm'] or row['v3_algorithm'].get('stage')!=3 or row['v3_algorithm'].get('generation')!='steiner_negotiated_tsv_research':raise RuntimeError('New Final is missing actual architecture metadata')
+                    elif strategy!='v3_final_guide_guard':raise RuntimeError('Binary did not execute a recognized fixed V3 Final strategy')
                 if case!='open_3d_case001':row['trace_replay']=replay(directory,data)
                 if not a.no_score:
                     evaluation=[sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case',case,'--label',label,'--backend',backend,'--engine','latest','--timeout',str(a.evaluation_budget)]

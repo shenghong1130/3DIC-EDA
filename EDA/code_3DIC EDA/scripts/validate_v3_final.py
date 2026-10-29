@@ -26,7 +26,7 @@ def quality_gate(rows):
     reasons=[];strict=False
     for case in ['toy','sample001','open_3d_case001']:
         pair={r['variant']:r for r in rows if r['case']==case}
-        if set(pair)!= {'v2','v3'}:reasons.append(case+': missing pair');continue
+        if not {'v2','v3'}<=set(pair):reasons.append(case+': missing pair');continue
         a,b=pair['v2'],pair['v3']
         if any(r['status']!='ROUTED' or r['official_status']!='PASS' for r in [a,b]):reasons.append(case+': routing/evaluation incomplete');continue
         if b['wirelength_dbu']>a['wirelength_dbu']+1e-6:reasons.append(case+': official wirelength regression')
@@ -34,6 +34,12 @@ def quality_gate(rows):
         if b['official_overflow']>a['official_overflow']:reasons.append(case+': official overflow regression')
         if b['congestion_score']<a['congestion_score']-1e-9:reasons.append(case+': congestion score regression')
         if b['thermal_score']<a['thermal_score']-1e-9:reasons.append(case+': thermal score regression')
+        old=pair.get('old_final')
+        if old:
+            if old['status']!='ROUTED' or old['official_status']!='PASS':reasons.append(case+': old Final control incomplete')
+            else:
+                for key,direction in [('wirelength_dbu',1),('official_overflow',1),('wirelength_score',-1),('congestion_score',-1),('thermal_score',-1)]:
+                    if direction*(b[key]-old[key])>1e-9:reasons.append(case+': regression against old Final: '+key)
         if case=='open_3d_case001':strict=b['wirelength_dbu']<a['wirelength_dbu']-1e-6 or b['official_overflow']<a['official_overflow']
     if not strict:reasons.append('No strict case001 wirelength/overflow improvement')
     return not reasons,reasons
@@ -65,7 +71,7 @@ def main():
             run(['python3','-B','-m','unittest','discover','-s','tests','-p',pattern,'-v'],pattern+'.log',150,
                 {'ROUTER_EXE':linux_path(research),'V3_FINAL_EXE':linux_path(candidate),'PYTHONDONTWRITEBYTECODE':'1'})
         manifest={'binary_sha256':sha256(candidate),'config_sha256':expected,'source_sha256':sources,'build_command':command,
-            'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),'strategy':'v3_final_guide_guard','registered':False}
+            'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),'strategy':'v3_steiner_negotiated_global','registered':False}
         save_new(report/'validated_build.json',manifest)
         with zipfile.ZipFile(report/'validated_sources.zip','x',compression=zipfile.ZIP_DEFLATED) as z:
             for name,digest in sources.items():

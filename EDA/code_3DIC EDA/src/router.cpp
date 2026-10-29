@@ -38,6 +38,11 @@ Router::~Router() noexcept {
 Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace(t),started(std::chrono::steady_clock::now()),progress(p){
 #ifdef GR_V3_FINAL
     cfg.v3_final=true;
+#ifdef GR_V3_STAGE
+    cfg.v3_stage=GR_V3_STAGE;
+#else
+    cfg.v3_stage=3;
+#endif
 #endif
     if(cfg.v3_final){
         cfg.net_order_mode=0;cfg.tree_route_mode=0;cfg.reroute_priority_mode=0;
@@ -69,7 +74,7 @@ void Router::refresh_heat_stats(){
     heat_min_=*std::min_element(heat.begin(),heat.end());heat_max_=*std::max_element(heat.begin(),heat.end());
 }
 double Router::elapsed()const{return std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();}
-void Router::check_time()const{if(progress)progress->poll();double seconds=elapsed();if(seconds>cfg.time_limit)throw RouterTimeout();if(reroute_deadline_seconds_>0&&seconds>=reroute_deadline_seconds_)throw RerouteBudget();}
+void Router::check_time()const{if(progress)progress->poll();double seconds=elapsed();if(seconds>cfg.time_limit)throw RouterTimeout();if(reroute_deadline_seconds_>0&&seconds>=reroute_deadline_seconds_)throw RerouteBudget();if(v3_route_deadline_>0&&seconds>=v3_route_deadline_)throw V3Budget();}
 double Router::congestion_penalty(const Resource&r,int demand)const{
     double cap=std::max(1,r.capacity),before=double(r.usage)+r.fixed;
     int mode=cfg.congestion_scope_mode==1&&!rerouting_?0:cfg.congestion_cost_mode;
@@ -114,6 +119,7 @@ void Router::load_thermal(const std::filesystem::path&p){
     double next=ambient;for(size_t k=heat.size();k-->0;){if(std::isfinite(heat[k]))next=heat[k];else heat[k]=next;}
     refresh_heat_stats();
     Json e=Json::object();e["mapped_gcells"]=known;e["total_gcells"]=nx*ny;e["ambient"]=ambient;trace.event("thermal_mapped",e);
+    if(cfg.v3_stage>=3)build_v3_thermal(j);
 }
 void Router::build_fixed_demand(){
     for(auto&[name,i]:d.instances){check_time();auto&m=d.macros.at(i.macro);auto add=[&](const Rect&raw){
@@ -159,6 +165,7 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
     auto [gx,gy]=center(tree?*tree->nodes.begin():goal);
     auto interval=[](double value,double low,double high){return std::max({low-value,0.0,value-high});};
     auto heuristic=[&](int x,int y,int l){
+        if(tree&&tree->exact)return tree->exact->distance({cfg.wire*x_centers_[x]/unit,cfg.wire*y_centers_[y]/unit,cfg.via*l});
         if(tree)return cfg.wire*(interval(x_centers_[x],x_centers_[tree->xl],x_centers_[tree->xh])+interval(y_centers_[y],y_centers_[tree->yl],y_centers_[tree->yh]))/unit+cfg.via*interval(l,tree->ll,tree->lh);
         return cfg.wire*(std::abs(x_centers_[x]-gx)+std::abs(y_centers_[y]-gy))/unit+cfg.via*std::abs(l-bl);
     };
@@ -183,6 +190,7 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
         while(!q.empty()){
             auto cur=q.top();q.pop();GR_COUNT(queue_pops,1);if(cur.g>known(cur.v).g+1e-10){GR_COUNT(stale_pops,1);continue;}
             if(tree?tree->nodes.count(cur.v):cur.v==goal){std::vector<Id> result;for(Id v=cur.v;;v=known(v).parent){result.push_back(v);if(v==start)break;}std::reverse(result.begin(),result.end());return result;}
+            if(tree&&tree->exact){++v3_counts_["multi_target_expansions"];if(expanded>=50000)throw V3Budget();}
             ++expanded;GR_COUNT(expansions,1);GR_MAX(max_expansions,expanded);if(expanded>cfg.search_limit)throw std::runtime_error("A* expansion limit; increase search_limit");
             if(expanded%4096==0)check_time();
             int x,y,l;decode(cur.v,x,y,l);
@@ -194,7 +202,8 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 if(!planar){bool via=l>=1&&l<=20&&ll>=1&&ll<=20?(ll>l?via_up_[l]:via_down_[l]):d.vias.count({std::min(l,ll),std::max(l,ll)});if(!via)return;}
                 if(planar&&cross&&(l==10||l==11))return; // Only access cells on interface layers.
                 auto&res=resource(v);
-                double penalty=congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
+                double penalty=cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,cross&&(ll==10||ll==11)?2:1):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
+                if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
                 double cost=cur.g+base+penalty;bool improved=false;
                 if(dense){auto&entry=search_cells_[slot(xx,yy,ll)];if(entry.generation!=search_generation_||cost+1e-10<entry.info.g){if(entry.generation!=search_generation_)++discovered;entry.info={cost,cur.v};entry.generation=search_generation_;improved=true;}}
@@ -241,11 +250,32 @@ Id Router::select_tsv(const Net&n){
     }return answer;
 }
 Route Router::route(const Net&n){
+    if(cfg.v3_stage&&!v3_legacy_route_){
+        bool fallback=false;double previous=v3_route_deadline_;v3_route_deadline_=elapsed()+0.5;
+        struct Reset {double&v;double old;~Reset(){v=old;}} reset{v3_route_deadline_,previous};
+        if(n.pins.size()>16){++v3_fallbacks_["high_pin_count"];fallback=true;}
+        else try{
+            auto candidate=route_steiner(n);
+            if(cfg.v3_stage>=2&&n.pins.size()>=3){
+                v3_route_deadline_=previous;v3_legacy_route_=true;
+                struct LegacyFlag {bool&v;~LegacyFlag(){v=false;}} flag{v3_legacy_route_};
+                auto reference=route(n);double cost=guide_grid_cost(candidate),old_cost=guide_grid_cost(reference);
+                double phi=v3_marginal(candidate),old_phi=v3_marginal(reference),upper=v3_marginal(candidate,1),old_upper=v3_marginal(reference,1);
+                if(!std::isfinite(cost)||!std::isfinite(old_cost)||cost>old_cost+1e-6||phi>old_phi+1e-10||upper>old_upper+1e-10||!(cost<old_cost-1e-6||phi<old_phi-1e-10)){++v3_fallbacks_["joint_guide_and_congestion_guard"];++v3_counts_["fallback_to_mst"];return reference;}
+            }
+            ++v3_counts_["new_routes_selected"];return candidate;
+        }
+        catch(const RouterTimeout&){++v3_fallbacks_["global_timeout"];throw;}
+        catch(const RerouteBudget&){throw;}
+        catch(const V3Budget&){++v3_fallbacks_["per_net_budget"];fallback=true;}
+        catch(const std::runtime_error&e){std::string m=e.what();if(m.find("No legal path")==0||m.find("A* expansion limit")==0){++v3_fallbacks_["unreachable_or_expansion_limit"];fallback=true;}else throw;}
+        if(fallback){++v3_counts_["fallback_to_mst"];v3_route_deadline_=previous;v3_legacy_route_=true;struct Flag {bool&v;~Flag(){v=false;}} flag{v3_legacy_route_};return route(n);}
+    }
     Progress::Scope log(progress,"NET_ROUTE",true);
     Route r;r.cross=n.cross;Json sel;
     if(trace.out&&!trace.truncated){sel=Json::object();sel["net"]=n.name;sel["pin_count"]=int(n.pins.size());trace.event("net_selected",sel);}
     std::vector<Id> bottom,top;for(auto&p:n.pins){Id v=pin_node(p);(p.layer<=10?bottom:top).push_back(v);r.nodes.insert(v);}
-    if(n.cross){r.tsv=select_tsv(n);bottom.push_back(r.tsv);int x,y,l;decode(r.tsv,x,y,l);Id v=id(x,y,11);top.push_back(v);r.nodes.insert(r.tsv);r.nodes.insert(v);r.edges.insert({r.tsv,v});}
+    if(n.cross){r.tsv=v3_forced_tsv_?v3_forced_tsv_:select_tsv(n);bottom.push_back(r.tsv);int x,y,l;decode(r.tsv,x,y,l);Id v=id(x,y,11);top.push_back(v);r.nodes.insert(r.tsv);r.nodes.insert(v);r.edges.insert({r.tsv,v});}
     auto connect=[&](std::vector<Id>&ps,int lo,int hi){std::sort(ps.begin(),ps.end());ps.erase(std::unique(ps.begin(),ps.end()),ps.end());
         if(cfg.tree_route_mode==1){
             // Only the connected component is a target: r.nodes also holds
@@ -379,7 +409,7 @@ void Router::prune_routes(){
                 if(l<20&&(l==10?(old.cross&&v==old.tsv):d.vias.count({l,l+1}))){Id w=id(x,y,l+1);if(old.nodes.count(w))induced.insert({v,w});}
             }
             if(induced.size()<old.nodes.size())continue;
-            ++attempted;double old_cost=guide_wirelength(old);if(!std::isfinite(old_cost))continue;
+            ++attempted;double old_cost=cfg.v3_stage?guide_grid_cost(old):guide_wirelength(old);if(!std::isfinite(old_cost))continue;
             std::vector<Id> nodes(old.nodes.begin(),old.nodes.end());std::unordered_map<Id,size_t> slots;for(size_t k=0;k<nodes.size();k++)slots[nodes[k]]=k;
             std::vector<size_t> parent(nodes.size()),rank(nodes.size());std::iota(parent.begin(),parent.end(),0);
             auto root=[&](size_t k){while(parent[k]!=k){parent[k]=parent[parent[k]];k=parent[k];}return k;};
@@ -407,8 +437,9 @@ void Router::prune_routes(){
             Route candidate;candidate.cross=old.cross;candidate.tsv=old.tsv;
             for(size_t k=0;k<nodes.size();k++)if(active[k])candidate.nodes.insert(nodes[k]);
             if(candidate.nodes.size()==old.nodes.size())continue;
+            for(Id v:old.steiner_points)if(candidate.nodes.count(v))candidate.steiner_points.push_back(v);
             for(auto[a,b]:tree)if(active[a]&&active[b])candidate.edges.insert({std::min(nodes[a],nodes[b]),std::max(nodes[a],nodes[b])});
-            make_guides(candidate);validate(d.nets[index],candidate);double estimate=guide_wirelength(candidate);
+            make_guides(candidate);validate(d.nets[index],candidate);double estimate=cfg.v3_stage?guide_grid_cost(candidate):guide_wirelength(candidate);
             if(!std::isfinite(estimate)||estimate>old_cost+1e-8||candidate.guides.size()>old.guides.size())continue;
             if(backup_nodes+old.nodes.size()>100000){stop="backup_node_budget";break;}
             backup_nodes+=old.nodes.size();
@@ -616,16 +647,19 @@ void Router::run(){
     struct RestoreFlag {bool&value;bool previous;~RestoreFlag(){value=previous;}} restore_flag{static_frozen_,previous_frozen};
     if(progress)progress->pass(d.nets.size(),0);
     Progress::Scope routing_log(progress,"ROUTING");
+    if(cfg.v3_stage>=2){Progress::Scope model(progress,"V3_FIXED_PROJECTION");build_guide_model();}
     auto order=initial_order();
     for(size_t position=0;position<order.size();position++){size_t i=order[position];if(progress)progress->net(position+1,d.nets.size(),d.nets[i].name,0);check_time();try{routes[i]=route(d.nets[i]);occupy(routes[i],1);if(trace.out&&!trace.truncated)trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}catch(const RouterTimeout&){throw;}catch(const std::bad_alloc&){throw;}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
     int stagnant=0;long long best;{Progress::Scope overflow_log(progress,"OVERFLOW");best=overflow();}Json initial=Json::object();initial["iteration"]=0;initial["overflow_local"]=double(best);rounds.push_back(initial);trace.event("iteration_done",initial);
-    for(int it=1;it<=cfg.iterations&&best>0&&stagnant<cfg.stagnation;it++){
+    if(cfg.v3_stage>=2){for(int it=1;it<=cfg.iterations;it++){if(progress)progress->pass(d.nets.size(),it);negotiated_round(it);if(v3_rounds_.back().at("accepted_nets").number()==0)break;}}
+    else for(int it=1;it<=cfg.iterations&&best>0&&stagnant<cfg.stagnation;it++){
         if(progress)progress->pass(d.nets.size(),it);
         Progress::Scope iteration_log(progress,"OPTIMIZATION");
         auto[now,rerouted]=reroute_pass(it,best);bool accepted=now<best;
         if(!accepted)stagnant++;else{best=now;stagnant=0;}
         Json j=Json::object();j["iteration"]=it;j["candidate_overflow_local"]=double(now);j["overflow_local"]=double(best);j["accepted"]=accepted;j["rerouted_nets"]=rerouted;if(cfg.reroute_policy_mode)j["reroute_diagnostics"]=last_reroute_diagnostics_;rounds.push_back(j);trace.event("iteration_done",j);
     }
+    if(cfg.v3_stage>=3)optimize_tsv_global();
     if(cfg.v3_final){
         {Progress::Scope pruning_log(progress,"GUIDE_PRUNE");prune_routes();}
     }
@@ -637,6 +671,7 @@ Json Router::route_json(const Net&n,const Route&r)const{
     for(auto&e:r.edges){Json v=Json::array();v.push(double(e.a));v.push(double(e.b));edges.push(v);int x,y,l,xx,yy,ll;decode(e.a,x,y,l);decode(e.b,xx,yy,ll);if(l!=ll&&std::min(l,ll)!=10)vias++;}j["edges"]=edges;
     Json gs=Json::array();for(auto&r:r.guides){Json g=numbers(std::vector<double>{r.x1,r.y1,r.x2,r.y2,double(r.layer)});gs.push(g);}j["guides"]=gs;
     Json ps=Json::array();for(auto&p:n.pins){Json v=Json::object();v["name"]=p.name;v["x"]=p.x;v["y"]=p.y;v["layer"]=p.layer;v["node"]=double(pin_node(p));ps.push(v);}j["pins"]=ps;
+    if(!r.steiner_points.empty())j["steiner_topology_nodes"]=numbers(r.steiner_points);
     j["wirelength_dbu_local"]=wirelength(r);j["via_count"]=vias;j["tsv_count"]=n.cross?1:0;j["tsv_node"]=n.cross?Json(double(r.tsv)):Json();j["status"]="ROUTED";return j;
 }
 void Router::result_json(std::ostream&o)const{
@@ -667,10 +702,11 @@ void Router::result_json(std::ostream&o)const{
     };
     auto number=[](auto v){return Json(double(v));};
     check_time();
+    if(cfg.v3_stage)field("v3_algorithm",v3_metadata());
     field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
-    if(cfg.v3_final){Json final=Json::object();final["strategy"]="v3_final_guide_guard";final["optimization"]="v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]="offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
-    if(cfg.v3_final||cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
-    if(cfg.v3_final||cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
+    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
+    if(cfg.v3_final||cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.v3_stage?"steiner_and_multi_target_with_fallback":cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
+    if(cfg.v3_final||cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["active_cost_model"]=cfg.v3_stage>=2?"normalized_marginal_negotiated":"legacy_research_cost_mode";modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
     field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
     array("x_lines",xs,number,"X lines");array("y_lines",ys,number,"Y lines");
     array("layers",d.layers,[](const auto&entry){const auto&[n,l]=entry;Json v=Json::object();v["number"]=n;v["name"]=l.name;v["tier"]=n<=10?"bottom":"top";v["direction"]=l.direction;return v;},"Layers");
@@ -718,3 +754,5 @@ void Router::write_guide(const std::filesystem::path&p)const{
     for(size_t i=0;i<d.nets.size();i++){check_time();validate(d.nets[i],routes[i]);o<<d.nets[i].name<<"\n(\n";for(auto&r:routes[i].guides)o<<std::llround(r.x1)<<' '<<std::llround(r.y1)<<' '<<std::llround(r.x2)<<' '<<std::llround(r.y2)<<' '<<d.layers.at(r.layer).name<<'\n';o<<")\n";}o.close();if(!o)throw std::runtime_error("Guide write failed");if(std::filesystem::exists(p))std::filesystem::remove(p);std::filesystem::rename(temp,p);
 }
 }
+
+#include "router_v3_impl.hpp"

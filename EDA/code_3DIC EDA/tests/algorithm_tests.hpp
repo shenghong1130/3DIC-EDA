@@ -11,6 +11,15 @@ struct RouterTestAccess {
     static void expire_pass(Router&r){r.reroute_deadline_seconds_=r.elapsed()/2;}
     static void phase(Router&r,bool enabled){r.rerouting_=enabled;}
     static void prune(Router&r){r.prune_routes();}
+    static Json topology(Router&r,const std::vector<Id>&p,int lo,int hi){auto t=r.steiner_topology(p,lo,hi);Json j=Json::object();j["cost"]=t.cost;j["points"]=numbers(t.steiner);return j;}
+    static void negotiated(Router&r,int iteration){r.negotiated_round(iteration);}
+    static double v3price(Router&r,Id v,int demand=1){return r.v3_penalty(v,demand);}
+    static void thermal_v3(Router&r,const Json&j){r.build_v3_thermal(j);}
+    static void global_tsv(Router&r){r.optimize_tsv_global();}
+    static Route forced_tsv(Router&r,const Net&n,Id v){Id old=r.v3_forced_tsv_;r.v3_forced_tsv_=v;try{auto route=r.route(n);r.v3_forced_tsv_=old;return route;}catch(...){r.v3_forced_tsv_=old;throw;}}
+    static void expire_v3(Router&r){r.v3_route_deadline_=r.elapsed()/2;}
+    static size_t thermal_size(const Router&r){return r.v3_thermal_rise_.size();}
+    static bool thermal_ready(const Router&r){return r.v3_thermal_ready_;}
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){

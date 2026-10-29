@@ -23,13 +23,14 @@ struct Design {
     std::set<std::pair<int,int>> vias;bool tsv_cut=false;
 };
 struct Edge {Id a,b;bool operator<(const Edge&e)const{return a<e.a||(a==e.a&&b<e.b);}};
-struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;};
+struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;std::vector<Id> steiner_points;};
 struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;
     // All zero preserves V2 routing. Numeric modes are validated by main.cpp.
     int net_order_mode=0,tree_route_mode=0,reroute_priority_mode=0;
     int congestion_cost_mode=0,reroute_policy_mode=0,reroute_max_nets=512,congestion_scope_mode=0;
     double reroute_pass_seconds=20,reroute_wire_growth=0.005;
     bool v3_final=false; // Selected by the formal build, not a JSON option.
+    int v3_stage=0; // Internal ablation: 1 Steiner, 2 negotiated, 3 global TSV.
 };
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);
