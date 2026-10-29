@@ -112,5 +112,12 @@ class RegistrationSafetyTests(unittest.TestCase):
     def test_bad_provenance_does_not_publish_version(self):
         with self.isolated(),patch.object(manager,'rebuild',side_effect=ValueError('Rebuilt SHA256 differs')),self.assertRaisesRegex(ValueError,'SHA256 differs'):manager.register('v3',self.source,'HEAD','new')
         self.assertFalse(self.file.exists());self.assertFalse((self.root/'build/router_v3').exists())
+    def test_final_entry_cannot_skip_committed_source_proof(self):
+        destination=self.root/'build/router_v3_final';destination.write_bytes(self.source.read_bytes());original=destination.read_bytes()
+        with self.isolated(),patch.object(manager,'rebuild',side_effect=ValueError('Rebuilt SHA256 differs')),self.assertRaisesRegex(ValueError,'SHA256 differs'):
+            manager.register('v3',destination,'HEAD','Final',final=True)
+        self.assertEqual(destination.read_bytes(),original);self.assertFalse(self.file.exists())
+    def test_final_entry_is_not_a_v1_v2_alias(self):
+        with self.isolated(),self.assertRaisesRegex(ValueError,'only valid for v3'):manager.register('v2',self.source,'HEAD','invalid',final=True)
 
 if __name__=='__main__':unittest.main()

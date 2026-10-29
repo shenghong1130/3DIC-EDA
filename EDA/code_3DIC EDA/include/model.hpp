@@ -29,6 +29,7 @@ struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time
     int net_order_mode=0,tree_route_mode=0,reroute_priority_mode=0;
     int congestion_cost_mode=0,reroute_policy_mode=0,reroute_max_nets=512,congestion_scope_mode=0;
     double reroute_pass_seconds=20,reroute_wire_growth=0.005;
+    bool v3_final=false; // Selected by the formal build, not a JSON option.
 };
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);

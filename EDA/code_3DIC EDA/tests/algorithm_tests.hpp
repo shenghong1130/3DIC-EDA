@@ -10,6 +10,7 @@ struct RouterTestAccess {
     static double penalty(const Router&r,const Resource&s,int demand=1){return r.congestion_penalty(s,demand);}
     static void expire_pass(Router&r){r.reroute_deadline_seconds_=r.elapsed()/2;}
     static void phase(Router&r,bool enabled){r.rerouting_=enabled;}
+    static void prune(Router&r){r.prune_routes();}
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){
