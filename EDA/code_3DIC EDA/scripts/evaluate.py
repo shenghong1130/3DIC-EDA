@@ -59,6 +59,11 @@ def execute(a,run,directory):
                       env=native_env if a.backend=='native' else None,
                       monitor_dir=directory,monitor_interval=a.monitor_interval,process_role='evaluator'))
         result['host_process_status']=result['process_status']
+        # Preserve wsl.exe's real wait result BEFORE any post-exit WSL/Event
+        # probe. If the host dies during diagnostics, LAUNCHING is not left as
+        # the only on-disk evidence of a process that already exited.
+        result['diagnostics_pending']=True
+        atomic_json(directory/'invocation.json',result)
         end=time.monotonic()+1
         while not (directory/'evaluator_exit.json').exists() and time.monotonic()<end:time.sleep(.1)
         supervisor=json_file(directory/'evaluator_exit.json')
@@ -69,6 +74,8 @@ def execute(a,run,directory):
         report,state=read_report(directory/'evaluation_report.json')
         result.update(report=report,report_state=state)
         category,evidence=classify_evaluator(result,supervisor,run_id,report,state,a.backend)
+        result.update(failure_category=category,evidence=evidence)
+        atomic_json(directory/'invocation.json',result)
         if category!='SUCCESS' and a.backend=='wsl':
             result['wsl_after']=wsl_snapshot()
             category,evidence=classify_evaluator(result,supervisor or process,run_id,report,state,a.backend,result['wsl_after'])
@@ -99,7 +106,7 @@ def execute(a,run,directory):
     except (OSError,ValueError,KeyError) as e:
         result.update(status='ERROR',official_status='NOT_EVALUATED',failure_category='SETUP_OR_REPORT_ERROR',failure_reason=str(e))
     finally:
-        result.update(finished_at=utc(),total_runtime_seconds=time.monotonic()-start)
+        result.update(finished_at=utc(),total_runtime_seconds=time.monotonic()-start,diagnostics_pending=False)
         atomic_json(directory/'invocation.json',result)
     return result
 

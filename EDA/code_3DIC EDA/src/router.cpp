@@ -47,6 +47,9 @@ Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace
 #ifdef GR_V3_2
     cfg.v3_batch=true;
 #endif
+#ifdef GR_V3_3
+    cfg.v3_batch=true;cfg.v3_calibrated=true;
+#endif
     if(cfg.v3_final){
         cfg.net_order_mode=0;cfg.tree_route_mode=0;cfg.reroute_priority_mode=0;
         cfg.congestion_cost_mode=0;cfg.congestion_scope_mode=0;cfg.reroute_policy_mode=0;
@@ -110,7 +113,7 @@ int Router::capacity(Id v)const{
     if(static_frozen_&&l>=1&&l<=20&&!axis_capacity_[l].empty()){GR_COUNT(capacity_cache_hits,1);return axis_capacity_[l].at(layer_horizontal_[l]?y:x);}
     auto r=cell(v);auto&layer=d.layers.at(r.layer);char axis=layer.direction=="HORIZONTAL"?'Y':'X';int c=0;for(auto&t:d.tracks)if(t.layer==r.layer&&t.axis==axis)c+=count_tracks(t,axis=='X'?r.x1:r.y1,axis=='X'?r.x2:r.y2,axis=='X'?r.x2==xs.back():r.y2==ys.back());return c;
 }
-Resource& Router::resource(Id v){auto [it,newentry]=resources.try_emplace(v);if(newentry){GR_COUNT(resource_insertions,1);it->second.capacity=capacity(v);}return it->second;}
+Resource& Router::resource(Id v){auto [it,newentry]=resources.try_emplace(v);if(newentry){GR_COUNT(resource_insertions,1);it->second.capacity=capacity(v);if(batch_cache_ready_){auto q=scoring_cell(v,0);batch_cache_.phi+=q.phi;batch_cache_.upper+=q.upper;batch_cache_.overflow+=q.overflow;batch_cache_.hotspots+=q.hotspots;}}return it->second;}
 void Router::load_thermal(const std::filesystem::path&p){
     auto j=Json::parse(read_file(p));ambient=j.at("meta").at("ambientTemp").number();auto& nodes=j.at("nodes");if(nodes.type!=Json::Array||nodes.arr.empty())throw std::runtime_error("Thermal nodes must be a nonempty array");
     heat.assign(heat.size(),0);std::map<std::pair<double,double>,std::pair<double,int>> projected;
@@ -210,6 +213,12 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 double penalty=cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
+                if(cfg.v3_calibrated&&v3_batch_active_&&alternative_variant_){
+                    // Nonnegative soft exclusions: no illegal Via/layer edge
+                    // is introduced, and the geometric heuristic stays a bound.
+                    if(alternative_avoid_.count(v)&&!alternative_mandatory_.count(v))penalty+=4*std::max(base,cfg.via);
+                    if(alternative_variant_==2&&planar&&(ll==1||ll==11)&&!alternative_mandatory_.count(v))penalty+=2*base;
+                }
                 double cost=cur.g+base+penalty;bool improved=false;
                 if(dense){auto&entry=search_cells_[slot(xx,yy,ll)];if(entry.generation!=search_generation_||cost+1e-10<entry.info.g){if(entry.generation!=search_generation_)++discovered;entry.info={cost,cur.v};entry.generation=search_generation_;improved=true;}}
                 else{auto it=dist.find(v);if(it==dist.end()){dist.emplace(v,SearchInfo{cost,cur.v});++discovered;improved=true;}else if(cost+1e-10<it->second.g){it->second={cost,cur.v};improved=true;}}
@@ -325,7 +334,13 @@ Route Router::route(const Net&n){
     };if(!bottom.empty())connect(bottom,1,10);if(!top.empty())connect(top,11,20);
     make_guides(r);validate(n,r);return r;
 }
-void Router::occupy(const Route&r,int sign){for(Id v:r.nodes){auto&res=resource(v);res.usage+=sign;if(res.usage<0)throw std::runtime_error("Negative resource usage");}if(r.cross){int x,y,l;decode(r.tsv,x,y,l);resource(r.tsv).usage+=sign;resource(id(x,y,11)).usage+=sign;}}
+void Router::occupy(const Route&r,int sign){
+    // Price every touched cell before the first mutation. Cached terms make
+    // the commit/undo itself allocation-free, including BOTH TSV endpoints.
+    if(cfg.v3_calibrated){for(Id v:r.nodes)(void)scoring_cell(v,resource(v).usage);if(r.cross){int x,y,l;decode(r.tsv,x,y,l);(void)scoring_cell(r.tsv,resource(r.tsv).usage);(void)scoring_cell(id(x,y,11),resource(id(x,y,11)).usage);}}
+    for(Id v:r.nodes)change_usage(v,sign);
+    if(r.cross){int x,y,l;decode(r.tsv,x,y,l);change_usage(r.tsv,sign);change_usage(id(x,y,11),sign);}
+}
 long long Router::overflow()const{long long total=0;for(auto&[v,r]:resources)total+=std::max(0,r.fixed+r.usage-r.capacity);return total;}
 double Router::wirelength(const Route&r)const{double w=0;for(auto&e:r.edges){int ax,ay,al,bx,by,bl;decode(e.a,ax,ay,al);decode(e.b,bx,by,bl);if(al==bl){auto[x,y]=center(e.a);auto[u,v]=center(e.b);w+=std::abs(x-u)+std::abs(y-v);}}return w;}
 double Router::guide_wirelength(const Route&r)const{
@@ -356,7 +371,21 @@ double Router::guide_wirelength(const Route&r)const{
     }return total;
 }
 void Router::build_guide_model(){
+    batch_cache_ready_=false;v3_fixed_cache_.clear();
+    for(auto&[v,r]:resources){(void)v;r.scoring_ready=false;}
     fixed_intervals_.clear();guide_model_ready_=false;guide_interval_count_=0;
+    if(cfg.v3_calibrated){
+        size_t coordinates=0;
+        for(int l=1;l<=20;l++){
+            auto&v=scoring_tracks_[l];v.clear();if(!d.layers.count(l))continue;
+            char axis=d.layers.at(l).direction=="HORIZONTAL"?'Y':'X';
+            for(const auto&t:d.tracks)if(t.layer==l&&t.axis==axis){
+                if(t.count<0||coordinates+size_t(t.count)>4000000)return;
+                coordinates+=size_t(t.count);for(int k=0;k<t.count;k++)v.push_back(t.start+k*t.step);
+            }
+            std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());
+        }
+    }
     constexpr size_t limit=2000000;bool bounded=true;
     for(const auto&[name,i]:d.instances){
         check_time();const auto&m=d.macros.at(i.macro);
@@ -374,7 +403,12 @@ void Router::build_guide_model(){
             }
         };
         for(const auto&r:m.obs)add(r);
-        for(const auto&[pin,rs]:m.pins)for(const auto&r:rs)add(r);
+        for(const auto&[pin,rs]:m.pins)for(auto r:rs){
+            // Compatibility with the CURRENT hash-pinned ELF, not physical
+            // geometry or the later announcement. PIN access stays untouched.
+            if(cfg.v3_calibrated&&!rs.empty())r.layer=rs.front().layer;
+            add(r);
+        }
         if(!bounded){fixed_intervals_.clear();return;} // Keep original demand as explicit fallback.
     }
     for(auto&[key,intervals]:fixed_intervals_){
@@ -393,6 +427,34 @@ int Router::guide_fixed_demand(Id v){
     auto it=std::lower_bound(intervals.begin(),intervals.end(),lo,[](const auto&a,double b){return a.second<b;});
     for(;it!=intervals.end()&&it->first<=hi;++it)for(const auto&t:d.tracks)if(t.layer==l&&t.axis==track_axis)demand+=count_tracks(t,std::max(lo,it->first),std::min(hi,it->second),true);
     return demand;
+}
+int Router::scoring_capacity(Id v)const{
+    if(!guide_model_ready_){auto it=resources.find(v);return it==resources.end()?capacity(v):it->second.capacity;}
+    int x,y,l;decode(v,x,y,l);const auto&t=scoring_tracks_[l];
+    const auto&axis=d.layers.at(l).direction=="HORIZONTAL"?ys:xs;int k=d.layers.at(l).direction=="HORIZONTAL"?y:x;
+    auto begin=k==0?t.begin():std::lower_bound(t.begin(),t.end(),axis[k]);
+    auto end=k+2==int(axis.size())?t.end():std::lower_bound(t.begin(),t.end(),axis[k+1]);
+    return int(end-begin);
+}
+int Router::scoring_fixed_demand(Id v){
+    if(!guide_model_ready_)return resource(v).fixed;
+    int x,y,l;decode(v,x,y,l);bool horizontal=d.layers.at(l).direction=="HORIZONTAL";
+    auto found=fixed_intervals_.find({l,horizontal?x:y});if(found==fixed_intervals_.end())return 0;
+    const auto&t=scoring_tracks_[l];if(t.size()<2)return 0;
+    const auto&axis=horizontal?ys:xs;int k=horizontal?y:x;
+    double lo=axis[k],hi=axis[k+1];std::vector<std::pair<int,int>> bins;
+    auto it=std::lower_bound(found->second.begin(),found->second.end(),lo,[](const auto&a,double b){return a.second<b;});
+    for(;it!=found->second.end()&&it->first<=hi;++it){
+        double a=std::max(lo,it->first),b=std::min(hi,it->second);
+        if(b<a)continue;
+        int first=std::max(0,int(std::upper_bound(t.begin(),t.end(),a)-t.begin())-1);
+        int last=std::min(int(t.size())-1,int(std::lower_bound(t.begin(),t.end(),b)-t.begin()));
+        if(std::abs(b-a)<=1e-9*std::max(std::abs(a),std::abs(b)))first=std::min(first,int(t.size())-2),last=first+1;
+        if(first<last)bins.emplace_back(first,last);
+    }
+    std::sort(bins.begin(),bins.end());int count=0,end=-1;
+    for(auto[a,b]:bins){count+=std::max(0,b-std::max(a,end));end=std::max(end,b);}
+    return count;
 }
 void Router::prune_routes(){
     // Use legal adjacency inside the already occupied cells, then Kruskal +
@@ -709,7 +771,7 @@ void Router::result_json(std::ostream&o)const{
     check_time();
     if(cfg.v3_stage)field("v3_algorithm",v3_metadata());
     field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
-    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_batch?"v3_2_hotspot_multi_net":cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_batch?"whole_group_negotiated_transaction":cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
+    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_calibrated?"v3_3_calibrated_alternative_batch":cfg.v3_batch?"v3_2_hotspot_multi_net":cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_batch?"whole_group_negotiated_transaction":cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
     if(cfg.v3_final||cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.v3_stage?"steiner_and_multi_target_with_fallback":cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
     if(cfg.v3_final||cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["active_cost_model"]=cfg.v3_stage>=2?"normalized_marginal_negotiated":"legacy_research_cost_mode";modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
     field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
@@ -762,3 +824,4 @@ void Router::write_guide(const std::filesystem::path&p)const{
 
 #include "router_v3_impl.hpp"
 #include "router_batch_impl.hpp"
+#include "router_v3_3_impl.hpp"

@@ -3,9 +3,14 @@
 // of individually accepted moves. Implementation is included once by router.cpp.
 namespace gr {
 Router::BatchQuality Router::batch_quality(){
+    if(cfg.v3_calibrated&&batch_cache_ready_){++v3_counts_["quality_cache_hits"];return batch_cache_;}
+    return batch_quality_full();
+}
+Router::BatchQuality Router::batch_quality_full(){
     BatchQuality out;size_t checked=0;
     for(const auto&[v,r]:resources){
         if(++checked%4096==0)check_time();
+        if(cfg.v3_calibrated){auto q=scoring_cell(v,r.usage);out.phi+=q.phi;out.upper+=q.upper;out.overflow+=q.overflow;out.hotspots+=q.hotspots;continue;}
         double cap=std::max(1,r.capacity),fixed=v3_fixed(v);
         double over=std::max(0.0,r.usage+fixed-r.capacity),upper=std::max(0.0,r.usage+fixed+1-r.capacity);
         out.phi+=over*over/(cap*cap);out.upper+=upper*upper/(cap*cap);
@@ -15,13 +20,14 @@ Router::BatchQuality Router::batch_quality(){
 }
 bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&total_wire,double wire_reference,Json&detail){
     detail=Json::object();detail["accepted"]=false;detail["nets"]=numbers(group);
-    if(group.size()<2||group.size()>8){detail["reason"]="group_size";return false;}
+    if(group.size()<(cfg.v3_calibrated?1u:2u)||group.size()>8){detail["reason"]="group_size";return false;}
     std::set<size_t> unique(group.begin(),group.end());if(unique.size()!=group.size())throw std::runtime_error("Duplicate Net in hotspot transaction");
     struct Backup {size_t index;Route old;bool removed=false,installed=false;};
     std::vector<Backup> saved;saved.reserve(group.size());size_t nodes=0;double old_wire=0;
     std::unordered_map<Id,int> old_demand;
     for(size_t i:group){
         if(i>=routes.size())throw std::runtime_error("Invalid batch Net index");
+        if(cfg.v3_calibrated&&d.nets[i].pins.size()>32){detail["reason"]="high_pin_group_budget";return false;}
         double cost=guide_grid_cost(routes[i]);if(!std::isfinite(cost)){detail["reason"]="guide_budget";return false;}
         old_wire+=cost;nodes+=routes[i].nodes.size();if(nodes>20000){detail["reason"]="backup_node_budget";return false;}
         for(Id v:routes[i].nodes)++old_demand[v];
@@ -33,8 +39,9 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
     const auto before=batch_quality();double original_wire=total_wire;
     double prior_deadline=reroute_deadline_seconds_;Id prior_tsv=v3_forced_tsv_;bool prior_phase=rerouting_,prior_batch=v3_batch_active_;
     rerouting_=true;v3_batch_active_=true;v3_present_=1+iteration;
-    reroute_deadline_seconds_=prior_deadline>0?std::min(prior_deadline,elapsed()+2):elapsed()+2;
-    struct Reset {Router&r;double deadline;Id tsv;bool phase,batch;~Reset(){r.reroute_deadline_seconds_=deadline;r.v3_forced_tsv_=tsv;r.rerouting_=phase;r.v3_batch_active_=batch;}} reset{*this,prior_deadline,prior_tsv,prior_phase,prior_batch};
+    double budget=cfg.v3_calibrated?.6:2;
+    reroute_deadline_seconds_=prior_deadline>0?std::min(prior_deadline,elapsed()+budget):elapsed()+budget;
+    struct Reset {Router&r;double deadline;Id tsv;bool phase,batch;~Reset(){r.reroute_deadline_seconds_=deadline;r.v3_forced_tsv_=tsv;r.rerouting_=phase;r.v3_batch_active_=batch;r.alternative_avoid_.clear();r.alternative_mandatory_.clear();}} reset{*this,prior_deadline,prior_tsv,prior_phase,prior_batch};
     auto restore=[&]{
         for(auto it=saved.rbegin();it!=saved.rend();++it){
             if(!it->removed)continue;
@@ -49,7 +56,19 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
         double new_wire=0;int individually_longer=0;
         for(auto&b:saved){
             check_time();v3_forced_tsv_=b.old.cross?b.old.tsv:0;
+            if(cfg.v3_calibrated){
+                if(progress)progress->net(b.index+1,d.nets.size(),d.nets[b.index].name,iteration);
+                alternative_mandatory_.clear();alternative_avoid_.clear();
+                for(const auto&p:d.nets[b.index].pins)alternative_mandatory_.insert(pin_node(p));
+                if(b.old.cross){int x,y,l;decode(b.old.tsv,x,y,l);alternative_mandatory_.insert(b.old.tsv);alternative_mandatory_.insert(id(x,y,11));}
+                for(Id v:b.old.nodes)if(!alternative_mandatory_.count(v)&&scoring_cell(v,resource(v).usage+1).overflow)alternative_avoid_.insert(v);
+            }
             Route candidate=route(d.nets[b.index]);validate(d.nets[b.index],candidate);
+            if(cfg.v3_calibrated){
+                ++v3_counts_["alternative_routes_generated"];
+                bool different=candidate.nodes!=b.old.nodes||candidate.edges.size()!=b.old.edges.size()||!std::equal(candidate.edges.begin(),candidate.edges.end(),b.old.edges.begin(),[](auto a,auto b){return a.a==b.a&&a.b==b.b;});
+                if(different){++v3_counts_["distinct_route_candidates"];if(alternative_variant_==2)++v3_counts_["layer_escape_distinct_candidates"];}
+            }
             if(candidate.cross&&candidate.tsv!=b.old.tsv)throw std::runtime_error("Batch changed fixed TSV anchor");
             double cost=guide_grid_cost(candidate);if(!std::isfinite(cost)){restore();detail["reason"]="guide_budget";return false;}
             individually_longer+=cost>guide_grid_cost(b.old)+1e-6;new_wire+=cost;
@@ -85,6 +104,7 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
     }catch(...){restore();throw;}
 }
 void Router::hotspot_round(int iteration){
+    if(cfg.v3_calibrated){calibrated_hotspot_round(iteration);return;}
     Progress::Scope log(progress,"HOTSPOT_MULTI_NET");Json report=Json::object();report["iteration"]=iteration;report["accepted_groups"]=0;
     auto before=batch_quality();double total_wire=0;
     for(const auto&r:routes){double cost=guide_grid_cost(r);if(!std::isfinite(cost)){report["stop_reason"]="global_guide_estimate_unknown";v3_batch_rounds_.push_back(report);return;}total_wire+=cost;}

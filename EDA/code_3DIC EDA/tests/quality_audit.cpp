@@ -2,10 +2,15 @@
 #include "router.hpp"
 #include <iostream>
 int main(int argc,char**argv){using namespace gr;try{
-    if(argc!=4)throw std::runtime_error("quality_audit input.lef input.def result.json");
+    if(argc!=4&&(argc!=5||std::string(argv[4])!="--calibrated"))throw std::runtime_error("quality_audit input.lef input.def result.json [--calibrated]");
     if(std::filesystem::file_size(argv[3])>128*1024*1024)throw std::runtime_error("Audit limited to small result files (128 MiB)");
     Design d;parse_lef(argv[1],d);parse_def(argv[2],d);Config c;c.time_limit=180;Trace t("",1);Router r(d,c,t);r.build_fixed_demand();r.build_guide_model();
     Json data=Json::parse(read_file(argv[3]));double total=0;int unknown=0;Json out=Json::object(),nets=Json::array();
+    if(argc==5){
+        c.v3_calibrated=true;Router compatible(d,c,t);compatible.build_guide_model();Json rows=Json::array();
+        for(const auto&row:data.at("resources").arr){Id v=Id(row.arr[0].number());Json item=Json::array();item.push(double(v));item.push(row.arr[2]);item.push(r.guide_fixed_demand(v));item.push(compatible.scoring_fixed_demand(v));item.push(row.arr[1]);item.push(compatible.scoring_capacity(v));rows.push(item);}
+        out["columns"]=Json::parse("[\"node\",\"usage_including_tsv\",\"old_point_fixed\",\"interval_fixed\",\"old_capacity\",\"interval_capacity\"]");out["resources"]=rows;out["routing_executed"]=false;out.write(std::cout);return 0;
+    }
     for(const auto&net:data.at("nets").arr){Route route;for(const auto&v:net.at("guides").arr)route.guides.push_back({v.arr[0].number(),v.arr[1].number(),v.arr[2].number(),v.arr[3].number(),int(v.arr[4].number())});
         double estimate=r.guide_wirelength(route);Json n=Json::object();n["net"]=net.at("net");n["estimate_dbu"]=std::isfinite(estimate)?Json(estimate):Json();n["graph_wirelength"]=net.at("wirelength_dbu_local");nets.push(n);if(std::isfinite(estimate))total+=estimate;else ++unknown;
     }

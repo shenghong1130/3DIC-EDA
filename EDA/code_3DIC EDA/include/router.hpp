@@ -8,7 +8,7 @@
 #include "v3_algorithms.hpp"
 namespace gr {
 struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("Router time budget exceeded") {}};
-struct Resource {int capacity=0,usage=0,fixed=0;double history=0;};
+struct Resource {int capacity=0,usage=0,fixed=0;double history=0;int scoring_fixed=0,scoring_capacity=0;bool scoring_ready=false;};
 class Router {
 public:
     Design& d;Config cfg;Trace& trace;std::vector<double> xs,ys,heat,thermal_count;
@@ -53,6 +53,8 @@ public:
     double guide_grid_cost(const Route&)const;
     void build_guide_model();
     int guide_fixed_demand(Id);
+    int scoring_fixed_demand(Id);
+    int scoring_capacity(Id)const;
     void run();
     void make_guides(Route&)const;
     void validate(const Net&,const Route&)const;
@@ -78,6 +80,7 @@ private:
     std::vector<int> reroute_cooldown_;
     Json last_reroute_diagnostics_;
     std::map<std::pair<int,int>,std::vector<std::pair<double,double>>> fixed_intervals_;
+    std::array<std::vector<double>,21> scoring_tracks_;
     bool guide_model_ready_=false;
     size_t guide_interval_count_=0;
     Json final_prune_stats_;
@@ -91,6 +94,14 @@ private:
     void hotspot_round(int);
     struct BatchQuality {double phi=0,upper=0;long long overflow=0;size_t hotspots=0;};
     BatchQuality batch_quality();
+    BatchQuality batch_quality_full();
+    BatchQuality scoring_cell(Id,int);
+    void change_usage(Id,int);
+    void calibrated_hotspot_round(int);
+    bool batch_cache_ready_=false;
+    BatchQuality batch_cache_;
+    int alternative_variant_=0;
+    std::unordered_set<Id> alternative_avoid_,alternative_mandatory_;
     bool reroute_group(const std::vector<size_t>&,int,double&,double,Json&);
     bool v3_batch_active_=false;
     std::unordered_map<Id,double> v3_batch_prices_;

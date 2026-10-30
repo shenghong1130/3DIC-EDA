@@ -101,11 +101,11 @@ Route Router::route_steiner(const Net&n){
 int Router::v3_fixed(Id v){
     if(!guide_model_ready_)return resource(v).fixed;
     auto found=v3_fixed_cache_.find(v);if(found!=v3_fixed_cache_.end())return found->second;
-    int value=guide_fixed_demand(v);if(v3_fixed_cache_.size()<200000)v3_fixed_cache_.emplace(v,value);return value;
+    int value=cfg.v3_calibrated?scoring_fixed_demand(v):guide_fixed_demand(v);if(v3_fixed_cache_.size()<200000)v3_fixed_cache_.emplace(v,value);return value;
 }
 double Router::v3_penalty(Id v,int demand){
-    const auto&r=resource(v);double cap=std::max(1,r.capacity),before=double(r.usage)+v3_fixed(v),after=before+demand;
-    double a=std::max(0.0,before-r.capacity)/cap,b=std::max(0.0,after-r.capacity)/cap;
+    const auto&r=resource(v);int capacity=cfg.v3_calibrated&&guide_model_ready_?scoring_capacity(v):r.capacity;double cap=std::max(1,capacity),before=double(r.usage)+v3_fixed(v),after=before+demand;
+    double a=std::max(0.0,before-capacity)/cap,b=std::max(0.0,after-capacity)/cap;
     double toll=0;if(v3_batch_active_){auto found=v3_batch_prices_.find(v);if(found!=v3_batch_prices_.end())toll=found->second;}
     return cfg.congestion*(v3_present_*(b*b-a*a)+0.05*std::pow(std::min(1.0,after/cap),4))+cfg.history*r.history+toll;
 }
@@ -270,7 +270,7 @@ void Router::optimize_tsv_global(){
     }catch(...){for(auto it=saved.rbegin();it!=saved.rend();++it)restore(*it);throw;}
 }
 Json Router::v3_metadata()const{
-    Json out=Json::object();out["generation"]=cfg.v3_batch?"v3_2_hotspot_multi_net":"steiner_negotiated_tsv_research";out["stage"]=cfg.v3_stage;
+    Json out=Json::object();out["generation"]=cfg.v3_calibrated?"v3_3_calibrated_alternative_batch":cfg.v3_batch?"v3_2_hotspot_multi_net":"steiner_negotiated_tsv_research";out["stage"]=cfg.v3_stage;
     if(cfg.v3_batch){Json batches=Json::array();for(const auto&row:v3_batch_rounds_)batches.push(row);out["hotspot_batches"]=batches;out["batch_quality_scope"]="whole materialized resource state; relative-wire proxy, normalized projected overflow, fixed TSV; not an official score";}
     auto count=[&](const char*key){auto it=v3_counts_.find(key);return it==v3_counts_.end()?0LL:it->second;};
     out["topology"]=count("steiner_topologies_proposed")?"bounded_hanan_steiner_with_terminal_mst_fallback":"terminal_topology_no_steiner_point";
@@ -285,6 +285,7 @@ Json Router::v3_metadata()const{
     if(cfg.v3_stage>=3){out["fallback_to_local_tsv"]=!v3_thermal_ready_||count("global_tsv_moved")==0;out["global_tsv"]=v3_global_tsv_stats_;}
     out["thermal_projection_ready"]=v3_thermal_ready_;out["thermal_grid_cells"]=double(v3_thermal_rise_.size());out["thermal_projection"]="full raw grid; horizontal then vertical fill; separate from legacy UI heat";
     out["fixed_model"]=guide_model_ready_?"projected_track_union_approximation":"legacy_fixed_approximation";out["fixed_model_uncertainty"]="acceptance checks projected demand and projected demand plus one; empirical guard, not a proven universal error bound";
+    if(cfg.v3_calibrated){out["fixed_model"]=guide_model_ready_?"hash_pinned_latest_track_interval_union":"legacy_fallback_unavailable";out["calibration_scope"]="current 4104d0b2 ELF; case001 overflow CSV; not physical occupancy or all-grid demand proof";out["quality_update"]="dirty resource delta with independent full-map oracle tests";}
     out["pricing_scope"]="stable initial cost; negotiated and global TSV trials use dynamic prices";
     out["price_cache_entries"]=double(v3_fixed_cache_.size());out["price_cache_limit"]=200000;out["steiner_terminal_limit"]=16;out["steiner_candidate_limit"]=96;out["target_node_limit"]=65536;
     double guide_cost=0;int unknown=0,steiner_routes=0;size_t steiner_nodes=0;for(const auto&r:routes){double value=guide_grid_cost(r);if(std::isfinite(value))guide_cost+=value;else ++unknown;steiner_routes+=!r.steiner_points.empty();steiner_nodes+=r.steiner_points.size();}

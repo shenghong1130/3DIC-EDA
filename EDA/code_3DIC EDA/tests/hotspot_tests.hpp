@@ -1,7 +1,8 @@
 // Two competing Nets: the first may detour while the second sheds a large
 // legal loop. Tests route real graph edges and compare the whole resource map.
-void hotspot_tests(){
+void hotspot_tests(bool calibrated=false){
     Trace trace("",16);Design design=tiny();Config cfg;cfg.v3_stage=3;cfg.v3_batch=true;cfg.iterations=0;cfg.margin=100;cfg.congestion=1000;
+    cfg.v3_calibrated=calibrated;
     design.nets={{"a",{{"a0",600,700,1},{"a1",4600,700,1}},false},{"b",{{"b0",600,700,1},{"b1",4600,700,1}},false}};
     Router router(design,cfg,trace);
     for(const auto&[layer,description]:design.layers){(void)description;for(int y=0;y<router.ny;y++)for(int x=0;x<router.nx;x++){auto&r=router.resource(router.id(x,y,layer));r.capacity=100;if(layer!=1&&layer!=2)r.fixed=100000;}}

@@ -1,6 +1,6 @@
 """Validate one immutable numeric build; optionally run case001 exactly once.
 
-Only V3.2 is currently implemented. No retries, sweeps, Router recompilation
+Numeric V3.2/V3.3 builds. No retries, sweeps, Router recompilation
 after publication, automatic registration, Git writes, or large Case runs.
 """
 import argparse
@@ -22,7 +22,7 @@ def save_new(path,value):
     with Path(path).open('x',encoding='utf8') as f:json.dump(value,f,ensure_ascii=False,indent=2);f.write('\n')
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--version',required=True,choices=['v3_2'])
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--version',required=True,choices=['v3_2','v3_3'])
     parser.add_argument('--run-case001',action='store_true',help='After all lightweight checks, one Router run and at most one latest evaluation, 600s each')
     a=parser.parse_args();version=a.version;report=OUTPUTS/'reports'/version;report.mkdir(parents=True,exist_ok=True)
     label=formal_run_label('open_3d_case001',version)
@@ -41,11 +41,11 @@ def main():
         work=Path(temp);core=work/'core';candidate=work/'router';research=work/'research';old_architecture=work/'old_architecture'
         run(['g++',*FLAGS,'tests/core_tests.cpp','src/parser.cpp','src/router.cpp','-o',linux_path(core)],'validation_core_build.log')
         run([linux_path(core)],'validation_core.log',120)
-        command=['g++',*FLAGS,'-DGR_V3_FINAL','-DGR_V3_2',*SOURCES,'-o',linux_path(candidate)]
+        command=['g++',*FLAGS,'-DGR_V3_FINAL','-DGR_V3_3' if version=='v3_3' else '-DGR_V3_2',*SOURCES,'-o',linux_path(candidate)]
         run(command,'validation_router_build.log')
         run(['g++',*FLAGS,*SOURCES,'-o',linux_path(research)],'validation_legacy_build.log')
         run(['g++',*FLAGS,'-DGR_V3_FINAL',*SOURCES,'-o',linux_path(old_architecture)],'validation_old_architecture_build.log')
-        environment={'ROUTER_EXE':linux_path(research),'V3_FINAL_EXE':linux_path(old_architecture),'V3_2_EXE':linux_path(candidate),'PYTHONDONTWRITEBYTECODE':'1'}
+        environment={'ROUTER_EXE':linux_path(research),'V3_FINAL_EXE':linux_path(old_architecture),'V3_2_EXE':linux_path(PROJECT/'build/router_v3_2' if version=='v3_3' else candidate),'PYTHONDONTWRITEBYTECODE':'1'}
         for pattern in ['test_workflow.py','test_router_versions.py','test_v3_final.py','test_ui_store.py','test_congestion_analysis.py','test_diagnostics.py']:
             run(['python3','-B','-m','unittest','discover','-s','tests','-p',pattern,'-v'],pattern+'.log',180,environment)
         for case in ['toy','sample001']:
@@ -53,7 +53,8 @@ def main():
             run([linux_path(candidate),'--def',linux_path(inputs['def']),'--lef',linux_path(inputs['lef']),'--thermal-report',linux_path(inputs['thermal']),
                  '--config',linux_path(config),'--time-limit','60','--output',linux_path(folder/'route.guide'),'--metrics',linux_path(folder/'result.json'),'--trace',linux_path(folder/'trace.jsonl')],case+'_temporary.log',75)
             data=json.loads((folder/'result.json').read_text(encoding='utf8'))
-            if data['metrics']['routed_nets']!=len(data['nets']) or data['v3_algorithm']['generation']!='v3_2_hotspot_multi_net':raise RuntimeError('Small-case completeness/architecture mismatch')
+            expected='v3_3_calibrated_alternative_batch' if version=='v3_3' else 'v3_2_hotspot_multi_net'
+            if data['metrics']['routed_nets']!=len(data['nets']) or data['v3_algorithm']['generation']!=expected:raise RuntimeError('Small-case completeness/architecture mismatch')
             from compare_router_v3 import replay
             micro.append({'case':case,'net_count':len(data['nets']),'metrics':data['metrics'],'trace_replay':replay(folder,data),'guide_sha256':sha256(folder/'route.guide'),'official_status':'NOT_EVALUATED','temporary_outputs':True})
         if sha256(config)!=config_sha or any(sha256(PROJECT/name)!=digest for name,digest in pinned.items()):raise RuntimeError('Source/test/config changed during validation')

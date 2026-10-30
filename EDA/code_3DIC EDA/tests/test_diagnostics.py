@@ -165,6 +165,23 @@ raise SystemExit(s.main())
         category,_=classify({'process_status':'FINISHED','returncode':run.returncode},{},record,'test','wsl',False)
         self.assertEqual(category,'UNKNOWN')
 class EvaluatorEvidenceTests(unittest.TestCase):
+    def test_descendant_rss_is_not_the_two_megabyte_launcher(self):
+        from unittest import mock
+        import diagnostics as d
+        def numbers(path):return {'VmRSS':2048 if Path(path).parent.name=='1' else 9000000}
+        def children(path,*args,**kwargs):return '2' if path.parent.name=='1' else ''
+        with mock.patch.object(d,'_numbers',numbers),mock.patch.object(Path,'read_text',children):
+            result=d.process_tree_memory(1)
+        self.assertEqual(result['tree_rss_bytes'],9002048)
+        self.assertEqual(result['tree_pids'],'1;2')
+        self.assertFalse(result['tree_truncated'])
+
+    def test_host_commit_snapshot_is_optional_and_nonnegative(self):
+        from diagnostics import windows_memory
+        data=windows_memory()
+        self.assertTrue(all(isinstance(x,int) and x>=0 for x in data.values()))
+        if data:self.assertLessEqual(data['commit_total_bytes'],data['commit_limit_bytes'])
+
     def test_evaluator_categories_require_process_evidence(self):
         from evaluator_diagnostics import classify_evaluator
         base={'run_id':'test','evaluator_returncode':0}
@@ -239,7 +256,7 @@ class EvaluatorWorkflowTests(unittest.TestCase):
         self.protected={p:p.read_bytes() for p in self.target.rglob('*') if p.is_file()}
         tool=self.d/'\u8bc4\u4f30\u7a0b\u5e8f';tool.mkdir()
         for name in ('score','POST9.dat','POWV9.dat'):(tool/name).write_text('synthetic evaluator')
-        for name,value in [('EDA',self.d),('run_dir',lambda *args:self.target),('wsl_snapshot',lambda:{}),('windows_events',lambda *args:{})]:
+        for name,value in [('EDA',self.d),('run_dir',lambda *args:self.target),('existing_run_dir',lambda *args:self.target),('wsl_snapshot',lambda:{}),('windows_events',lambda *args:{})]:
             patch=mock.patch.object(evaluate,name,value);patch.start();self.addCleanup(patch.stop)
         self.output=io.StringIO()
 
@@ -277,6 +294,15 @@ class EvaluatorWorkflowTests(unittest.TestCase):
         self.assertEqual(rc,1);self.assertEqual(inv['status'],'ERROR');self.assertEqual(inv['official_status'],'NOT_EVALUATED')
         self.assertEqual(inv['failure_category'],'UNKNOWN');self.assertEqual(inv['report'],{})
         self.assertEqual(inv['peak_memory_bytes'],789);self.assertIn('lower bound',inv['peak_memory_source'])
+
+    def test_raw_wsl_exit_is_flushed_before_diagnostic_probe(self):
+        checked=[]
+        def probe():
+            row=json.loads((self.target/'official_latest_attempts/diagnostic/invocation.json').read_bytes())
+            self.assertEqual(row['returncode'],1);self.assertTrue(row['diagnostics_pending']);checked.append(True)
+            return {}
+        with self.mock.patch.object(self.e,'wsl_snapshot',probe):self.invoke_mock(code=1,exit_record=False)
+        self.assertTrue(checked)
 
     def test_missing_report_after_clean_exit(self):
         rc,inv=self.invoke_mock()

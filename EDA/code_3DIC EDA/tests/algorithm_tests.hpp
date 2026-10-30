@@ -24,6 +24,15 @@ struct RouterTestAccess {
     static void batch_toll(Router&r,Id v,double price){r.v3_batch_prices_[v]=price;}
     static Json batch_quality(Router&r){auto q=r.batch_quality();Json j=Json::object();j["phi"]=q.phi;j["upper"]=q.upper;j["overflow"]=double(q.overflow);return j;}
     static void hotspot(Router&r){r.hotspot_round(1);}
+    static void quality_cache(Router&r){r.batch_cache_ready_=false;r.batch_cache_=r.batch_quality_full();r.batch_cache_ready_=true;}
+    static Json quality_full(Router&r){auto q=r.batch_quality_full();Json j=Json::object();j["phi"]=q.phi;j["upper"]=q.upper;j["overflow"]=double(q.overflow);return j;}
+    static Route alternative(Router&r,const Net&n,const Route&old,int variant){
+        r.rerouting_=r.v3_batch_active_=true;r.alternative_variant_=variant;
+        for(const auto&p:n.pins)r.alternative_mandatory_.insert(r.pin_node(p));
+        for(Id v:old.nodes)if(!r.alternative_mandatory_.count(v))r.alternative_avoid_.insert(v);
+        try{auto trial=r.route(n);r.rerouting_=r.v3_batch_active_=false;r.alternative_variant_=0;r.alternative_avoid_.clear();r.alternative_mandatory_.clear();return trial;}
+        catch(...){r.rerouting_=r.v3_batch_active_=false;r.alternative_variant_=0;r.alternative_avoid_.clear();r.alternative_mandatory_.clear();throw;}
+    }
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){

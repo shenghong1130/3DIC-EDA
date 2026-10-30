@@ -15,7 +15,7 @@ namespace gr {
 // Optional cooperative diagnostics; no threads and no routing decisions.
 class Progress {
     using Clock=std::chrono::steady_clock;
-    struct Frame {const char* phase="STARTUP";Clock::time_point began;bool report=false;};
+    struct Frame {const char* phase="STARTUP";Clock::time_point began;bool report=false,fine=false;};
     Clock::time_point began_=Clock::now(),last_heartbeat_=began_,last_memory_=began_;
     std::ofstream human_,events_,memory_;
     const char* phase_="STARTUP";const char* error_phase_=nullptr;
@@ -43,7 +43,7 @@ class Progress {
     bool sampled_=false;
     Frame enter(const char*phase,bool fine) noexcept {
         bool report=!fine||detail_||(report_net_&&std::string_view(phase)=="RIP_UP_REROUTE");
-        Frame f{phase_,report?Clock::now():Clock::time_point{},report};phase_=phase;
+        Frame f{phase_,report?Clock::now():Clock::time_point{},report,fine};phase_=phase;
         if(std::string_view(phase)=="WRITE_RESULT"){output_section_.clear();output_completed_=output_total_=0;output_bytes_=output_seconds_=0;sample(true);}
         if(f.report)emit("phase_started","Started");
         return f;
@@ -52,7 +52,7 @@ class Progress {
         try {
             if(failed&&!error_phase_){error_phase_=phase_;error_net_=net_;error_index_=index_;}
             stage_time_=f.report?std::chrono::duration<double>(Clock::now()-f.began).count():0;
-            if(f.report||failed)emit(failed?"phase_failed":"phase_completed",failed?"Failed while unwinding":"Completed");
+            if(f.report||(failed&&!f.fine))emit(failed?"phase_failed":"phase_completed",failed?"Failed while unwinding":"Completed");
             phase_=f.phase;stage_time_=0;
         }catch(...){}
     }
@@ -116,7 +116,7 @@ public:
             emit("output_progress",std::string(section)+" "+std::to_string(completed)+"/"+std::to_string(total)+" "+message+" bytes="+std::to_string(bytes)+" output_seconds="+std::to_string(seconds));
         }catch(...){}
     }
-    void pass(size_t total,int iteration) noexcept {if(!enabled_)return;total_=total;iteration_=iteration;index_=completed_=0;net_.clear();}
+    void pass(size_t total,int iteration) noexcept {if(!enabled_)return;total_=total;iteration_=iteration;index_=completed_=0;net_.clear();report_net_=detail_=false;error_phase_=nullptr;}
     void net(size_t index,size_t total,const std::string&name,int iteration) noexcept {
         if(!enabled_)return;
         try {index_=index;total_=total;net_=name;iteration_=iteration;completed_=index?index-1:0;report_net_=index==1||index==total||index%every_==0;

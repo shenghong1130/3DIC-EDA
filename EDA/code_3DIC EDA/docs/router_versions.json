@@ -316,6 +316,185 @@
       "validation_report": "outputs/reports/v3_2/results.json",
       "original_build_release_status": "NOT_RELEASED",
       "original_build_receipt_sha256": "8601d4d7e7508f54f6017aa47eb53422cd45e8288d2b88e7e8106b6a10e090ac"
+    },
+    "v3_3": {
+      "version": "v3_3",
+      "path": "build/router_v3_3",
+      "config_path": "configs/v3_3.json",
+      "label": "case001_v3_3",
+      "sha256": "f6283d37933b815fbf41706cba986db07e942aa618beac2578c243fd64b6ee83",
+      "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "git_head": "d782dbcd010f9ef7c97f69bf433079ac5394afdd",
+      "verified": false,
+      "status": "CANDIDATE",
+      "release_status": "NOT_RELEASED_CASE001_ONLY",
+      "source_sha256": {
+        "src\\main.cpp": "51889f4baacc65efb14f5965f1af662d510ef13e2f38cc0d7eba564a602b3280",
+        "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+        "src\\router.cpp": "8a798eb4356a03c7dde6fd54804bc9d2e5b9fcbf11b360665175248fcd04d009",
+        "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+        "include\\model.hpp": "71806487ce5f50a12ad6a70858268254fb4ddb71dfd1d8d08d91bb813ea9c4a5",
+        "include\\progress.hpp": "0de5b783832546579fa855c8ff5fd333a720e7136304bbab558e173df71fde47",
+        "include\\router.hpp": "01d4e6a4d7028179e90222176b5c2fa500ca19cc2fe5e3f53982ec17f147e018",
+        "include\\router_batch_impl.hpp": "8e7525f83698cb12d694e18262dd24d3b93ba1055ea36b172cdaedb30e55f793",
+        "include\\router_v3_3_impl.hpp": "d3c58f8c15fb7b5bc31f894b2c0e13b24342facafc3787faee3f485bebd4e447",
+        "include\\router_v3_impl.hpp": "36aa2694cd96634a67b1251b09d617afb5dd778d4b279f84a7bbe38738228c82",
+        "include\\v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+      },
+      "test_sha256": {
+        "tests\\algorithm_tests.hpp": "8634c1c69e0de8bc0216e3c6c642d4c69be90da2b4371e8ce10147233c3654e9",
+        "tests\\congestion_tests.hpp": "7a9528e503ed3a98e6802d97ed9f837a68a72ac26b571adb563106182798ed9d",
+        "tests\\core_tests.cpp": "d084e8d8a0a2c36ba6ec7f7ef0d649260b6354b9cc4b24053570e874cf37e254",
+        "tests\\guide_quality_tests.hpp": "e4233ee6aab18da975533a1841bd33a9f269e88e1af5493a3043fe54cc41133e",
+        "tests\\hotspot_tests.hpp": "d37a0b1954eb8ac018a5bcb99b02140f86dcfc9d718b6d9ae39367c539feb973",
+        "tests\\quality_audit.cpp": "7bc1d0d3b0d584b74a4f6d4c8a6c1c83c1ee58c87580faaa1f3d660edf3add0b",
+        "tests\\router_benchmark.cpp": "8edc801d0378f0e7e16171293d7cf1d63e5556e632d40ddeb5f620f6f1246749",
+        "tests\\test_case001_cleanup.py": "b4a454d9c1043c64a2879f81678b35bfe96035aad96771c122ffe1112be88ddb",
+        "tests\\test_cleanup_outputs.py": "ba959239802b7f5191f27f32b8006624dd7ed6dc5264221d8bfe63aa28d332b2",
+        "tests\\test_congestion_analysis.py": "a66fb5ad4dd41e871a9747dba2ff69b5eb5638320d251319d648a68c90f1fea6",
+        "tests\\test_diagnostics.py": "e25954c445e04f9a2f9ea6aefcf40984ffeca14c862e2f9adefbc79f363ab139",
+        "tests\\test_router_versions.py": "3af4b6650f06895a20c56987e2863ab35bd011f3da225f4c6570068315eb1ebf",
+        "tests\\test_ui_store.py": "392ab82c4ee9b959609e04db9c74ed623469c452fec746130767b87d5288a900",
+        "tests\\test_v3_final.py": "16a015b8a6c89895b97bd5887c619bbf1c521d1a94cbcde32019e71bceb5268d",
+        "tests\\test_workflow.py": "cc5e0415669132108771af7bf80bc99ba3019308ebcf392e38d632e76b7facaa",
+        "tests\\tree_aware_tests.hpp": "d2dd8826fd1df238fab15a605e0dd0e7b586b08def947b5f6fae1e0e54e84604",
+        "tests\\v3_3_tests.hpp": "4e883c4682ec345a2b753c83d742f89e2351fd5e563cd23dfe839a07cc9f283e",
+        "tests\\v3_generation_tests.hpp": "035a057f258f385282636032e4427ebbfca179ec88e4c39aa31756a856eb0935"
+      },
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "-DGR_V3_FINAL",
+        "-DGR_V3_3",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/development/.v3_3_validate_vai4lute/router"
+      ],
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "source_state": "UNCOMMITTED_ALGORITHM; immutable source snapshot, not an independent Git rebuild",
+      "checks": [
+        {
+          "log": "validation_core_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_core.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_router_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_legacy_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_old_architecture_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_workflow.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_router_versions.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_v3_final.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_ui_store.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_congestion_analysis.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_diagnostics.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "toy_temporary.log",
+          "returncode": 0
+        },
+        {
+          "log": "sample001_temporary.log",
+          "returncode": 0
+        }
+      ],
+      "micro": [
+        {
+          "case": "toy",
+          "net_count": 203,
+          "metrics": {
+            "nets": 203,
+            "official_status": "NOT_EVALUATED",
+            "overflow_local": 1297,
+            "routed_nets": 203,
+            "runtime_seconds": 0.376433164,
+            "thermal_correlation_local": 0.0497479630890668,
+            "tsv_count": 3,
+            "via_count": 349,
+            "wirelength_dbu_local": 9212700
+          },
+          "trace_replay": {
+            "complete": true,
+            "events": 2578,
+            "strategies": []
+          },
+          "guide_sha256": "b29d5cfc963a26f955e6e6d2f68feb73af99b6addd2b20d446dfb69e6f26105a",
+          "official_status": "NOT_EVALUATED",
+          "temporary_outputs": true
+        },
+        {
+          "case": "sample001",
+          "net_count": 203,
+          "metrics": {
+            "nets": 203,
+            "official_status": "NOT_EVALUATED",
+            "overflow_local": 3140,
+            "routed_nets": 203,
+            "runtime_seconds": 0.301289772,
+            "thermal_correlation_local": 0.00109406671048192,
+            "tsv_count": 3,
+            "via_count": 185,
+            "wirelength_dbu_local": 1710000
+          },
+          "trace_replay": {
+            "complete": true,
+            "events": 780,
+            "strategies": [
+              "bounded_hanan_steiner",
+              "mst_astar"
+            ]
+          },
+          "guide_sha256": "61bdaa0736b8118f16d0c47bcb4955af7739695cf9b930eaf5fc03559243113a",
+          "official_status": "NOT_EVALUATED",
+          "temporary_outputs": true
+        }
+      ],
+      "validation_report": "outputs/reports/v3_3/comparison.json",
+      "case001_validation": {
+        "directory": "outputs/runs/open_3d_case001/case001_v3_3",
+        "label": "case001_v3_3",
+        "official_status": "PASS",
+        "guide_sha256": "98a226c62ab3b5e47f0d6917f305fe51e4346443074c410a04be59cc87bc3651",
+        "report_sha256": "af419f1b4d81b14f1ae17b05c9f4afead58d4ddc38ce4bddf81b6609109101f2",
+        "evaluator_sha256": "4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a",
+        "scope": "Single case001 observation; large cases not run; no independent committed-source rebuild"
+      }
     }
   },
   "formal_configs": {
