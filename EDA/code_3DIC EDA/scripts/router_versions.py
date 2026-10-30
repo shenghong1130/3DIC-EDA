@@ -1,7 +1,7 @@
 """Read-only Router identity lookup. No compilation, registry writes or Git calls."""
 import json,re
 from pathlib import Path
-from common import PROJECT
+from common import PROJECT,formal_run_label
 
 REGISTRY=PROJECT/'docs/router_versions.json'
 VERSION=re.compile(r'v[1-9][0-9]*(?:_[1-9][0-9]*)?\Z')
@@ -52,7 +52,7 @@ def identify_router(digest,path=None):
         if (VERSION.fullmatch(v) and isinstance(r,dict) and r.get('status')=='CANDIDATE'
             and r.get('verified') is False and r.get('sha256')==digest
             and r.get('path')=='build/router_'+v and r.get('config_path')=='configs/'+v+'.json'
-            and r.get('label')==v and r.get('source_sha256') and r.get('build_command')):candidates.append(v)
+            and r.get('label') in {v,formal_run_label('open_3d_case001',v)} and r.get('source_sha256') and r.get('build_command')):candidates.append(v)
     if candidates:
         all_matches=sorted(set(matches+candidates),key=version_key)
         if len(all_matches)>1:return dict(result,router_version_status='AMBIGUOUS',router_version_matches=all_matches,router_version_reason='Ambiguous verified/candidate SHA256: '+', '.join(all_matches))

@@ -41,7 +41,7 @@ def runs():
 def selected(run):
     if len(run.split('/'))!=2:raise ValueError('Unknown run')
     case,label=run.split('/');d=existing_run_dir(case,label);r=load(d/'run.json')
-    if r.get('case')!=case or label not in {r.get('label'),r.get('migration',{}).get('original_label')}:raise ValueError('Run manifest identity mismatch')
+    if r.get('case')!=case or label not in {r.get('label'),r.get('migration',{}).get('original_label'),*r.get('migration',{}).get('previous_labels',[])}:raise ValueError('Run manifest identity mismatch')
     return d
 def guide(path):
     nets={};name=None;opened=False

@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from common import PROJECT,OUTPUTS,backend_command,linux_path,sha256,catalog
+from common import PROJECT,OUTPUTS,backend_command,linux_path,sha256,catalog,formal_run_label
 from manage_router_versions import publish_json,registry_lock
 from router_versions import REGISTRY,load_registry
 
@@ -25,7 +25,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--version',required=True,choices=['v3_2'])
     parser.add_argument('--run-case001',action='store_true',help='After all lightweight checks, one Router run and at most one latest evaluation, 600s each')
     a=parser.parse_args();version=a.version;report=OUTPUTS/'reports'/version;report.mkdir(parents=True,exist_ok=True)
-    binary=PROJECT/'build'/('router_'+version);config=PROJECT/'configs'/(version+'.json');directory=OUTPUTS/'runs/open_3d_case001'/version
+    label=formal_run_label('open_3d_case001',version)
+    binary=PROJECT/'build'/('router_'+version);config=PROJECT/'configs'/(version+'.json');directory=OUTPUTS/'runs/open_3d_case001'/label
     if binary.exists() or directory.exists() or (report/'build.json').exists():parser.error('Version binary/record already exists. Never overwrite or silently retry a numeric version.')
     if not config.is_file():parser.error('Missing matching numeric config')
     backend='wsl' if os.name=='nt' else 'native'
@@ -57,7 +58,7 @@ def main():
             micro.append({'case':case,'net_count':len(data['nets']),'metrics':data['metrics'],'trace_replay':replay(folder,data),'guide_sha256':sha256(folder/'route.guide'),'official_status':'NOT_EVALUATED','temporary_outputs':True})
         if sha256(config)!=config_sha or any(sha256(PROJECT/name)!=digest for name,digest in pinned.items()):raise RuntimeError('Source/test/config changed during validation')
         compiler=subprocess.check_output(backend_command(['g++','--version'],backend)).decode('utf8',errors='replace')
-        receipt={'version':version,'path':'build/router_'+version,'config_path':'configs/'+version+'.json','label':version,'sha256':sha256(candidate),'config_sha256':config_sha,
+        receipt={'version':version,'path':'build/router_'+version,'config_path':'configs/'+version+'.json','label':label,'sha256':sha256(candidate),'config_sha256':config_sha,
             'git_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT).decode().strip(),'verified':False,'status':'CANDIDATE','release_status':'NOT_RELEASED',
             'source_sha256':{name:digest for name,digest in pinned.items() if name.startswith(('src','include'))},'test_sha256':{name:digest for name,digest in pinned.items() if name.startswith('tests')},
             'build_command':command,'compiler':compiler,'source_state':'UNCOMMITTED_ALGORITHM; immutable source snapshot, not an independent Git rebuild','checks':checks,'micro':micro}
@@ -77,14 +78,14 @@ def main():
     print('Validated one candidate; temporary builds and toy/sample outputs removed',flush=True)
     if not a.run_case001:return 0
     # This exclusive receipt is a durable one-attempt fuse, also on host errors.
-    save_new(report/'case001_attempt.json',{'case':'open_3d_case001','label':version,'router_sha256':receipt['sha256'],'config_sha256':config_sha,'router_budget_seconds':600,'evaluation_budget_seconds':600,'attempt':1})
-    args=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case','open_3d_case001','--backend',backend,'--router',str(binary),'--config',str(config),'--label',version,'--time-limit','600']
+    save_new(report/'case001_attempt.json',{'case':'open_3d_case001','label':label,'router_sha256':receipt['sha256'],'config_sha256':config_sha,'router_budget_seconds':600,'evaluation_budget_seconds':600,'attempt':1})
+    args=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case','open_3d_case001','--backend',backend,'--router',str(binary),'--config',str(config),'--label',label,'--time-limit','600']
     with (report/'case001_run.log').open('xb') as log:call=subprocess.run(args,cwd=PROJECT,stdout=log,stderr=subprocess.STDOUT,timeout=690)
     run_data=json.loads((directory/'run.json').read_text(encoding='utf8'))
     if call.returncode or run_data.get('status')!='ROUTED' or run_data.get('returncode')!=0:
         print('Unique case001 run failed; preserved without retries or scoring',flush=True);return 2
     print('Unique case001 ROUTED; run one latest evaluation on the same Guide',flush=True)
-    with (report/'case001_evaluation.log').open('xb') as log:call=subprocess.run([sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case','open_3d_case001','--label',version,'--backend',backend,'--engine','latest','--timeout','600'],cwd=PROJECT,stdout=log,stderr=subprocess.STDOUT,timeout=675)
+    with (report/'case001_evaluation.log').open('xb') as log:call=subprocess.run([sys.executable,'-B',str(PROJECT/'scripts/evaluate.py'),'--case','open_3d_case001','--label',label,'--backend',backend,'--engine','latest','--timeout','600'],cwd=PROJECT,stdout=log,stderr=subprocess.STDOUT,timeout=675)
     print('Unique case001 evaluation helper returncode:',call.returncode,flush=True)
     return call.returncode
 

@@ -60,7 +60,7 @@ class RunMetadataTests(unittest.TestCase):
         (self.root/'configs/default.json').write_text('{"wire":1,"time_limit":999}',encoding='utf8')
         self.registry=self.root/'docs/router_versions.json';self.registry.write_text(json.dumps({'schema_version':1,'versions':{'v1':record('v1',b'v1'),'v2':record('v2',b'v2')}}))
         self.target=self.root/'outputs/runs/toy/new_label';self.launch_record=None
-    def invoke(self,router=None,code=1,status='FINISHED',config=None,label='new_label',comparison=False,case='toy'):
+    def invoke(self,router=None,code=1,status='FINISHED',config=None,label='new_label',comparison=True,case='toy'):
         inputs={case:{'def':str(self.root/'inputs/case.def'),'lef':str(self.root/'inputs/case.lef'),'thermal':str(self.root/'inputs/thermal.json')}}
         def launch(*args,**kwargs):
             self.launch_record=json.loads((self.target/'run.json').read_text(encoding='utf8'))
@@ -92,18 +92,25 @@ class RunMetadataTests(unittest.TestCase):
     def test_case001_retry_label_is_rejected_before_launch(self):
         config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
         with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):
-            self.invoke(self.root/'build/router_v2',config=config,label='v2_retry',case='open_3d_case001')
+            self.invoke(self.root/'build/router_v2',config=config,label='case001_v2_retry',case='open_3d_case001',comparison=False)
         self.assertIsNone(self.launch_record);self.assertFalse(self.target.exists())
+    def test_other_case_and_version_mismatches_are_rejected_before_launch(self):
+        config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
+        for case,label in [('open_3d_case003','case005_v2'),('open_3d_case005','case005_v3_2'),
+                ('toy','v2'),('sample001','sample001_v2_retry'),('sample001_legacy','sample001_v2')]:
+            with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):
+                self.invoke(self.root/'build/router_v2',config=config,label=label,case=case,comparison=False)
+            self.assertIsNone(self.launch_record);self.assertFalse(self.target.exists())
     def test_existing_case001_numeric_result_is_not_recreated(self):
         self.target.mkdir(parents=True);(self.target/'run.json').write_text('{"status":"ROUTED"}')
         err=io.StringIO()
         with contextlib.redirect_stderr(err),self.assertRaises(SystemExit):
-            self.invoke(self.root/'build/router_v2',label='v2',case='open_3d_case001')
+            self.invoke(self.root/'build/router_v2',label='case001_v2',case='open_3d_case001',comparison=False)
         self.assertIn('evaluate.py --attempt',err.getvalue());self.assertIsNone(self.launch_record)
     def test_v2_formal_config_and_label_are_recorded_as_version(self):
         config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
-        self.target=self.root/'outputs/runs/toy/v2'
-        _,r,_=self.invoke(self.root/'build/router_v2',config=config,label='v2')
+        self.target=self.root/'outputs/runs/toy/toy_v2'
+        _,r,_=self.invoke(self.root/'build/router_v2',config=config,label='toy_v2',comparison=False)
         self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_path'],'configs/v2.json')
     def test_missing_registry_preserves_execution_and_timeout_metadata(self):
         self.registry.unlink();_,r,text=self.invoke(status='TIMEOUT',code=124)
@@ -124,10 +131,10 @@ class RunMetadataTests(unittest.TestCase):
     def test_numeric_router_requires_matching_config_and_label(self):
         data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))
         exe=self.root/'build/router_v3_1';exe.write_bytes(b'numeric');config=self.root/'configs/v3_1.json';config.write_text('{"wire":1}')
-        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):self.invoke(exe)
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):self.invoke(exe,comparison=False)
         self.assertFalse(self.target.exists())
-        self.target=self.root/'outputs/runs/toy/v3_1'
-        _,r,_=self.invoke(exe,config=config,label='v3_1');self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_sha256'],digest(config.read_bytes()))
+        self.target=self.root/'outputs/runs/toy/toy_v3_1'
+        _,r,_=self.invoke(exe,config=config,label='toy_v3_1',comparison=False);self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_sha256'],digest(config.read_bytes()))
 
     def test_numeric_mismatch_is_only_an_explicit_comparison(self):
         data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))

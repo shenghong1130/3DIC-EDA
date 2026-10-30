@@ -6,7 +6,7 @@ replaces this script's derived reports/charts, never source measurements.
 """
 import argparse,csv,json,os,statistics,sys
 from pathlib import Path
-from common import PROJECT,OUTPUTS,safe_label,sha256
+from common import PROJECT,OUTPUTS,safe_label,sha256,remap_record_paths
 
 ROOT=OUTPUTS/'reports/algorithm_optimization'
 REFRESH=False
@@ -18,7 +18,7 @@ def number(v):return 'N/A' if v is None else f'{v:.6g}'
 
 def measurement_times(row):
     """Read real times; retired/missing raw runs never trigger reconstruction."""
-    directory=Path(row['run_directory'])
+    directory=Path(remap_record_paths(row['run_directory']))
     if (directory/'result.json').is_file() and (directory/'run.json').is_file():
         result=read(directory/'result.json');run=read(directory/'run.json')
         return dict(router_elapsed_seconds=result['metrics']['runtime_seconds'],

@@ -99,7 +99,7 @@ def main(argv=None):
             directory=OUTPUTS/'runs'/case/label
             if directory.exists():raise RuntimeError('Historical Label already exists: '+label)
             executable=resolve_router(PROJECT/binary) if binary else candidate;config_path=config_file(config)
-            cmd=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--backend',backend,'--router',str(executable),'--config',str(config_path),'--time-limit',str(a.router_budget)]
+            cmd=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--backend',backend,'--router',str(executable),'--config',str(config_path),'--time-limit',str(a.router_budget),'--comparison']
             if case!='open_3d_case001':cmd+=['--trace']
             prefix=report/f'{sequence:02d}_{case}_{variant}'
             print(f'[{sequence}] {case} / {variant}',flush=True)

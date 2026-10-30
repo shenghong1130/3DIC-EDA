@@ -121,7 +121,7 @@ def main():
                     row=old|{'reference_report':str(a.reference.resolve()),'reused_control':True};save_new(report/(case+'_'+name+'.json'),row);rows.append(row);continue
                 label=safe_label('gen_'+a.experiment+'_'+name);directory=OUTPUTS/'runs'/case/label
                 if directory.exists():raise RuntimeError('Historical label conflict: '+label)
-                args=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--router',str(executable),'--backend',a.backend,'--config',str(config),'--time-limit',str(a.router_budget)]
+                args=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--router',str(executable),'--backend',a.backend,'--config',str(config),'--time-limit',str(a.router_budget),'--comparison']
                 if case!='open_3d_case001':args+=['--trace']
                 print(case,name,flush=True);peak=WindowsPeak(executable)
                 with (report/(case+'_'+name+'.log')).open('xb') as f:

@@ -114,7 +114,7 @@ def register(version,source,ref,description,final=False,architecture=False,batch
             with source.open('rb') as src,dest.open('xb') as target:shutil.copyfileobj(src,target)
             shutil.copymode(source,dest)
         if final:entry['build_variant']='v3_final'
-        if architecture:entry.update(build_variant='v3_architecture',release_status='VERIFIED_RESEARCH_BASELINE_NOT_DEFAULT',config_path='configs/'+version+'.json',label=version)
+        if architecture:entry.update(build_variant='v3_architecture',release_status='VERIFIED_RESEARCH_BASELINE_NOT_DEFAULT',config_path='configs/'+version+'.json',run_label_pattern='{case_key}_'+version)
         if batch:entry['build_variant']='v3_hotspot_batch'
         previous_candidate=data.get('candidates',{}).get(version,{})
         if previous_candidate.get('validation_report'):entry['validation_report']=previous_candidate['validation_report']

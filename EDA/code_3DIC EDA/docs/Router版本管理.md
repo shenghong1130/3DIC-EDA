@@ -86,20 +86,20 @@ python scripts/manage_router_versions.py --verify
 
 ```powershell
 Set-Location -LiteralPath 'D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA'
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v1 --label v1 --config configs/v1.json --time-limit 600
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v2 --label v2 --config configs/v2.json --time-limit 600
+python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v1 --label case001_v1 --config configs/v1.json --time-limit 600
+python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v2 --label case001_v2 --config configs/v2.json --time-limit 600
 ```
 
 不加 `--router` 的 WSL 命令仍执行根目录 `router`，不会自动替换成最新版本。评分器/UI 仍读取相同 Guide、结果与原有清单字段。参数实验脚本接口保持兼容，不修改旧计划/结果；如果旧批次冻结了 `run_case.py` 哈希，本次新增记录功能会触发其原有版本保护，应使用新 Experiment ID，或在原工具环境续跑，不篡改旧指纹。
 
 ## 6. 数字配置与历史报告
 
-| Router | Config | 新正式运行 Label |
+| Router | Config | case001 正式 Label |
 |---|---|---|
-| `router_v1` | `configs/v1.json` | `v1` |
-| `router_v2` | `configs/v2.json` | `v2` |
-| `router_v3_1` | `configs/v3_1.json` | `v3_1` |
-| `router_v3_2` | `configs/v3_2.json` | `v3_2` |
+| `router_v1` | `configs/v1.json` | `case001_v1`（未创建既有记录） |
+| `router_v2` | `configs/v2.json` | `case001_v2` |
+| `router_v3_1` | `configs/v3_1.json` | `case001_v3_1` |
+| `router_v3_2` | `configs/v3_2.json` | `case001_v3_2` |
 
 V1 配置保留历史 default 原字节，V2 配置保留 default2 原字节，与保留的同参数对照一致；V2/V3.1/V3.2 配置完全相同。历史 default、default2、baseline、debug、final 均位于 `configs/archive/`。统一登记逐项固定兼容别名的 SHA256，解析时不替换成不同参数。
 
@@ -113,4 +113,6 @@ python scripts/summarize.py --history-only
 python scripts/cleanup_outputs.py --case001-prune --dry-run
 ```
 
-以上命令不启动 Router、评分器或编译。case001 日常目录仅有 `v2`、`v3_1`、`v3_2` 与全部 tune 目录，V1 无可核实的非调参结果目录。旧 Final 与超时记录完整归档到 `outputs/history/case001/`。原始 run/Guide/result/日志/官方回执字节不变，读取层提供迁移后的 Label、Guide 路径和原始身份，不产生新的运行或评分。摘要见 [case001_history.json](../outputs/reports/case001_history.json)。已存在的正式 case001 Label 拒绝重新布线，复评分用 `evaluate.py --attempt`。旧清理计划已完成，Retention 已删除，专用清理预览仅显示 RETIRED，应用被拒绝。
+正式 Label 通过 `formal_run_label(Case ID, Router 版本)` 统一生成：`open_3d_caseNNN` 简写为 `caseNNN`，其他 ID（含 `_legacy`）保持完整，再拼接版本。登记回执内的旧 Label 是原始构建证据，不作为所有 Case 的固定运行名。
+
+case001 日常目录为 `case001_v2`、`case001_v3_1`、`case001_v3_2` 与全部 tune，不创建 V1 结果。旧 Final、超时证据及 case003 的 V1 不同参数对照保留在 history。`run_migrations` 直接指向最终目录，并保存原始及中间 Label/路径；读取层不改原始清单或评分。旧名称可查询，但新的正式运行必须使用 Case＋版本的正确 Label，已存在时停止，复评分使用 `--attempt`。同一版本的其他历史参数对照不强行合并为一个成绩，未核实的二进制也不按目录名猜测版本。

@@ -67,6 +67,13 @@ def resolve_router(path):
     except (FileNotFoundError,KeyError):return path
 def run_dir(case,label):return OUTPUTS/'runs'/safe_label(case)/safe_label(label)
 
+def formal_run_label(case,version):
+    """One Case/version naming rule; it does not assert a run exists."""
+    safe_label(case)
+    if not re.fullmatch(r'v[1-9][0-9]*(?:_[1-9][0-9]*)?',version):raise ValueError('Invalid Router version')
+    match=re.fullmatch(r'open_3d_(case[0-9]+)',case)
+    return safe_label((match.group(1) if match else case)+'_'+version)
+
 def migration_target(row):
     target=(PROJECT/row['directory']).resolve()
     if not target.is_relative_to(OUTPUTS.resolve()):raise ValueError('Run migration escaped outputs')
@@ -75,10 +82,15 @@ def migration_target(row):
 def existing_run_dir(case,label):
     """Read-only old-Label compatibility; never used to allocate new runs."""
     safe_label(case);safe_label(label)
+    direct=run_dir(case,label)
+    if direct.is_dir():return direct  # A real current run outranks a historical alias.
+    matches=set()
     for key,row in management_data().get('run_migrations',{}).items():
-        if key==case+'/'+label or (key.split('/')[0]==case and row['label']==label):
+        if key.split('/')[0]==case and label in {key.split('/',1)[1],row['label'],*row.get('previous_labels',[])}:
             target=migration_target(row)
-            if target.is_dir():return target
+            if target.is_dir():matches.add(target)
+    if len(matches)>1:raise ValueError('Ambiguous historical run Label: '+case+'/'+label)
+    if matches:return matches.pop()
     return run_dir(case,label)
 
 def remap_record_paths(value):
@@ -91,10 +103,11 @@ def remap_record_paths(value):
     for row in management_data().get('run_migrations',{}).values():
         target=migration_target(row)
         if not target.is_dir():continue
-        old=PROJECT/row['original_directory']
-        for source,destination in [(str(old),str(target)),(old.as_posix(),target.as_posix()),(linux_path(old),linux_path(target)),
-                (row['original_directory'],row['directory'])]:
-            mappings.append((source,destination))
+        for old_relative in {row['original_directory'],*row.get('previous_directories',[])}:
+            old=PROJECT/old_relative
+            for source,destination in [(str(old),str(target)),(old.as_posix(),target.as_posix()),(linux_path(old),linux_path(target)),
+                    (old_relative,row['directory'])]:
+                mappings.append((source,destination))
     def visit(item):
         if isinstance(item,dict):return {k:(v if k in {'command','evaluator_command','build_command'} else visit(v)) for k,v in item.items()}
         if isinstance(item,list):return [visit(x) for x in item]
@@ -115,7 +128,7 @@ def load_run(directory):
             raise ValueError('Original migrated run identity changed')
         data.update(label=row['label'],guide=str(directory/'route.guide'),migration={
             'original_label':raw['label'],'original_run_sha256':row['original_run_sha256'],
-            'directory':row['directory'],'historical_migration_only':True})
+            'directory':row['directory'],'previous_labels':row.get('previous_labels',[]),'historical_migration_only':True})
         if raw.get('trace') is not None:data['trace']=str(directory/'trace.jsonl')
         break
     return data

@@ -2082,24 +2082,38 @@
   },
   "run_migrations": {
     "open_3d_case001/gen_20261030_stage_a_linux_v2": {
-      "directory": "outputs/runs/open_3d_case001/v2",
-      "label": "v2",
+      "directory": "outputs/runs/open_3d_case001/case001_v2",
+      "label": "case001_v2",
       "original_directory": "outputs/runs/open_3d_case001/gen_20261030_stage_a_linux_v2",
       "original_label": "gen_20261030_stage_a_linux_v2",
       "original_run_sha256": "0ae9b3bd7ab8f1a65486d83d8d5d41a439701ce6afb53043d74c8f7299eb1c8a",
       "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
       "result_sha256": "43161c1aca47c5fbebffc49ae3be47e8257203fb8c685289507bd334a9f7c90e",
-      "kind": "REPRESENTATIVE"
+      "kind": "REPRESENTATIVE",
+      "previous_directories": [
+        "outputs/runs/open_3d_case001/v2"
+      ],
+      "previous_labels": [
+        "v2"
+      ],
+      "router_version": "v2"
     },
     "open_3d_case001/gen_20261030_guarded_linux_new_v3": {
-      "directory": "outputs/runs/open_3d_case001/v3_1",
-      "label": "v3_1",
+      "directory": "outputs/runs/open_3d_case001/case001_v3_1",
+      "label": "case001_v3_1",
       "original_directory": "outputs/runs/open_3d_case001/gen_20261030_guarded_linux_new_v3",
       "original_label": "gen_20261030_guarded_linux_new_v3",
       "original_run_sha256": "791e9159b07a1b4cb84e721a3a8fa97095f21d69dd419d2e775e7da25c5e6ee1",
       "guide_sha256": "2f6066bd09fc0f78c8253f43cc2ec1f6239613d9d6e3c1618336e00532d15de1",
       "result_sha256": "080126e757791d5871d37eb0e5cb452feea453acc5f13c418d62226749b3b53f",
-      "kind": "REPRESENTATIVE"
+      "kind": "REPRESENTATIVE",
+      "previous_directories": [
+        "outputs/runs/open_3d_case001/v3_1"
+      ],
+      "previous_labels": [
+        "v3_1"
+      ],
+      "router_version": "v3_1"
     },
     "open_3d_case001/v3_20261029_230856_release_v3": {
       "directory": "outputs/history/case001/old_v3_final",
@@ -2120,6 +2134,118 @@
       "guide_sha256": "8ccf2bccf9d1b06cf5044b2c6222ceadf9b8a6156c5e9b0294e91adc3559df33",
       "result_sha256": "aa9ec1023291e66a67092f163e27c6e1c96b5f274cac8b652907bd5c0d2fb284",
       "kind": "ARCHIVED_EVIDENCE"
+    },
+    "open_3d_case001/v3_2": {
+      "original_label": "v3_2",
+      "original_run_sha256": "941ae7351564dbde8b7c3a903fedaf0f1e69452f1fceb99025865f54a19bf3a9",
+      "guide_sha256": "4f8c635a82a0f5c470389f92bdaaf209438e18edea6b0bfdedb6ca5c57d07fc3",
+      "result_sha256": "b90abd24d16e80a58538961214e341b6a198db06cb8792f791d7122cc370a30f",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/open_3d_case001/v3_2",
+      "directory": "outputs/runs/open_3d_case001/case001_v3_2",
+      "label": "case001_v3_2",
+      "router_version": "v3_2"
+    },
+    "open_3d_case003/case003_v2_1": {
+      "original_label": "case003_v2_1",
+      "original_run_sha256": "75af2a1faad18f3addbcf2b0d2de589436f885579f061f7921d1c702039a793f",
+      "guide_sha256": "599ddd730fc0e7cc72ec8bce520750c578f0b7e54d0db056b0fa5fb2d1c5bead",
+      "result_sha256": "44d02138881591aa128d4b5d88cef41e508cd4d1e649cfd194eae2a7e6529e10",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/open_3d_case003/case003_v2_1",
+      "directory": "outputs/runs/open_3d_case003/case003_v1",
+      "label": "case003_v1",
+      "router_version": "v1"
+    },
+    "open_3d_case005/case005_v2_1": {
+      "original_label": "case005_v2_1",
+      "original_run_sha256": "f6873259892a0dd34269b5d53bec8728fb1cdd5ff0b7a5fb035be6a641aec8b4",
+      "guide_sha256": "9c34d895cc2266644184da3bf67931fdce0558c3091e636866c5fd911beccdc4",
+      "result_sha256": "9d69c2202cb465428dba2fcf02798127bc9ce3db1c7d91371da4fc2ababc3c82",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/open_3d_case005/case005_v2_1",
+      "directory": "outputs/runs/open_3d_case005/case005_v2",
+      "label": "case005_v2",
+      "router_version": "v2"
+    },
+    "toy/phase2_baseline_5d1562d": {
+      "original_label": "phase2_baseline_5d1562d",
+      "original_run_sha256": "cb998fb215036a4faa4e153587e3ca86c6f1b703b81be1e0ceea96382bb12a38",
+      "guide_sha256": "ebb1101a4a867e3cd42883886bbf595d40d2e769224c08fb5ec6730bc2946699",
+      "result_sha256": "4a8aa1cc5124e9f1efdeddea06cddb891010eab0f198e8ebd3743c636f15a409",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/toy/phase2_baseline_5d1562d",
+      "directory": "outputs/runs/toy/toy_v1",
+      "label": "toy_v1",
+      "router_version": "v1"
+    },
+    "toy/gen_20261030_stage_a_linux_v2": {
+      "original_label": "gen_20261030_stage_a_linux_v2",
+      "original_run_sha256": "50850dce36e429da049d51c910c5cffc784612089871fe3927842a086ade004f",
+      "guide_sha256": "88268c3d6a8e8ae493971e85af3f7d428b17777a161e8b239edfb922c2484d5a",
+      "result_sha256": "8f5b2b8425b5a0b346e3f23a2c47aaeefdd235c6d2d88939ace6254908f6c205",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/toy/gen_20261030_stage_a_linux_v2",
+      "directory": "outputs/runs/toy/toy_v2",
+      "label": "toy_v2",
+      "router_version": "v2"
+    },
+    "toy/gen_20261030_guarded_linux_new_v3": {
+      "original_label": "gen_20261030_guarded_linux_new_v3",
+      "original_run_sha256": "95442ddabbe3c9bbf7188138726476916d78727610791f1a09e630f22b4c09d8",
+      "guide_sha256": "8e119ac6d8d19d601852bf0450af9320189e58dd6016b35dbcd6d6c0e900c4f2",
+      "result_sha256": "6512ecf69e850d7c817f091422108a766a855eeff26a4afd72a438ae8f77800c",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/toy/gen_20261030_guarded_linux_new_v3",
+      "directory": "outputs/runs/toy/toy_v3_1",
+      "label": "toy_v3_1",
+      "router_version": "v3_1"
+    },
+    "sample001/phase2_baseline_5d1562d": {
+      "original_label": "phase2_baseline_5d1562d",
+      "original_run_sha256": "c9ff2ce2cbe2da76f13a6e7ba2ef123d21d0e6d922ff9d75e8d7c946e959286e",
+      "guide_sha256": "61bdaa0736b8118f16d0c47bcb4955af7739695cf9b930eaf5fc03559243113a",
+      "result_sha256": "af191a57d7268d56bd6e4e86fe2c00663b4dd096a9b7ade77bb97192d0b24dbe",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/sample001/phase2_baseline_5d1562d",
+      "directory": "outputs/runs/sample001/sample001_v1",
+      "label": "sample001_v1",
+      "router_version": "v1"
+    },
+    "sample001/gen_20261030_stage_a_linux_v2": {
+      "original_label": "gen_20261030_stage_a_linux_v2",
+      "original_run_sha256": "57d2f6cdf873179b315e7a0df8755e1a880d6e29565a838da54e4fadf98f5204",
+      "guide_sha256": "61bdaa0736b8118f16d0c47bcb4955af7739695cf9b930eaf5fc03559243113a",
+      "result_sha256": "4871998292617ea427ce7919aa68b181cdaa588ccd7f519ed0f8fe4e1b2944de",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/sample001/gen_20261030_stage_a_linux_v2",
+      "directory": "outputs/runs/sample001/sample001_v2",
+      "label": "sample001_v2",
+      "router_version": "v2"
+    },
+    "sample001/gen_20261030_guarded_linux_new_v3": {
+      "original_label": "gen_20261030_guarded_linux_new_v3",
+      "original_run_sha256": "5dcc6d921ad79da8a650ab753c1840e1c211488a46689ead2674eeeaad7d895d",
+      "guide_sha256": "61bdaa0736b8118f16d0c47bcb4955af7739695cf9b930eaf5fc03559243113a",
+      "result_sha256": "c58e3a05c015ada3df032cf582e3631df4e35780cea83f34e14eae4172fa6870",
+      "kind": "REPRESENTATIVE",
+      "original_directory": "outputs/runs/sample001/gen_20261030_guarded_linux_new_v3",
+      "directory": "outputs/runs/sample001/sample001_v3_1",
+      "label": "sample001_v3_1",
+      "router_version": "v3_1"
+    },
+    "open_3d_case003/case003_v3_1": {
+      "original_label": "case003_v3_1",
+      "original_run_sha256": "a20e94c46c0c0189ebe633c798b7195b1c3c03735759cadeff1892042cef013d",
+      "guide_sha256": "843b0b842d206be656fd8791e2f1e77b8a585da86ca4072fa2de5ae551871b8b",
+      "result_sha256": "fee11334ea1f8e5cf13996e7a015e5478aad8b2aa6f3ab297ffdac4877dd07f8",
+      "kind": "ARCHIVED_COMPARISON",
+      "original_directory": "outputs/runs/open_3d_case003/case003_v3_1",
+      "directory": "outputs/history/case003/v1_parameter_comparison",
+      "label": "v1_parameter_comparison",
+      "router_version": "v1"
     }
-  }
+  },
+  "run_label_format": "{case_key}_{version}",
+  "run_case_key_rule": "open_3d_caseNNN -> caseNNN; other Case IDs retained in full"
 }
