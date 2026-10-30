@@ -11,7 +11,7 @@ def main():
         print_history();return
     rows=[];allruns=[]
     for p in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
-        r=json.loads(p.read_text(encoding='utf8'));d=json.loads((p.parent/'result.json').read_text(encoding='utf8')) if (p.parent/'result.json').exists() else {};report=p.parent/'official_latest/evaluation_report.json';official=json.loads(report.read_text(encoding='utf8')) if report.exists() else {}
+        r=load_run(p.parent);d=json.loads((p.parent/'result.json').read_text(encoding='utf8')) if (p.parent/'result.json').exists() else {};report=p.parent/'official_latest/evaluation_report.json';official=load_record(report) if report.exists() else {}
         official_status=r.get('official_status','NOT_EVALUATED')
         if official and official_status!='PASS':official_status='REPORT_'+official.get('status','UNKNOWN')+' / metadata incomplete'
         allruns.append({'case':r['case'],'label':r['label'],'router':r['status'],'official':r.get('official_status','NOT_EVALUATED'),'local':d.get('metrics',{}),'iterations':d.get('iterations',[]),'process_runtime':r['runtime_seconds'],'peak_memory_bytes':r['peak_memory_bytes'],'report':official,'failure_reason':r.get('failure_reason'),'path':str(p.parent)})
@@ -19,7 +19,7 @@ def main():
     # Archived rows remain reportable without reading deleted Guide/result/logs.
     from case001_history import summary_rows
     for r in summary_rows():
-        if r['raw_run_retained']:continue
+        if r['daily_run_retained']:continue
         report=r['official_report']
         allruns.append({'case':r['case'],'label':r['label'],'router':r['status'],
             'official':r['official_status'],'local':r.get('metrics',{}),'iterations':r.get('iterations',[]),

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import argparse,zipfile,json,stat,hashlib
-from common import PROJECT,OUTPUTS,save
+from common import PROJECT,OUTPUTS,save,load_run
 def main():
     p=argparse.ArgumentParser(description='Create source submission ZIP; official qualification is reported separately.')
     p.add_argument('--output',type=Path,default=OUTPUTS/'submission_v1.zip');p.add_argument('--with-linux-binary',action='store_true');a=p.parse_args()
@@ -25,7 +25,7 @@ def main():
             z.writestr(info,data,compress_type=zipfile.ZIP_DEFLATED)
     runs=[]
     for f in (OUTPUTS/'runs').glob('*/*/run.json'):
-        d=json.loads(f.read_text(encoding='utf8'));runs.append({'case':d['case'],'label':d['label'],'official_status':d['official_status']})
+        d=load_run(f.parent);runs.append({'case':d['case'],'label':d['label'],'official_status':d['official_status']})
     save(target.with_suffix('.manifest.json'),{'archive':str(target),'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'files':[f.relative_to(PROJECT).as_posix() for f in files],'validation':runs,'qualification':'Local cases only; full official submission validation is not established.'})
     print(target)
 if __name__=='__main__':main()

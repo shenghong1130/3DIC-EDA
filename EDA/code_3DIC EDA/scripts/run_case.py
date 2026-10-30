@@ -3,7 +3,7 @@ import argparse,json,os,sys,time,uuid,math
 from pathlib import Path
 from common import *
 from diagnostics import atomic_json,progress_tail,json_file,classify,utc
-from router_versions import identify_router,display_path
+from router_versions import identify_router,display_path,load_registry
 
 def optional_hash(path):
     try:return sha256(path)
@@ -31,10 +31,20 @@ def main():
     except ValueError as e:p.error(str(e))
     output=(a.output or target/'route.guide').resolve()
     if not output.is_relative_to(OUTPUTS.resolve()):p.error('Local helper outputs must be under project outputs/')
-    if target.exists() or output.exists():p.error('Run/output already exists; use a new --label (partial logs are history too)')
+    if target.exists() or output.exists():
+        if case=='open_3d_case001' and re.fullmatch(r'v[1-9][0-9]*(?:_[1-9][0-9]*)?',a.label):p.error('该版本的正式 case001 结果已存在。复评分请使用 evaluate.py --attempt，不要重新布线。')
+        p.error('Run/output already exists; use a new --label (partial logs are history too)')
     config=resolve_config(a.config);cfg=json.loads(config.read_text(encoding='utf8'))
     exe=resolve_router(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe'))
     binary_hash=optional_hash(exe);version=identify_router(binary_hash)
+    if case=='open_3d_case001':
+        tuning=(a.label.startswith('tune_') and a.comparison and
+                config.is_relative_to((PROJECT/'parameter_tuning/configs').resolve()))
+        if not tuning:
+            v=version['router_version']
+            if (not re.fullmatch(r'v[1-9][0-9]*(?:_[1-9][0-9]*)?',v) or a.comparison or
+                    a.label!=v or config!=(PROJECT/'configs'/(v+'.json')).resolve()):
+                p.error('case001 正式结果必须使用同一数字版本的 Router、Config、Label。历史研究请使用临时工作目录，不要创建 retry/stage 运行目录。')
     numeric=version['router_version'] if re.fullmatch(r'v[1-9][0-9]*_[1-9][0-9]*',version['router_version']) else None
     # New V1/V2 formal configs coexist with the historical default workflow.
     basic=version['router_version']
@@ -44,8 +54,9 @@ def main():
     if named and not a.comparison and named.group(1)!=numeric:p.error('Numeric Router filename has no matching SHA256 identity; inspect the receipt or use --comparison for a non-version run')
     if numeric and not a.comparison:
         if config!=(PROJECT/'configs'/(numeric+'.json')).resolve() or a.label!=numeric:p.error('Version run requires matching Router/config/label '+numeric+'; use --comparison for an explicit non-version experiment')
-        receipt=(json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8')).get('candidates',{}).get(numeric) or json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8'))['versions'].get(numeric,{}))
-        formal=json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8')).get('formal_configs',{}).get(numeric,{})
+        registry=load_registry()
+        receipt=registry.get('candidates',{}).get(numeric) or registry['versions'].get(numeric,{})
+        formal=registry.get('formal_configs',{}).get(numeric,{})
         expected_config=receipt.get('config_sha256') or formal.get('sha256')
         if expected_config and sha256(config)!=expected_config:p.error('Numeric version configuration hash changed')
     conv=linux_path if a.backend=='wsl' else lambda x:str(Path(x).resolve())

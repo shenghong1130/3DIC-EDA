@@ -25,9 +25,7 @@ V2 SHA256：`6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f`�
 
 | 文件 | 用途 |
 |---|---|
-| [build/router_versions.json](../build/router_versions.json) | 本机运行时登记；包含真实哈希、Git 提交、原文件、编译器、命令、独立重建与 CLI 核验证据 |
-| [docs/router_versions.json](../docs/router_versions.json) | 相同登记的可 Git 跟踪副本；`build/` 被忽略，不把 ELF 强行加入 Git |
-| [docs/router_build_inventory.json](../docs/router_build_inventory.json) | 本次逐文件清查快照：完整 SHA256、ELF 类型、角色、源码/构建证据、原命令及关联历史 Run |
+| [docs/router_versions.json](router_versions.json) | 唯一权威登记；版本、Config、候选回执、历史别名、必要构建证据与运行迁移索引统一管理 |
 | `outputs/reports/router_version_management/` | 本次保护清单、注册/测试日志和验证报告；旧性能报告未修改 |
 
 进入 `EDA\code_3DIC EDA` 后，在 PowerShell 执行：
@@ -39,7 +37,9 @@ python scripts/manage_router_versions.py --verify
 
 `--list` 动态核对正式文件哈希和 Git 源码证据；`--verify` 另检查可执行的四参数 `--help`，都不编译、不运行布线。需要再次独立重建核验时显式使用 `--verify --rebuild`。Verified 表示来源/字节/CLI 核实，不等于新的官方评分 PASS。
 
-运行时只读本机登记文件，不自动恢复、写登记、调用 Git 或编译。登记缺失/损坏时为 UNKNOWN；换机器后可在检查文档副本后复制到 `build/router_versions.json`，再运行 `--verify`。登记文件和二进制需要一起保存。不要手改 `verified` 冒充已核实版本。
+运行、查询和注册统一使用 Git 跟踪的 `docs/router_versions.json`，不再读取或写入 build 镜像；注册仍持独占锁，独立重建并检查哈希后原子发布。登记缺失/损坏时识别为 UNKNOWN，不从文件名或旧副本猜测版本。登记和二进制应一起保存，不能手改 `verified` 冒充已核实版本。
+
+登记中的 `versions` 保存独立 Git 重建证据，`candidates` 保存未发布候选完整回执，`formal_configs` 绑定数字配置；`config_aliases`、`router_aliases` 逐项保留旧路径、新路径与 SHA256；`historical_builds` 按哈希合并历史构建证据；`run_migrations` 记录历史结果迁移。V3.2 原回执字段已完整保留，初始发布状态单列，仍为 CANDIDATE/未发布。旧 Inventory 的逐运行列表已移除，唯一来源、命令、源码哈希及 UNKNOWN 说明保留在登记中。
 
 ## 3. 旧编译文件的含义
 
@@ -101,9 +101,9 @@ python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/r
 | `router_v3_1` | `configs/v3_1.json` | `v3_1` |
 | `router_v3_2` | `configs/v3_2.json` | `v3_2` |
 
-V1 配置保留历史 default 原字节，V2 配置保留 default2 原字节，与保留的同参数对照一致；V2/V3.1/V3.2 配置完全相同。历史 default、default2、baseline、debug、final 均位于 `configs/archive/`。[config_aliases.json](config_aliases.json) 逐项固定兼容别名的 SHA256，解析时不替换成不同参数。
+V1 配置保留历史 default 原字节，V2 配置保留 default2 原字节，与保留的同参数对照一致；V2/V3.1/V3.2 配置完全相同。历史 default、default2、baseline、debug、final 均位于 `configs/archive/`。统一登记逐项固定兼容别名的 SHA256，解析时不替换成不同参数。
 
-V3.1 是研究基线；V3.2 仍为 CANDIDATE_NOT_RELEASED。旧 Final 二进制通过 [router_artifacts.json](router_artifacts.json) 追溯归档位置，不改名冒充 V3.1。`validate_v3_final.py` 现在只读取历史指标并提供纯数据质量门槛；旧构建/发布流程已退役，拒绝 `--apply`。
+V3.1 是研究基线；V3.2 仍为 CANDIDATE_NOT_RELEASED。旧 Final 二进制通过统一登记的历史别名追溯归档位置，不改名冒充 V3.1。`validate_v3_final.py` 只读取历史指标并提供纯数据质量门槛，拒绝 `--apply`。
 
 ```powershell
 python scripts/research_v3.py --history-only
@@ -113,4 +113,4 @@ python scripts/summarize.py --history-only
 python scripts/cleanup_outputs.py --case001-prune --dry-run
 ```
 
-以上命令不启动 Router、评分器或编译。case001 代表结果的原 Label 见 [case001_history.json](../outputs/reports/case001_history.json)，另保留两份唯一证据例外及全部调参实验。报告中已删除的运行路径改为 `history://case001/...` 来源标识，不能作为文件读取。缺失历史运行不会自动重建；已存在的 Label 不得覆盖或自动重试。真实分数、负收益和发布判断见主目录算法文档。
+以上命令不启动 Router、评分器或编译。case001 日常目录仅有 `v2`、`v3_1`、`v3_2` 与全部 tune 目录，V1 无可核实的非调参结果目录。旧 Final 与超时记录完整归档到 `outputs/history/case001/`。原始 run/Guide/result/日志/官方回执字节不变，读取层提供迁移后的 Label、Guide 路径和原始身份，不产生新的运行或评分。摘要见 [case001_history.json](../outputs/reports/case001_history.json)。已存在的正式 case001 Label 拒绝重新布线，复评分用 `evaluate.py --attempt`。旧清理计划已完成，Retention 已删除，专用清理预览仅显示 RETIRED，应用被拒绝。

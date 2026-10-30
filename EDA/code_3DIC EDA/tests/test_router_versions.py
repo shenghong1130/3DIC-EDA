@@ -54,21 +54,21 @@ class IdentityTests(unittest.TestCase):
 class RunMetadataTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='router version space ');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
-        for folder in ['build','configs','src','include','inputs']:(self.root/folder).mkdir()
+        for folder in ['build','docs','configs','src','include','inputs']:(self.root/folder).mkdir()
         for name in ['case.def','case.lef','thermal.json']:(self.root/'inputs'/name).write_text('mock input')
         (self.root/'router').write_bytes(b'v1');(self.root/'build/router_v1').write_bytes(b'v1');(self.root/'build/router_v2').write_bytes(b'v2')
         (self.root/'configs/default.json').write_text('{"wire":1,"time_limit":999}',encoding='utf8')
-        self.registry=self.root/'build/router_versions.json';self.registry.write_text(json.dumps({'schema_version':1,'versions':{'v1':record('v1',b'v1'),'v2':record('v2',b'v2')}}))
+        self.registry=self.root/'docs/router_versions.json';self.registry.write_text(json.dumps({'schema_version':1,'versions':{'v1':record('v1',b'v1'),'v2':record('v2',b'v2')}}))
         self.target=self.root/'outputs/runs/toy/new_label';self.launch_record=None
-    def invoke(self,router=None,code=1,status='FINISHED',config=None,label='new_label',comparison=False):
-        inputs={'toy':{'def':str(self.root/'inputs/case.def'),'lef':str(self.root/'inputs/case.lef'),'thermal':str(self.root/'inputs/thermal.json')}}
+    def invoke(self,router=None,code=1,status='FINISHED',config=None,label='new_label',comparison=False,case='toy'):
+        inputs={case:{'def':str(self.root/'inputs/case.def'),'lef':str(self.root/'inputs/case.lef'),'thermal':str(self.root/'inputs/thermal.json')}}
         def launch(*args,**kwargs):
             self.launch_record=json.loads((self.target/'run.json').read_text(encoding='utf8'))
             self.assertEqual(self.launch_record['status'],'RUNNING')
             if code==0:
                 (self.target/'route.guide').write_text('mock Guide');(self.target/'result.json').write_text('{}')
             return {'returncode':code,'runtime_seconds':.001,'process_status':status}
-        args=['run_case.py','--case','toy','--backend','wsl','--label',label,'--config',str(config or self.root/'configs/default.json'),'--time-limit','12','--no-monitor']
+        args=['run_case.py','--case',case,'--backend','wsl','--label',label,'--config',str(config or self.root/'configs/default.json'),'--time-limit','12','--no-monitor']
         if comparison:args+=['--comparison']
         if router is not None:args+=['--router',str(router)]
         out=io.StringIO()
@@ -89,6 +89,17 @@ class RunMetadataTests(unittest.TestCase):
         self.assertEqual(r['router_binary'],'build/renamed_router');self.assertIn('Router Version : V2',text)
     def test_selected_v1(self):
         _,r,_=self.invoke(self.root/'build/router_v1');self.assertEqual(r['router_version'],'v1')
+    def test_case001_retry_label_is_rejected_before_launch(self):
+        config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):
+            self.invoke(self.root/'build/router_v2',config=config,label='v2_retry',case='open_3d_case001')
+        self.assertIsNone(self.launch_record);self.assertFalse(self.target.exists())
+    def test_existing_case001_numeric_result_is_not_recreated(self):
+        self.target.mkdir(parents=True);(self.target/'run.json').write_text('{"status":"ROUTED"}')
+        err=io.StringIO()
+        with contextlib.redirect_stderr(err),self.assertRaises(SystemExit):
+            self.invoke(self.root/'build/router_v2',label='v2',case='open_3d_case001')
+        self.assertIn('evaluate.py --attempt',err.getvalue());self.assertIsNone(self.launch_record)
     def test_v2_formal_config_and_label_are_recorded_as_version(self):
         config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
         self.target=self.root/'outputs/runs/toy/v2'
@@ -126,11 +137,11 @@ class RunMetadataTests(unittest.TestCase):
 class RegistrationSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
-        (self.root/'build').mkdir();(self.root/'docs').mkdir();self.file=self.root/'build/router_versions.json'
+        (self.root/'build').mkdir();(self.root/'docs').mkdir();self.file=self.root/'docs/router_versions.json'
         self.source=self.root/'candidate';self.source.write_bytes(b'\x7fELFmock')
     @contextlib.contextmanager
     def isolated(self):
-        with patch.object(manager,'PROJECT',self.root),patch.object(manager,'REGISTRY',self.file),patch.object(manager,'MIRROR',self.root/'docs/router_versions.json'),patch.object(manager,'load_registry',side_effect=lambda:versions.load_registry(self.file)),patch.object(manager,'commit_id',return_value='a'*40),patch.object(manager,'git_sources',return_value={'src/router.cpp':b'source'}):yield
+        with patch.object(manager,'PROJECT',self.root),patch.object(manager,'REGISTRY',self.file),patch.object(manager,'load_registry',side_effect=lambda:versions.load_registry(self.file)),patch.object(manager,'commit_id',return_value='a'*40),patch.object(manager,'git_sources',return_value={'src/router.cpp':b'source'}):yield
     def test_existing_binary_never_overwritten(self):
         destination=self.root/'build/router_v3';destination.write_bytes(b'preserve me')
         with self.isolated(),self.assertRaisesRegex(ValueError,'already exists'):manager.register('v3',self.source,'HEAD','new')

@@ -6,8 +6,8 @@ Only the reviewed browser profiles and three checksum-pinned synthetic JSONs
 below may be deleted. New/unknown paths, runs, scores, ZIPs, caches and binaries
 are retained. No Router, evaluator, build or browser process is launched/killed.
 Use --report-dir outputs/reports/<new-name> to save a preview audit as well.
-The separate --case001-prune opt-in uses a checksum-pinned historical summary
-and exact reviewed retention policy; ordinary --apply still protects all runs.
+The completed --case001-prune plan is retired: preview reports RETIRED and
+apply refuses deletion. Ordinary --apply still protects all runs and history.
 """
 from pathlib import Path
 import argparse
@@ -42,7 +42,7 @@ SYNTHETIC = {
     STREAM + '/synthetic_new/result.json': '86ad084a579e8a5629b734ed67d3c633ba397f8957163424d06e482480c7ba06',
     STREAM + '/synthetic_supervised/result.json': '9bda338175c2fcb45a56ce565f63a0b0f8e2874fd148cefa94c818b497631058',
 }
-PROTECTED_ROOTS = {'runs', 'submissions', 'reports', 'ui_cache', 'development',
+PROTECTED_ROOTS = {'runs', 'history', 'submissions', 'reports', 'ui_cache', 'development',
                    'evaluator_sidecars', 'unpacked_submission'}
 PROTECTED_NAMES = {'.gitkeep', 'run.json', 'route.guide', 'invocation.json',
     'evaluation_report.json', 'progress.log', 'progress.jsonl', 'router_exit.json',
@@ -332,7 +332,7 @@ def main():
     group.add_argument('--dry-run', action='store_true', help='Preview only (default)')
     group.add_argument('--apply', action='store_true', help='Apply the reviewed safe allowlist with an audit trail')
     p.add_argument('--report-dir', type=Path, help='New, non-existing directory under outputs/reports')
-    p.add_argument('--case001-prune', action='store_true', help='Opt-in exact reviewed case001 manifest; tuning and other Cases remain protected')
+    p.add_argument('--case001-prune', action='store_true', help='Retired plan: preview only; --apply refuses deletion')
     a = p.parse_args()
     if a.case001_prune:
         if a.report_dir:p.error('case001 pruning uses one fixed final audit; preview writes nothing')

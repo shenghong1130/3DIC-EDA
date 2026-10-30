@@ -7,6 +7,17 @@ os.environ['PYTHONUTF8']='1'
 PROJECT=Path(__file__).resolve().parents[1]
 EDA=PROJECT.parent
 OUTPUTS=PROJECT/'outputs'
+_management_cache=None
+
+def management_data():
+    """The tracked registry is the sole version/alias/migration authority."""
+    global _management_cache
+    path=PROJECT/'docs/router_versions.json'
+    try:
+        stat=path.stat();key=(str(path.resolve()),stat.st_size,stat.st_mtime_ns)
+        if _management_cache is not None and _management_cache[0]==key:return _management_cache[1]
+        data=json.loads(path.read_text(encoding='utf8'));_management_cache=(key,data);return data
+    except FileNotFoundError:return {}
 def catalog():
     cases={}
     for dataset,base in [('公开测试用例',EDA/'公开测试用例'),('公开数据集',EDA/'赛题八公开数据集/赛题八公开数据集/cases'),('旧版工具样例',EDA/'eda-elite-challenge/eda-elite-challenge2026/cases')]:
@@ -31,7 +42,7 @@ def resolve_config(path):
     if path.is_file():return path
     try:
         relative=path.relative_to(PROJECT.resolve()).as_posix()
-        row=json.loads((PROJECT/'docs/config_aliases.json').read_text(encoding='utf8'))['aliases'].get(relative)
+        row=management_data().get('config_aliases',{}).get(relative)
         if not row:return path
         target=(PROJECT/row['path']).resolve()
         if not target.is_relative_to((PROJECT/'configs/archive').resolve()) or not target.is_file() or sha256(target)!=row['sha256']:
@@ -47,7 +58,7 @@ def resolve_router(path):
     if path.is_file():return path
     try:
         relative=path.relative_to(PROJECT.resolve()).as_posix()
-        records=json.loads((PROJECT/'docs/router_artifacts.json').read_text(encoding='utf8'))['artifacts']
+        records=management_data().get('router_aliases',{})
         row=records.get(relative)
         if not row:return path
         target=(PROJECT/row['path']).resolve()
@@ -55,6 +66,68 @@ def resolve_router(path):
         return target
     except (FileNotFoundError,KeyError):return path
 def run_dir(case,label):return OUTPUTS/'runs'/safe_label(case)/safe_label(label)
+
+def migration_target(row):
+    target=(PROJECT/row['directory']).resolve()
+    if not target.is_relative_to(OUTPUTS.resolve()):raise ValueError('Run migration escaped outputs')
+    return target
+
+def existing_run_dir(case,label):
+    """Read-only old-Label compatibility; never used to allocate new runs."""
+    safe_label(case);safe_label(label)
+    for key,row in management_data().get('run_migrations',{}).items():
+        if key==case+'/'+label or (key.split('/')[0]==case and row['label']==label):
+            target=migration_target(row)
+            if target.is_dir():return target
+    return run_dir(case,label)
+
+def remap_record_paths(value):
+    """Expose current file paths without changing immutable historical bytes.
+
+    Execution commands are original provenance, never rewritten into a command
+    that was not executed. Scores, timestamps, hashes and input data are intact.
+    """
+    mappings=[]
+    for row in management_data().get('run_migrations',{}).values():
+        target=migration_target(row)
+        if not target.is_dir():continue
+        old=PROJECT/row['original_directory']
+        for source,destination in [(str(old),str(target)),(old.as_posix(),target.as_posix()),(linux_path(old),linux_path(target)),
+                (row['original_directory'],row['directory'])]:
+            mappings.append((source,destination))
+    def visit(item):
+        if isinstance(item,dict):return {k:(v if k in {'command','evaluator_command','build_command'} else visit(v)) for k,v in item.items()}
+        if isinstance(item,list):return [visit(x) for x in item]
+        if isinstance(item,str):
+            for old,new in mappings:
+                if item==old or item.startswith(old+'/') or item.startswith(old+'\\'):
+                    return new+item[len(old):]
+        return item
+    return visit(value)
+
+def load_run(directory):
+    """Logical run identity after migration; raw run.json stays immutable."""
+    directory=Path(directory).resolve();manifest=directory/'run.json'
+    raw=json.loads(manifest.read_text(encoding='utf8'));data=remap_record_paths(raw)
+    for key,row in management_data().get('run_migrations',{}).items():
+        if migration_target(row)!=directory:continue
+        if sha256(manifest)!=row['original_run_sha256'] or raw.get('label')!=row['original_label']:
+            raise ValueError('Original migrated run identity changed')
+        data.update(label=row['label'],guide=str(directory/'route.guide'),migration={
+            'original_label':raw['label'],'original_run_sha256':row['original_run_sha256'],
+            'directory':row['directory'],'historical_migration_only':True})
+        if raw.get('trace') is not None:data['trace']=str(directory/'trace.jsonl')
+        break
+    return data
+
+def load_record(path):
+    path=Path(path)
+    if path.name=='run.json':return load_run(path.parent)
+    data=json.loads(path.read_text(encoding='utf8'))
+    # Geometry/results contain no run-directory pointers; do not duplicate all
+    # Nets/resources simply to normalize small invocation/report metadata.
+    if path.name=='result.json':return data
+    return remap_record_paths(data)
 def save(path,value):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 def linux_path(path):

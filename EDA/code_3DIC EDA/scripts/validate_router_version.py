@@ -13,6 +13,7 @@ import tempfile
 import zipfile
 from common import PROJECT,OUTPUTS,backend_command,linux_path,sha256,catalog
 from manage_router_versions import publish_json,registry_lock
+from router_versions import REGISTRY,load_registry
 
 FLAGS=['-std=c++17','-O3','-DNDEBUG','-Wall','-Wextra','-I','include']
 SOURCES=['src/main.cpp','src/parser.cpp','src/router.cpp']
@@ -66,13 +67,13 @@ def main():
         # Same-volume, exclusive hard link publishes a closed complete binary.
         # TemporaryDirectory later removes only the temporary source link.
         with registry_lock():
-            reg=PROJECT/'build/router_versions.json';data=json.loads(reg.read_text(encoding='utf8'))
+            reg=REGISTRY;data=load_registry()
             if version in data['versions'] or version in data.get('candidates',{}):raise RuntimeError('Version identity already reserved')
             os.link(candidate,binary);binary.chmod(0o755)
             if sha256(binary)!=receipt['sha256']:raise RuntimeError('Publication hash mismatch')
             data.setdefault('candidates',{})[version]=receipt
-            publish_json(reg,data);publish_json(PROJECT/'docs/router_versions.json',data)
-        save_new(report/'build.json',receipt);save_new(PROJECT/'build'/('router_'+version+'.build.json'),receipt)
+            publish_json(reg,data)
+        save_new(report/'build.json',receipt)
     print('Validated one candidate; temporary builds and toy/sample outputs removed',flush=True)
     if not a.run_case001:return 0
     # This exclusive receipt is a durable one-attempt fuse, also on host errors.

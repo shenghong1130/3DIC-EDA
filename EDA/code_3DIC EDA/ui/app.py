@@ -6,7 +6,7 @@ from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
 from urllib.parse import urlparse,parse_qs
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label
+from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label,existing_run_dir,load_record
 from result_store import Store,Cursor,LARGE_BYTES,thermal_sample
 WEB=Path(__file__).resolve().parent/'static'
 CACHE=Path(os.environ.get('GR_UI_CACHE_DIR',str(OUTPUTS/'ui_cache')))
@@ -30,7 +30,7 @@ def attach_reports(r,d):
 
 def store(key):
     d=selected(key);case=key.split('/')[0];return Store(d/'result.json',CACHE,catalog().get(case,{}).get('reference'))
-def load(path):return json.loads(Path(path).read_text(encoding='utf8'))
+def load(path):return load_record(path)
 def runs():
     out={}
     for p in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
@@ -40,8 +40,8 @@ def runs():
     return out
 def selected(run):
     if len(run.split('/'))!=2:raise ValueError('Unknown run')
-    case,label=run.split('/');d=run_dir(case,label);r=load(d/'run.json')
-    if r.get('case')!=case or r.get('label')!=label:raise ValueError('Run manifest identity mismatch')
+    case,label=run.split('/');d=existing_run_dir(case,label);r=load(d/'run.json')
+    if r.get('case')!=case or label not in {r.get('label'),r.get('migration',{}).get('original_label')}:raise ValueError('Run manifest identity mismatch')
     return d
 def guide(path):
     nets={};name=None;opened=False

@@ -20,6 +20,8 @@ def archived_row(label, root=None):
     """Return measured metadata, explicitly without a raw-run directory."""
     rows = history(root)['records']
     if label not in rows:
+        matches=[r for r in rows.values() if r.get('current_label')==label]
+        if len(matches)==1:return matches[0]
         raise KeyError('No verified history for ' + label)
     return rows[label]
 
@@ -44,7 +46,8 @@ def summary_rows(data=None):
                    wirelength_dbu=report.get('wirelength',{}).get('total_dbu'),
                    official_overflow=report.get('congestion',{}).get('total_overflow'),
                    cpp_runtime_seconds=r.get('metrics',{}).get('runtime_seconds'),
-                   history_summary='outputs/'+SUMMARY+'#/records/'+label,raw_run_retained=r['retention']=='KEEP')
+                   history_summary='outputs/'+SUMMARY+'#/records/'+label,
+                   raw_run_retained=r['retention'] in {'KEEP','ARCHIVED'},daily_run_retained=r['retention']=='KEEP')
         row.update({k:report.get('score',{}).get(k) for k in ['wirelength_score','congestion_score','thermal_score']})
         rows.append(row)
     return rows

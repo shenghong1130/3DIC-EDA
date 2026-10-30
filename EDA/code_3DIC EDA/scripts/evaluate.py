@@ -2,7 +2,7 @@
 """Supervised official scoring; immutable routing records and exclusive attempts."""
 import argparse,json,math,os,shutil,time,uuid
 from pathlib import Path
-from common import EDA,PROJECT,run_dir,safe_label,sha256,linux_path,backend_command,timed_process,peak_rss
+from common import EDA,PROJECT,run_dir,safe_label,sha256,linux_path,backend_command,timed_process,peak_rss,existing_run_dir,load_run
 from diagnostics import atomic_json,json_file,utc
 from evaluator_diagnostics import log_tail,read_report,classify_evaluator,wsl_snapshot,windows_events,resource_tail
 
@@ -104,6 +104,19 @@ def execute(a,run,directory):
     return result
 
 
+def evaluation_run(case,label):
+    """Read-only preflight, also usable without launching an evaluator."""
+    target=existing_run_dir(case,label)
+    if not (target/'run.json').is_file():raise ValueError('Run not found')
+    run=load_run(target)
+    if run.get('status')!='ROUTED' or run.get('returncode',0)!=0:
+        raise ValueError('Router failed; no complete guide to evaluate')
+    if not Path(run['guide']).is_file():raise ValueError('Guide not found')
+    for key,value in run['inputs'].items():
+        if sha256(Path(value))!=run['input_sha256'][key]:raise ValueError('Input changed since routing: '+key)
+    return target,run
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description='Run unmodified official evaluators. Latest ELF is recommended.')
     p.add_argument('--case',required=True);p.add_argument('--label',default='default')
@@ -116,13 +129,7 @@ def main(argv=None):
     if not all(math.isfinite(x) and x>0 for x in (a.timeout,a.monitor_interval)):p.error('Budgets must be finite and positive')
     if os.name=='nt' and a.backend=='native':p.error('Official ELF requires WSL/Linux. Use --backend wsl.')
     try:
-        target=run_dir(a.case,a.label);manifest=target/'run.json'
-        if not manifest.is_file():p.error('Run not found')
-        run=json.loads(manifest.read_text(encoding='utf8'))
-        if run.get('status')!='ROUTED' or run.get('returncode',0)!=0:p.error('Router failed; no complete guide to evaluate')
-        if not Path(run['guide']).is_file():p.error('Guide not found')
-        for key,value in run['inputs'].items():
-            if sha256(Path(value))!=run['input_sha256'][key]:p.error('Input changed since routing: '+key)
+        target,run=evaluation_run(a.case,a.label)
         directory=(target/('official_'+a.engine+'_attempts')/safe_label(a.attempt)) if a.attempt else target/('official_'+a.engine)
         if directory.exists():p.error('Evaluation already exists; preserve it and choose a new --attempt name')
         directory.parent.mkdir(parents=True,exist_ok=True)

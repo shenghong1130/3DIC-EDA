@@ -3,7 +3,7 @@ import json,re
 from pathlib import Path
 from common import PROJECT
 
-REGISTRY=PROJECT/'build/router_versions.json'
+REGISTRY=PROJECT/'docs/router_versions.json'
 VERSION=re.compile(r'v[1-9][0-9]*(?:_[1-9][0-9]*)?\Z')
 SHA256=re.compile(r'[0-9a-f]{64}\Z')
 METHOD='independent_git_rebuild_sha256_and_cli_help'

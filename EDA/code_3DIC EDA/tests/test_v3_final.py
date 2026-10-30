@@ -17,7 +17,7 @@ class ArchiveCompatibility(unittest.TestCase):
             root=Path(tmp);archive=root/'configs/archive';archive.mkdir(parents=True)
             file=archive/'v3_legacy.json';file.write_bytes(b'{"wire":1}')
             (root/'docs').mkdir()
-            (root/'docs/config_aliases.json').write_text(json.dumps({'aliases':{'configs/v3_legacy.json':{
+            (root/'docs/router_versions.json').write_text(json.dumps({'config_aliases':{'configs/v3_legacy.json':{
                 'path':'configs/archive/v3_legacy.json','sha256':common.sha256(file)}}}))
             with patch.object(common,'PROJECT',root):
                 self.assertEqual(common.resolve_config(root/'configs/v3_legacy.json'),file)
@@ -29,7 +29,7 @@ class ArchiveCompatibility(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);(root/'configs/archive').mkdir(parents=True);(root/'docs').mkdir()
             file=root/'configs/archive/default.json';file.write_text('{"wire":2}')
-            (root/'docs/config_aliases.json').write_text(json.dumps({'aliases':{'configs/default.json':{
+            (root/'docs/router_versions.json').write_text(json.dumps({'config_aliases':{'configs/default.json':{
                 'path':'configs/archive/default.json','sha256':'0'*64}}}))
             with patch.object(common,'PROJECT',root):
                 with self.assertRaisesRegex(ValueError,'identity mismatch'):
@@ -39,7 +39,7 @@ class ArchiveCompatibility(unittest.TestCase):
         import hashlib
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);(root/'docs').mkdir();(root/'history').mkdir();file=root/'history/old';file.write_bytes(b'original')
-            registry=root/'docs/router_artifacts.json';registry.write_text(json.dumps({'artifacts':{'build/old':{'path':'history/old','sha256':hashlib.sha256(b'original').hexdigest()}}}))
+            registry=root/'docs/router_versions.json';registry.write_text(json.dumps({'router_aliases':{'build/old':{'path':'history/old','sha256':hashlib.sha256(b'original').hexdigest()}}}))
             with patch.object(common,'PROJECT',root):
                 self.assertEqual(common.resolve_router(root/'build/old'),file)
                 file.write_bytes(b'changed')

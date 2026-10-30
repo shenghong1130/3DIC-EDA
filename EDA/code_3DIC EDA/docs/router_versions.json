@@ -313,7 +313,9 @@
           "temporary_outputs": true
         }
       ],
-      "validation_report": "outputs/reports/v3_2/results.json"
+      "validation_report": "outputs/reports/v3_2/results.json",
+      "original_build_release_status": "NOT_RELEASED",
+      "original_build_receipt_sha256": "8601d4d7e7508f54f6017aa47eb53422cd45e8288d2b88e7e8106b6a10e090ac"
     }
   },
   "formal_configs": {
@@ -340,6 +342,1784 @@
       "source": "configs/v3_2.json",
       "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
       "evidence": "SHA65df candidate, CANDIDATE_NOT_RELEASED"
+    }
+  },
+  "config_aliases": {
+    "configs/v3_combined.json": {
+      "path": "configs/archive/v3_combined.json",
+      "sha256": "d2bc1bd4c49040eec71492385d0f482948c898333057c167c9acf5eb4743f68e"
+    },
+    "configs/v3_congestion.json": {
+      "path": "configs/archive/v3_congestion.json",
+      "sha256": "9ad04d0721a93fc86de6f877b8216a44166cae997cf9ca0788cc903107213419"
+    },
+    "configs/v3_congestion_candidate.json": {
+      "path": "configs/archive/v3_congestion_candidate.json",
+      "sha256": "8de9628116621a45ecdcf2fb136eacad89c0b740f8fb2c4145cb1285f1a11463"
+    },
+    "configs/v3_congestion_legacy.json": {
+      "path": "configs/archive/v3_congestion_legacy.json",
+      "sha256": "1aa56ba1d8bc0df4ca0a83fc4860d7b01a6e237ff87ab3efc16053144d78ed96"
+    },
+    "configs/v3_congestion_reroute_only.json": {
+      "path": "configs/archive/v3_congestion_reroute_only.json",
+      "sha256": "7c397fc0d5feff4ff273deb3bde23125fb90ed0531163db35c73cc50918e6189"
+    },
+    "configs/v3_cost_hybrid.json": {
+      "path": "configs/archive/v3_cost_hybrid.json",
+      "sha256": "9951f70f42115a97c7d594ebb7c15ba3db52220fed93d575a5c85eff71438312"
+    },
+    "configs/v3_cost_incremental.json": {
+      "path": "configs/archive/v3_cost_incremental.json",
+      "sha256": "629348b7483eee319b93190da5b9bcdf8487dd48d888e89ce874ead53919aa57"
+    },
+    "configs/v3_legacy.json": {
+      "path": "configs/archive/v3_legacy.json",
+      "sha256": "5bce9b09c4a067019a710e8fb8edf6ed9a587950d045c6d4c0c892ef30214a19"
+    },
+    "configs/v3_net_order.json": {
+      "path": "configs/archive/v3_net_order.json",
+      "sha256": "01bb9d18337b1a00b14df8e64596f8561715c89282bf6f525e7b039d5282bc48"
+    },
+    "configs/v3_reroute_guarded.json": {
+      "path": "configs/archive/v3_reroute_guarded.json",
+      "sha256": "7a98367cc90927cf59854b640930dfbd152fc6341e113a7177a966f42a1e0aa8"
+    },
+    "configs/v3_tree_aware.json": {
+      "path": "configs/archive/v3_tree_aware.json",
+      "sha256": "12c6c84cbf915384bb22c1ef7a24721b822567d902fba8e6f690df1bfe214710"
+    },
+    "configs/baseline.json": {
+      "path": "configs/archive/baseline.json",
+      "sha256": "000e40da7b56543ddc4aad208206678904fc396e8e3abd0995e6cb4659bbb20b"
+    },
+    "configs/case005_debug.json": {
+      "path": "configs/archive/case005_debug.json",
+      "sha256": "dece302d90ad4d1f726b15b7039ded73adb4f70ebb496c32df6852bd1da1e5eb"
+    },
+    "configs/default.json": {
+      "path": "configs/archive/default.json",
+      "sha256": "f4c192ef20102193f02b5d39eb15be3fadc7183cedaf1a65035c55dcc0f743e5"
+    },
+    "configs/default2.json": {
+      "path": "configs/archive/default2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4"
+    },
+    "configs/v3_final.json": {
+      "path": "configs/archive/v3_final.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4"
+    }
+  },
+  "router_aliases": {
+    "build/core_baseline": {
+      "path": "outputs/development/router_history/core_baseline",
+      "sha256": "1e19e143b34db4819f5734bcf6fd3ac12eba6859b8f3ec3ab9dedd951f196646",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/core_optimized": {
+      "path": "outputs/development/router_history/core_optimized",
+      "sha256": "27c0aa55ef097d76cb34c6b64ab930eefe599a9ed6e3b8203e3da74ce81e2cfa",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_astar_bench": {
+      "path": "outputs/development/router_history/router_astar_bench",
+      "sha256": "eb63c0519355a20660eb0f78894e3f086f8ca88fa559ffdb41be26fbec7fcf16",
+      "role": "BENCHMARK",
+      "action": "archive"
+    },
+    "build/router_astar_core": {
+      "path": "outputs/development/router_history/router_astar_core",
+      "sha256": "32d8dd0a9449b3bf600c2e8c584dbffefc2a918324339f5a56cbb52ae9c79bc9",
+      "role": "CORE_TEST (source UNKNOWN)",
+      "action": "archive"
+    },
+    "build/router_astar_profile": {
+      "path": "outputs/development/router_history/router_astar_profile",
+      "sha256": "65bc935922e6e3ce63c27ad026566f8076e016b0b0478f85ea25adab8c9f1348",
+      "role": "PROFILE_ROUTER",
+      "action": "archive"
+    },
+    "build/router_astar_v2_bench": {
+      "path": "outputs/development/router_history/router_astar_bench",
+      "sha256": "eb63c0519355a20660eb0f78894e3f086f8ca88fa559ffdb41be26fbec7fcf16",
+      "role": "BENCHMARK",
+      "action": "deduplicate"
+    },
+    "build/router_astar_v2_core": {
+      "path": "outputs/development/router_history/router_astar_v2_core",
+      "sha256": "243cd3f2903421df21abe9f62fe63e865b40e3f6360cb0c40f973706f3f62f1f",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_astar_v2_profile": {
+      "path": "outputs/development/router_history/router_astar_profile",
+      "sha256": "65bc935922e6e3ce63c27ad026566f8076e016b0b0478f85ea25adab8c9f1348",
+      "role": "PROFILE_ROUTER",
+      "action": "deduplicate"
+    },
+    "build/router_baseline": {
+      "path": "build/router_v1",
+      "sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+      "role": "PRODUCTION_ROUTER",
+      "action": "deduplicate"
+    },
+    "build/router_baseline_bench": {
+      "path": "outputs/development/router_history/router_baseline_bench",
+      "sha256": "9af6cda73b7874286ea8c6a6fd06f41dd33275e25240fc15c92b04c346ca85c1",
+      "role": "BENCHMARK",
+      "action": "archive"
+    },
+    "build/router_baseline_core": {
+      "path": "outputs/development/router_history/router_baseline_core",
+      "sha256": "1b0d7caa040966ee6eb6d25de7f5a9d90591a9b86cc2a877ef1d159e18e881d7",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_baseline_profile": {
+      "path": "outputs/development/router_history/router_baseline_profile",
+      "sha256": "5dedacdc5396521582ed5928a01359e31e3e21b34db1a9b1f714ec10dd4a4e38",
+      "role": "PROFILE_ROUTER",
+      "action": "archive"
+    },
+    "build/router_memory_bench": {
+      "path": "outputs/development/router_history/router_memory_bench",
+      "sha256": "ac874485b6dac607710bdcec59310aa6fa2f8dc568416a66799f7989c0442139",
+      "role": "BENCHMARK",
+      "action": "archive"
+    },
+    "build/router_memory_core": {
+      "path": "outputs/development/router_history/router_memory_core",
+      "sha256": "e785240cd022184ea900a015e13f5c49268c24f5e775143ab780885fa5443179",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_memory_profile": {
+      "path": "outputs/development/router_history/router_memory_profile",
+      "sha256": "e9e9b8bb29d2ac7be44cbd06ac36fe9922d3422802215ba64a5b9e083a12f7ed",
+      "role": "PROFILE_ROUTER",
+      "action": "archive"
+    },
+    "build/router_optimized": {
+      "path": "build/router_v2",
+      "sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+      "role": "PRODUCTION_ROUTER",
+      "action": "deduplicate"
+    },
+    "build/router_optimized_bench": {
+      "path": "outputs/development/router_history/router_optimized_bench",
+      "sha256": "4af71300482fcdf87ee165c12444950d0f6b88ce357f6380f4a03b47644c0ef5",
+      "role": "BENCHMARK",
+      "action": "archive"
+    },
+    "build/router_optimized_checked": {
+      "path": "build/router_v2",
+      "sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+      "role": "PRODUCTION_ROUTER",
+      "action": "deduplicate"
+    },
+    "build/router_optimized_core": {
+      "path": "outputs/development/router_history/router_optimized_core",
+      "sha256": "543b263e293842ba95e12c7bb0d9a7abc57ae1f8634157b17a00b9f7251aeba9",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_optimized_profile": {
+      "path": "outputs/development/router_history/router_optimized_profile",
+      "sha256": "a8a9488353e95d15ec04cff88f7921d27c1192132c835051758969799def25af",
+      "role": "PROFILE_ROUTER",
+      "action": "archive"
+    },
+    "build/router_original_70ddc978c6f4": {
+      "path": "build/router_v1",
+      "sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+      "role": "PRODUCTION_ROUTER",
+      "action": "deduplicate"
+    },
+    "build/router_tsv_bench": {
+      "path": "outputs/development/router_history/router_tsv_bench",
+      "sha256": "2e18f0a5ed8e1bce0e1f7c686f0c110d024fceebcb36e619ad1e815bc73d8f64",
+      "role": "BENCHMARK",
+      "action": "archive"
+    },
+    "build/router_tsv_core": {
+      "path": "outputs/development/router_history/router_tsv_core",
+      "sha256": "6e71876cbd3d45e5e8f8553032c543970a9b9375bc1fe9f0646187d1bccbbd79",
+      "role": "CORE_TEST",
+      "action": "archive"
+    },
+    "build/router_tsv_profile": {
+      "path": "outputs/development/router_history/router_tsv_profile",
+      "sha256": "68256f71fdb5c3c853f97e578db9381179b4721cb32e887dad5837259b53f91d",
+      "role": "PROFILE_ROUTER",
+      "action": "archive"
+    },
+    "build/router_v3_candidate": {
+      "path": "outputs/development/router_history/router_v3_candidate",
+      "sha256": "47a285c048124b5a6987f2b90171ff1c20fbe12b218b7405cc8aa4669977821a",
+      "role": "HISTORICAL_ROUTER_REQUIRES_PROVENANCE",
+      "action": "archive"
+    },
+    "build/router_v3_congestion_candidate_20261029": {
+      "path": "outputs/development/router_history/router_v3_congestion_candidate_20261029",
+      "sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac",
+      "role": "HISTORICAL_ROUTER_REQUIRES_PROVENANCE",
+      "action": "archive"
+    },
+    "build/router_v3_congestion_scoped_20261029": {
+      "path": "outputs/development/router_history/router_v3_congestion_scoped_20261029",
+      "sha256": "83ec6d3455f559774243895a6d7991a3b4b0af3d8187c8f18e15985d29b46893",
+      "role": "HISTORICAL_ROUTER_REQUIRES_PROVENANCE",
+      "action": "archive"
+    },
+    "build/router_v3_final": {
+      "path": "outputs/development/router_history/router_v3_final",
+      "sha256": "211fdc3e7b422c032685728a1a4df5d10fd3be406b009e06e0e0e79a928a74bd",
+      "role": "HISTORICAL_ROUTER_REQUIRES_PROVENANCE",
+      "action": "archive"
+    }
+  },
+  "historical_builds": {
+    "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423": {
+      "original_paths": [
+        "router",
+        "build/router_baseline",
+        "build/router_original_70ddc978c6f4",
+        "build/router_v1"
+      ],
+      "evidence": [
+        {
+          "sha256": "70ddc978c6f427ef79d6601e0a3bf099108e945cbbac249b2c2aa234d3c00423",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline"
+          ],
+          "stage": "V1 production/test",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "bc1e3ce584e5e55a30b7352586c2edcba69c2144c7532fa5515a1f507e3939a6",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "488423392e343662868a730483a16cef6e2e75a91dcebe8988c9a5479ffec05b",
+            "tests\\core_tests.cpp": "5efed94e0f45262ad07436ed6a8bf3cca4ea51803a2f44e980f08ae0a08d2e65"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/baseline_manifest.json"
+        }
+      ],
+      "bytes": 519464,
+      "file_type": "                            ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=2fc3f47f27682be97cfa1b0277f8ceda85ca4c74, for GNU/Linux 3.2.0, not stripped",
+      "role": "PRODUCTION_ROUTER",
+      "formal_version": "v1",
+      "source_version": "Git 024d648dae3fe9051e336b8928502de09bf0654b",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_baseline"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version",
+      "alternative_file_type": [
+        "             ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=2fc3f47f27682be97cfa1b0277f8ceda85ca4c74, for GNU/Linux 3.2.0, not stripped",
+        "ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=2fc3f47f27682be97cfa1b0277f8ceda85ca4c74, for GNU/Linux 3.2.0, not stripped",
+        "                   ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=2fc3f47f27682be97cfa1b0277f8ceda85ca4c74, for GNU/Linux 3.2.0, not stripped"
+      ]
+    },
+    "1e19e143b34db4819f5734bcf6fd3ac12eba6859b8f3ec3ab9dedd951f196646": {
+      "original_paths": [
+        "build/core_baseline"
+      ],
+      "evidence": [
+        {
+          "sha256": "1e19e143b34db4819f5734bcf6fd3ac12eba6859b8f3ec3ab9dedd951f196646",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/core_baseline"
+          ],
+          "stage": "V1 production/test",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "bc1e3ce584e5e55a30b7352586c2edcba69c2144c7532fa5515a1f507e3939a6",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "488423392e343662868a730483a16cef6e2e75a91dcebe8988c9a5479ffec05b",
+            "tests\\core_tests.cpp": "5efed94e0f45262ad07436ed6a8bf3cca4ea51803a2f44e980f08ae0a08d2e65"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/baseline_manifest.json"
+        }
+      ],
+      "bytes": 509856,
+      "file_type": "               ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=12a4a2aafc09c3c28849451cf7b46c242943c98b, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: V1 production/test",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/core_baseline"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "27c0aa55ef097d76cb34c6b64ab930eefe599a9ed6e3b8203e3da74ce81e2cfa": {
+      "original_paths": [
+        "build/core_optimized"
+      ],
+      "evidence": [
+        {
+          "sha256": "27c0aa55ef097d76cb34c6b64ab930eefe599a9ed6e3b8203e3da74ce81e2cfa",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/core_optimized"
+          ],
+          "stage": "V2 production/test",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "8e81f7b16c080a11b55d61c74d2887bd52ec52bb1e59ca0503771e7e88d3f12d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112",
+            "tests\\algorithm_tests.hpp": "379a45e4170221fb3c443e663ca4c21cd58fe368c1fdc51cb9c15532cb87bd0b",
+            "tests\\core_tests.cpp": "b54bbebda87ff5cbde3d9f1ee029528c309863c9a0706a3d54c06dde53ffce8e",
+            "tests\\router_benchmark.cpp": "a1b7ee9d64adaf072d27e95c3d52cf22639326dc6191ed7d0f2f3aaeffacece4"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/production_builds.json"
+        }
+      ],
+      "bytes": 553096,
+      "file_type": "              ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=d7ed6f2acc44b13dcca750f8e787c6007a692d3e, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: V2 production/test",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/core_optimized"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "eb63c0519355a20660eb0f78894e3f086f8ca88fa559ffdb41be26fbec7fcf16": {
+      "original_paths": [
+        "build/router_astar_bench",
+        "build/router_astar_v2_bench"
+      ],
+      "evidence": [
+        {
+          "sha256": "eb63c0519355a20660eb0f78894e3f086f8ca88fa559ffdb41be26fbec7fcf16",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_astar_v2_bench"
+          ],
+          "stage": "astar_v2",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "160ef41b3bbbbabe940f061d1ce77356a6b24e3949d43a220c1d2714721cefe4",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "0d088cbbd8573905fbeff8798a8a8a243f1811a21dda03c496132a8bf99e19b7"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/astar_v2/builds.json"
+        }
+      ],
+      "bytes": 512856,
+      "file_type": "          ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=4918effa7eef0562977570930720d42f2394cbaf, for GNU/Linux 3.2.0, not stripped",
+      "role": "BENCHMARK",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: astar_v2",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/router_benchmark.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_astar_v2_bench"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version",
+      "alternative_file_type": [
+        "       ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=4918effa7eef0562977570930720d42f2394cbaf, for GNU/Linux 3.2.0, not stripped"
+      ]
+    },
+    "32d8dd0a9449b3bf600c2e8c584dbffefc2a918324339f5a56cbb52ae9c79bc9": {
+      "original_paths": [
+        "build/router_astar_core"
+      ],
+      "evidence": [],
+      "bytes": 539720,
+      "file_type": "           ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=322dd49bc8317cc6304a567d0c99c420ae906602, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST (source UNKNOWN)",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNKNOWN: no hash-matching build manifest",
+      "compiler": null,
+      "build_command": null,
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Role evidenced by test assertion strings; missing failed-stage builds.json, actual build command/source UNKNOWN"
+    },
+    "65bc935922e6e3ce63c27ad026566f8076e016b0b0478f85ea25adab8c9f1348": {
+      "original_paths": [
+        "build/router_astar_profile",
+        "build/router_astar_v2_profile"
+      ],
+      "evidence": [
+        {
+          "sha256": "65bc935922e6e3ce63c27ad026566f8076e016b0b0478f85ea25adab8c9f1348",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_astar_v2_profile"
+          ],
+          "stage": "astar_v2",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "160ef41b3bbbbabe940f061d1ce77356a6b24e3949d43a220c1d2714721cefe4",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "0d088cbbd8573905fbeff8798a8a8a243f1811a21dda03c496132a8bf99e19b7"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/astar_v2/builds.json"
+        }
+      ],
+      "bytes": 535992,
+      "file_type": "        ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=79873d72cf741c1379b3cdbe30ab56e88cac7be4, for GNU/Linux 3.2.0, not stripped",
+      "role": "PROFILE_ROUTER",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: astar_v2",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_astar_v2_profile"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version",
+      "alternative_file_type": [
+        "     ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=79873d72cf741c1379b3cdbe30ab56e88cac7be4, for GNU/Linux 3.2.0, not stripped"
+      ]
+    },
+    "243cd3f2903421df21abe9f62fe63e865b40e3f6360cb0c40f973706f3f62f1f": {
+      "original_paths": [
+        "build/router_astar_v2_core"
+      ],
+      "evidence": [
+        {
+          "sha256": "243cd3f2903421df21abe9f62fe63e865b40e3f6360cb0c40f973706f3f62f1f",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_astar_v2_core"
+          ],
+          "stage": "astar_v2",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "160ef41b3bbbbabe940f061d1ce77356a6b24e3949d43a220c1d2714721cefe4",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "0d088cbbd8573905fbeff8798a8a8a243f1811a21dda03c496132a8bf99e19b7"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/astar_v2/builds.json"
+        }
+      ],
+      "bytes": 539720,
+      "file_type": "        ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=9bbb8251b4c6591cfebfb78e69640ba73722ade9, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: astar_v2",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_astar_v2_core"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "9af6cda73b7874286ea8c6a6fd06f41dd33275e25240fc15c92b04c346ca85c1": {
+      "original_paths": [
+        "build/router_baseline_bench"
+      ],
+      "evidence": [
+        {
+          "sha256": "9af6cda73b7874286ea8c6a6fd06f41dd33275e25240fc15c92b04c346ca85c1",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_bench"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline/builds.json"
+        },
+        {
+          "sha256": "9af6cda73b7874286ea8c6a6fd06f41dd33275e25240fc15c92b04c346ca85c1",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_bench"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline_measure/builds.json"
+        }
+      ],
+      "bytes": 508696,
+      "file_type": "       ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=9d5890d4e9205f132ce038bad58564e6da818d15, for GNU/Linux 3.2.0, not stripped",
+      "role": "BENCHMARK",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: baseline",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/router_benchmark.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_baseline_bench"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "1b0d7caa040966ee6eb6d25de7f5a9d90591a9b86cc2a877ef1d159e18e881d7": {
+      "original_paths": [
+        "build/router_baseline_core"
+      ],
+      "evidence": [
+        {
+          "sha256": "1b0d7caa040966ee6eb6d25de7f5a9d90591a9b86cc2a877ef1d159e18e881d7",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_core"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline/builds.json"
+        },
+        {
+          "sha256": "1b0d7caa040966ee6eb6d25de7f5a9d90591a9b86cc2a877ef1d159e18e881d7",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_core"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline_measure/builds.json"
+        }
+      ],
+      "bytes": 522232,
+      "file_type": "        ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=81e62b786492f4f7909defad404ddd9fde0a6d4e, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: baseline",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_baseline_core"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "5dedacdc5396521582ed5928a01359e31e3e21b34db1a9b1f714ec10dd4a4e38": {
+      "original_paths": [
+        "build/router_baseline_profile"
+      ],
+      "evidence": [
+        {
+          "sha256": "5dedacdc5396521582ed5928a01359e31e3e21b34db1a9b1f714ec10dd4a4e38",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_profile"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline/builds.json"
+        },
+        {
+          "sha256": "5dedacdc5396521582ed5928a01359e31e3e21b34db1a9b1f714ec10dd4a4e38",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_baseline_profile"
+          ],
+          "stage": "baseline",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "6c6910c077b65ee3424f80ea02fb189360b7a5e49434318472fea1d1787c6b06",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "e460aa98a59df8e60b3d14273f0ac0b78c57718d7f16dcaf7b477d7c0a963c47"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/baseline_measure/builds.json"
+        }
+      ],
+      "bytes": 531832,
+      "file_type": "     ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1894c306fabeffa83fc0d01335ddd82ea6e23953, for GNU/Linux 3.2.0, not stripped",
+      "role": "PROFILE_ROUTER",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: baseline",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_baseline_profile"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "ac874485b6dac607710bdcec59310aa6fa2f8dc568416a66799f7989c0442139": {
+      "original_paths": [
+        "build/router_memory_bench"
+      ],
+      "evidence": [
+        {
+          "sha256": "ac874485b6dac607710bdcec59310aa6fa2f8dc568416a66799f7989c0442139",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_memory_bench"
+          ],
+          "stage": "memory",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "d2a1ea972f56ca01895d3336482e4950005b76c21de6b457a3e024aff2adf625",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "dae2d1cd81ed38fc3db640ce375b6815513de0ee4be7da9559206516f329f1cb"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/memory/builds.json"
+        }
+      ],
+      "bytes": 521440,
+      "file_type": "         ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0fa518e9e1e53edbe8edd8fa91e2151a7e73b08a, for GNU/Linux 3.2.0, not stripped",
+      "role": "BENCHMARK",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: memory",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/router_benchmark.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_memory_bench"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "e785240cd022184ea900a015e13f5c49268c24f5e775143ab780885fa5443179": {
+      "original_paths": [
+        "build/router_memory_core"
+      ],
+      "evidence": [
+        {
+          "sha256": "e785240cd022184ea900a015e13f5c49268c24f5e775143ab780885fa5443179",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_memory_core"
+          ],
+          "stage": "memory",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "d2a1ea972f56ca01895d3336482e4950005b76c21de6b457a3e024aff2adf625",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "dae2d1cd81ed38fc3db640ce375b6815513de0ee4be7da9559206516f329f1cb"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/memory/builds.json"
+        }
+      ],
+      "bytes": 552648,
+      "file_type": "          ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=fc486b26e9f70e7761ec19e9982e5b727317cab8, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: memory",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_memory_core"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "e9e9b8bb29d2ac7be44cbd06ac36fe9922d3422802215ba64a5b9e083a12f7ed": {
+      "original_paths": [
+        "build/router_memory_profile"
+      ],
+      "evidence": [
+        {
+          "sha256": "e9e9b8bb29d2ac7be44cbd06ac36fe9922d3422802215ba64a5b9e083a12f7ed",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_memory_profile"
+          ],
+          "stage": "memory",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "d2a1ea972f56ca01895d3336482e4950005b76c21de6b457a3e024aff2adf625",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "dae2d1cd81ed38fc3db640ce375b6815513de0ee4be7da9559206516f329f1cb"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/memory/builds.json"
+        }
+      ],
+      "bytes": 540480,
+      "file_type": "       ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=f02ee13a225532ff06992f345a1a3a02065ea0f1, for GNU/Linux 3.2.0, not stripped",
+      "role": "PROFILE_ROUTER",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: memory",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_memory_profile"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f": {
+      "original_paths": [
+        "build/router_optimized",
+        "build/router_optimized_checked",
+        "build/router_v2"
+      ],
+      "evidence": [
+        {
+          "sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized"
+          ],
+          "stage": "V2 production/test",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "8e81f7b16c080a11b55d61c74d2887bd52ec52bb1e59ca0503771e7e88d3f12d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112",
+            "tests\\algorithm_tests.hpp": "379a45e4170221fb3c443e663ca4c21cd58fe368c1fdc51cb9c15532cb87bd0b",
+            "tests\\core_tests.cpp": "b54bbebda87ff5cbde3d9f1ee029528c309863c9a0706a3d54c06dde53ffce8e",
+            "tests\\router_benchmark.cpp": "a1b7ee9d64adaf072d27e95c3d52cf22639326dc6191ed7d0f2f3aaeffacece4"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/production_builds.json"
+        },
+        {
+          "sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_checked"
+          ],
+          "stage": "V2 final checked",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "8e81f7b16c080a11b55d61c74d2887bd52ec52bb1e59ca0503771e7e88d3f12d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112",
+            "tests\\algorithm_tests.hpp": "379a45e4170221fb3c443e663ca4c21cd58fe368c1fdc51cb9c15532cb87bd0b",
+            "tests\\core_tests.cpp": "b54bbebda87ff5cbde3d9f1ee029528c309863c9a0706a3d54c06dde53ffce8e",
+            "tests\\router_benchmark.cpp": "a1b7ee9d64adaf072d27e95c3d52cf22639326dc6191ed7d0f2f3aaeffacece4"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/optimized_manifest.json"
+        }
+      ],
+      "bytes": 530752,
+      "file_type": "            ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1db254df37f5b0c3ee23e379b5b01313f3984aaa, for GNU/Linux 3.2.0, not stripped",
+      "role": "PRODUCTION_ROUTER",
+      "formal_version": "v2",
+      "source_version": "Git a0f8e717ebbeca32ef999c8caf398fec46ba41c2",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_optimized"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version",
+      "alternative_file_type": [
+        "    ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1db254df37f5b0c3ee23e379b5b01313f3984aaa, for GNU/Linux 3.2.0, not stripped",
+        "                   ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1db254df37f5b0c3ee23e379b5b01313f3984aaa, for GNU/Linux 3.2.0, not stripped"
+      ]
+    },
+    "4af71300482fcdf87ee165c12444950d0f6b88ce357f6380f4a03b47644c0ef5": {
+      "original_paths": [
+        "build/router_optimized_bench"
+      ],
+      "evidence": [
+        {
+          "sha256": "4af71300482fcdf87ee165c12444950d0f6b88ce357f6380f4a03b47644c0ef5",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_bench"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/optimized/builds.json"
+        },
+        {
+          "sha256": "4af71300482fcdf87ee165c12444950d0f6b88ce357f6380f4a03b47644c0ef5",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_bench"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_final/builds.json"
+        },
+        {
+          "sha256": "4af71300482fcdf87ee165c12444950d0f6b88ce357f6380f4a03b47644c0ef5",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_bench"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_steady/builds.json"
+        }
+      ],
+      "bytes": 520144,
+      "file_type": "      ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=beee310b0b728c1fb415ff660bed6efbdb8fec44, for GNU/Linux 3.2.0, not stripped",
+      "role": "BENCHMARK",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: optimized",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/router_benchmark.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_optimized_bench"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "543b263e293842ba95e12c7bb0d9a7abc57ae1f8634157b17a00b9f7251aeba9": {
+      "original_paths": [
+        "build/router_optimized_core"
+      ],
+      "evidence": [
+        {
+          "sha256": "543b263e293842ba95e12c7bb0d9a7abc57ae1f8634157b17a00b9f7251aeba9",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_core"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/optimized/builds.json"
+        },
+        {
+          "sha256": "543b263e293842ba95e12c7bb0d9a7abc57ae1f8634157b17a00b9f7251aeba9",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_core"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_final/builds.json"
+        },
+        {
+          "sha256": "543b263e293842ba95e12c7bb0d9a7abc57ae1f8634157b17a00b9f7251aeba9",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_core"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_steady/builds.json"
+        }
+      ],
+      "bytes": 565512,
+      "file_type": "       ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=7c0c21523a9292ed294fe450ef69cf22bf7a7f45, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: optimized",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_optimized_core"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "a8a9488353e95d15ec04cff88f7921d27c1192132c835051758969799def25af": {
+      "original_paths": [
+        "build/router_optimized_profile"
+      ],
+      "evidence": [
+        {
+          "sha256": "a8a9488353e95d15ec04cff88f7921d27c1192132c835051758969799def25af",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_profile"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/optimized/builds.json"
+        },
+        {
+          "sha256": "a8a9488353e95d15ec04cff88f7921d27c1192132c835051758969799def25af",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_profile"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_final/builds.json"
+        },
+        {
+          "sha256": "a8a9488353e95d15ec04cff88f7921d27c1192132c835051758969799def25af",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_optimized_profile"
+          ],
+          "stage": "optimized",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "7024ff2c9495179f94956e4696c1e29643db33e15ba77c8a722b577a75b8a67d",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "d3359e6d326e381b33bcfd62f1cf84d63b23b95c98578667a5ea7c85dcbe5112"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/paired_steady/builds.json"
+        }
+      ],
+      "bytes": 543168,
+      "file_type": "    ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=d875e62e403aabc0d802500df03009379a49d893, for GNU/Linux 3.2.0, not stripped",
+      "role": "PROFILE_ROUTER",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: optimized",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_optimized_profile"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "2e18f0a5ed8e1bce0e1f7c686f0c110d024fceebcb36e619ad1e815bc73d8f64": {
+      "original_paths": [
+        "build/router_tsv_bench"
+      ],
+      "evidence": [
+        {
+          "sha256": "2e18f0a5ed8e1bce0e1f7c686f0c110d024fceebcb36e619ad1e815bc73d8f64",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/router_benchmark.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_tsv_bench"
+          ],
+          "stage": "tsv",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "024ea054fbf780e8fe9edd4c29ef816014908ce44648e5fa59fc5327978afabf",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "c3cd02e14b11735bfc419e0f0f80610e827264ed8d8b1125fd3efe62a564b573"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/tsv/builds.json"
+        }
+      ],
+      "bytes": 517200,
+      "file_type": "            ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=bde081ba4b76efe16b3a6f6cf71049da78175ba8, for GNU/Linux 3.2.0, not stripped",
+      "role": "BENCHMARK",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: tsv",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/router_benchmark.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_tsv_bench"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "6e71876cbd3d45e5e8f8553032c543970a9b9375bc1fe9f0646187d1bccbbd79": {
+      "original_paths": [
+        "build/router_tsv_core"
+      ],
+      "evidence": [
+        {
+          "sha256": "6e71876cbd3d45e5e8f8553032c543970a9b9375bc1fe9f0646187d1bccbbd79",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "tests/core_tests.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_tsv_core"
+          ],
+          "stage": "tsv",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "024ea054fbf780e8fe9edd4c29ef816014908ce44648e5fa59fc5327978afabf",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "c3cd02e14b11735bfc419e0f0f80610e827264ed8d8b1125fd3efe62a564b573"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/tsv/builds.json"
+        }
+      ],
+      "bytes": 548296,
+      "file_type": "             ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=f3c5afb198a0a5da5368f1b2269616ab20c490f7, for GNU/Linux 3.2.0, not stripped",
+      "role": "CORE_TEST",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: tsv",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "tests/core_tests.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_tsv_core"
+      ],
+      "run_case_router_compatible": "NO: does not expose the production four-argument Router CLI",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    },
+    "68256f71fdb5c3c853f97e578db9381179b4721cb32e887dad5837259b53f91d": {
+      "original_paths": [
+        "build/router_tsv_profile"
+      ],
+      "evidence": [
+        {
+          "sha256": "68256f71fdb5c3c853f97e578db9381179b4721cb32e887dad5837259b53f91d",
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-DGR_PROFILE",
+            "-I",
+            "include",
+            "src/main.cpp",
+            "src/parser.cpp",
+            "src/router.cpp",
+            "-o",
+            "build/router_tsv_profile"
+          ],
+          "stage": "tsv",
+          "source_sha256": {
+            "src\\main.cpp": "0d9dbd1585fd1a6329ddd66418ac4f61a16c3ed4db5eb81b877378cfa44846ab",
+            "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+            "src\\router.cpp": "024ea054fbf780e8fe9edd4c29ef816014908ce44648e5fa59fc5327978afabf",
+            "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+            "include\\model.hpp": "04aba21614676a4e307b18fbabc3765b53e6f0c80abd9bfedb5b4a6bdfb82bf1",
+            "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+            "include\\router.hpp": "c3cd02e14b11735bfc419e0f0f80610e827264ed8d8b1125fd3efe62a564b573"
+          },
+          "evidence": "outputs/reports/algorithm_optimization/stages/tsv/builds.json"
+        }
+      ],
+      "bytes": 540344,
+      "file_type": "          ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1c610a405766b9a18793eefee5ea6150b9c99cfb, for GNU/Linux 3.2.0, not stripped",
+      "role": "PROFILE_ROUTER",
+      "formal_version": "UNKNOWN",
+      "source_version": "UNCOMMITTED_STAGE: tsv",
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-DGR_PROFILE",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_tsv_profile"
+      ],
+      "run_case_router_compatible": "CLI_HELP_VERIFIED; full routing not executed in this task",
+      "note": "Matched binary SHA256 to build evidence; a Profile CLI is not a registered production version"
+    }
+  },
+  "run_migrations": {
+    "open_3d_case001/gen_20261030_stage_a_linux_v2": {
+      "directory": "outputs/runs/open_3d_case001/v2",
+      "label": "v2",
+      "original_directory": "outputs/runs/open_3d_case001/gen_20261030_stage_a_linux_v2",
+      "original_label": "gen_20261030_stage_a_linux_v2",
+      "original_run_sha256": "0ae9b3bd7ab8f1a65486d83d8d5d41a439701ce6afb53043d74c8f7299eb1c8a",
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "result_sha256": "43161c1aca47c5fbebffc49ae3be47e8257203fb8c685289507bd334a9f7c90e",
+      "kind": "REPRESENTATIVE"
+    },
+    "open_3d_case001/gen_20261030_guarded_linux_new_v3": {
+      "directory": "outputs/runs/open_3d_case001/v3_1",
+      "label": "v3_1",
+      "original_directory": "outputs/runs/open_3d_case001/gen_20261030_guarded_linux_new_v3",
+      "original_label": "gen_20261030_guarded_linux_new_v3",
+      "original_run_sha256": "791e9159b07a1b4cb84e721a3a8fa97095f21d69dd419d2e775e7da25c5e6ee1",
+      "guide_sha256": "2f6066bd09fc0f78c8253f43cc2ec1f6239613d9d6e3c1618336e00532d15de1",
+      "result_sha256": "080126e757791d5871d37eb0e5cb452feea453acc5f13c418d62226749b3b53f",
+      "kind": "REPRESENTATIVE"
+    },
+    "open_3d_case001/v3_20261029_230856_release_v3": {
+      "directory": "outputs/history/case001/old_v3_final",
+      "label": "old_v3_final",
+      "original_directory": "outputs/runs/open_3d_case001/v3_20261029_230856_release_v3",
+      "original_label": "v3_20261029_230856_release_v3",
+      "original_run_sha256": "03d84c2a0328281e955ec9b44ee8f5fc2e38769ec389238393df04b83ae2f1ca",
+      "guide_sha256": "09e8c693167ce096225034517cc2137ef35fafbff2a8834055510d9053bc4d07",
+      "result_sha256": "7b88e08d41fdfc3ed9c0f513a90dd4ff4549b9b5181c1e46f2e8d758e2d7c137",
+      "kind": "ARCHIVED_EVIDENCE"
+    },
+    "open_3d_case001/v3_20261029_113225_net_order": {
+      "directory": "outputs/history/case001/net_order_timeout",
+      "label": "net_order_timeout",
+      "original_directory": "outputs/runs/open_3d_case001/v3_20261029_113225_net_order",
+      "original_label": "v3_20261029_113225_net_order",
+      "original_run_sha256": "d3cc4a6840a953272686bf190e23d489c2a5a4b619c6c970cb9fdfbd25a8a9bd",
+      "guide_sha256": "8ccf2bccf9d1b06cf5044b2c6222ceadf9b8a6156c5e9b0294e91adc3559df33",
+      "result_sha256": "aa9ec1023291e66a67092f163e27c6e1c96b5f274cac8b652907bd5c0d2fb284",
+      "kind": "ARCHIVED_EVIDENCE"
     }
   }
 }

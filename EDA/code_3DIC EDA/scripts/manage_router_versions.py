@@ -9,7 +9,6 @@ from pathlib import Path
 from common import PROJECT,backend_command,linux_path,sha256,resolve_router
 from router_versions import REGISTRY,VERSION,METHOD,load_registry,verified_record,display_path,version_key
 
-MIRROR=PROJECT/'docs/router_versions.json'
 FLAGS=['-std=c++17','-O3','-DNDEBUG','-Wall','-Wextra','-I','include']
 SOURCES=['src/main.cpp','src/parser.cpp','src/router.cpp']
 
@@ -98,7 +97,6 @@ def register(version,source,ref,description,final=False,architecture=False,batch
     source=resolve_router(source);dest=PROJECT/'build'/('router_v3_final' if final else 'router_'+version)
     with registry_lock():
         data=load_registry() if REGISTRY.exists() else {'schema_version':1,'versions':{}}
-        if MIRROR.exists() and json.loads(MIRROR.read_text(encoding='utf8'))!=data:raise ValueError('Local/tracked registries disagree; inspect them before registering')
         if version in data['versions'] or dest.is_symlink() or (dest.exists() and not ((final or architecture) and source==dest.resolve())):raise ValueError('Version/file already exists; never overwrite: '+version)
         if not source.is_file() or not elf(source):raise ValueError('Registration requires an existing Linux ELF production Router')
         digest=sha256(source);commit=commit_id(ref);hashes=source_hashes(git_sources(commit))
@@ -124,7 +122,7 @@ def register(version,source,ref,description,final=False,architecture=False,batch
         if sha256(dest)!=digest:raise ValueError('Copied file changed; registry not published; inspect '+str(dest))
         help_check(dest);data['versions'][version]=entry
         data.get('candidates',{}).pop(version,None)
-        publish_json(REGISTRY,data);publish_json(MIRROR,data)
+        publish_json(REGISTRY,data)
         print('Registered '+version.upper()+' '+entry['path']+' '+digest)
 
 def main():
@@ -145,10 +143,9 @@ def main():
     try:data=load_registry()
     except (OSError,ValueError) as e:print('Registry unavailable: '+str(e));return 1
     valid=True
-    if not MIRROR.exists() or json.loads(MIRROR.read_text(encoding='utf8'))!=data:print('Registry mirror differs or is missing');valid=False
     print('| Version | File | SHA256 | Verified | Detail |\n|---|---|---|---|---|')
     versions=set(data['versions'])|set(data.get('candidates',{}))|{'v1','v2'}
-    versions.update(p.name.removeprefix('router_') for p in REGISTRY.parent.glob('router_v*') if VERSION.fullmatch(p.name.removeprefix('router_')))
+    versions.update(p.name.removeprefix('router_') for p in (PROJECT/'build').glob('router_v*') if VERSION.fullmatch(p.name.removeprefix('router_')))
     if any(not VERSION.fullmatch(v) for v in versions):raise ValueError('Invalid registry version key')
     counts={}
     for record in data['versions'].values():
