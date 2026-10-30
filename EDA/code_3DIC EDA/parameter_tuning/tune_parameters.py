@@ -16,7 +16,7 @@ from support import (HERE, PROJECT, TuningError, load, atomic, immutable, locked
     safe_label, sha256, utc, validate_state)
 from records import (read_optional, run_errors, artifact_errors, artifacts,
     official_state, collect)
-from common import resolve_router
+from common import resolve_router, resolve_config
 
 TERMINAL = {'COMPLETED','ROUTER_FAILED','EVALUATION_FAILED','INTERRUPTED','BLOCKED'}
 RETRYABLE = TERMINAL - {'COMPLETED'}
@@ -78,7 +78,7 @@ def prepare(args, report):
     backend = args.backend or settings['backend']; engine = args.engine or settings['engine']
     if os.name == 'nt' and backend == 'native':
         raise TuningError('Windows native official evaluation is unsupported; use --backend wsl')
-    baseline = load(PROJECT/'configs/default.json')
+    baseline = load(resolve_config(PROJECT/'configs/default.json'))
     rows = variants(baseline, settings, suite)
     router = resolve_router(args.router or (PROJECT/'router' if backend == 'wsl' or os.name != 'nt' else PROJECT/'outputs/router.exe'))
     rt = args.router_timeout if args.router_timeout is not None else settings['router_timeout']

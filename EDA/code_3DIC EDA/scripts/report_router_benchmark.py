@@ -16,6 +16,34 @@ def write(name,text):
     with (ROOT/name).open('w' if REFRESH else 'x',encoding='utf8',newline='\n') as f:f.write(text)
 def number(v):return 'N/A' if v is None else f'{v:.6g}'
 
+def measurement_times(row):
+    """Read real times; retired/missing raw runs never trigger reconstruction."""
+    directory=Path(row['run_directory'])
+    if (directory/'result.json').is_file() and (directory/'run.json').is_file():
+        result=read(directory/'result.json');run=read(directory/'run.json')
+        return dict(router_elapsed_seconds=result['metrics']['runtime_seconds'],
+            router_helper_runtime_seconds=run['runtime_seconds'],
+            router_process_runtime_seconds=(run.get('supervisor_exit') or {}).get('runtime_seconds'))
+    if row['case']=='open_3d_case001':
+        from case001_history import archived_row
+        try:
+            r=archived_row(row['label'])
+        except (KeyError,FileNotFoundError):r=None
+        if r is not None:
+            if (r['router_sha256'],r['guide_sha256'])!=(row['router_sha256'],row['guide_sha256']):
+                raise ValueError('Historical summary identity differs')
+            return dict(router_elapsed_seconds=r.get('metrics',{}).get('runtime_seconds'),
+                router_helper_runtime_seconds=r.get('runtime_seconds'),router_process_runtime_seconds=None)
+    # Some phase-two raw directories were already absent before pruning. Their
+    # measured report is independent evidence, never substitute another run.
+    prior=ROOT/'performance_comparison.json'
+    if prior.is_file():
+        matches=[r for r in read(prior).get('official_cases',[]) if all(r.get(k)==row.get(k)
+            for k in ['case','label','router_sha256','guide_sha256'])]
+        if len(matches)==1:
+            return {k:matches[0].get(k) for k in ['router_elapsed_seconds','router_helper_runtime_seconds','router_process_runtime_seconds']}
+    return dict(router_elapsed_seconds=None,router_helper_runtime_seconds=None,router_process_runtime_seconds=None)
+
 def main():
     global REFRESH
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--stage',default='paired_steady');p.add_argument('--refresh-derived',action='store_true');a=p.parse_args();safe_label(a.stage);REFRESH=a.refresh_derived
@@ -50,9 +78,7 @@ def main():
     for row in small:
         entry={k:row[k] for k in ['case','version','label','status','official_status','router_sha256','guide_sha256','normalized_json_sha256','peak_memory_bytes','router_peak_rss_bytes']}
         entry.update(official_metrics(row.get('official_report',{})))
-        result=read(Path(row['run_directory'])/'result.json');entry['router_elapsed_seconds']=result['metrics']['runtime_seconds']
-        run=read(Path(row['run_directory'])/'run.json');entry['router_helper_runtime_seconds']=run['runtime_seconds']
-        entry['router_process_runtime_seconds']=(run.get('supervisor_exit') or {}).get('runtime_seconds')
+        entry.update(measurement_times(row))
         official.append(entry)
     for case in dict.fromkeys(row['case'] for row in small):
         old,new=[r for r in small if r['case']==case];assert old['status']==new['status']=='ROUTED'

@@ -53,13 +53,19 @@ def replay(directory,data):
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--candidate',type=Path,default=PROJECT/'build/router_v3_final',help='Validated Final entry by default; temporary binary only during internal validation')
-    p.add_argument('--experiment',required=True)
+    p.add_argument('--experiment')
     p.add_argument('--case',choices=['toy','sample001','open_3d_case001'],action='append')
     p.add_argument('--router-budget',type=int,default=180)
     p.add_argument('--evaluation-budget',type=int,default=120)
     p.add_argument('--no-score',action='store_true')
     p.add_argument('--suite',choices=['final','tree','congestion','congestion_scoped'],default='final')
-    a=p.parse_args(argv);safe_label(a.experiment)
+    p.add_argument('--history-only',action='store_true',help='Read verified case001 summary; never launch or recreate historical runs')
+    a=p.parse_args(argv)
+    if a.history_only:
+        from case001_history import print_history
+        print_history();return 0
+    if not a.experiment:p.error('An explicit experiment is required; use --history-only to read archived results')
+    safe_label(a.experiment)
     backend='wsl' if os.name=='nt' else 'native'
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
     candidate=resolve_router(a.candidate)

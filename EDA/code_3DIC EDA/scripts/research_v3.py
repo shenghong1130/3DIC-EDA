@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 import zipfile
-from common import PROJECT,OUTPUTS,backend_command,linux_path,safe_label,sha256,catalog,resolve_router
+from common import PROJECT,OUTPUTS,backend_command,linux_path,safe_label,sha256,catalog,resolve_router,resolve_config
 from manage_router_versions import git_sources
 
 
@@ -56,17 +56,23 @@ class WindowsPeak:
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--experiment',required=True)
-    p.add_argument('--stage',type=int,choices=[1,2,3],required=True)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--experiment')
+    p.add_argument('--stage',type=int,choices=[1,2,3])
     p.add_argument('--backend',choices=['wsl','native'],default='wsl' if os.name=='nt' else 'native')
     p.add_argument('--score',action='store_true');p.add_argument('--router-budget',type=int,default=180);p.add_argument('--evaluation-budget',type=int,default=180)
     p.add_argument('--reference',type=Path,help='Reuse only hash-identical, completed Linux V2/old-Final controls from an earlier stage results.json')
-    a=p.parse_args();safe_label(a.experiment)
+    p.add_argument('--history-only',action='store_true',help='Read verified case001 summary; never launch or recreate historical runs')
+    a=p.parse_args()
+    if a.history_only:
+        from case001_history import print_history
+        print_history();return 0
+    if not a.experiment or a.stage is None:p.error('An explicit experiment and stage is required; use --history-only to read archived results')
+    safe_label(a.experiment)
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
     if a.score and a.backend=='native' and os.name=='nt':p.error('Official Linux evaluator cannot execute natively on Windows')
     if a.reference and a.backend=='native' and os.name=='nt':p.error('Native PE rebuilds have separate identities; Linux references only')
     report=OUTPUTS/'reports/v3_generation'/a.experiment;report.mkdir(parents=True,exist_ok=False)
-    config=PROJECT/'configs/v3_final.json';config_sha=sha256(config)
+    config=resolve_config(PROJECT/'configs/v3_final.json');config_sha=sha256(config)
     if a.backend=='wsl':
         check=subprocess.run(['wsl','-d','Ubuntu','--','/bin/true'],capture_output=True,timeout=25)
         (report/'wsl_preflight.log').write_bytes(check.stdout+check.stderr)

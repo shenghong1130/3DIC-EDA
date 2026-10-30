@@ -89,6 +89,11 @@ class RunMetadataTests(unittest.TestCase):
         self.assertEqual(r['router_binary'],'build/renamed_router');self.assertIn('Router Version : V2',text)
     def test_selected_v1(self):
         _,r,_=self.invoke(self.root/'build/router_v1');self.assertEqual(r['router_version'],'v1')
+    def test_v2_formal_config_and_label_are_recorded_as_version(self):
+        config=self.root/'configs/v2.json';config.write_bytes((self.root/'configs/default.json').read_bytes())
+        self.target=self.root/'outputs/runs/toy/v2'
+        _,r,_=self.invoke(self.root/'build/router_v2',config=config,label='v2')
+        self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_path'],'configs/v2.json')
     def test_missing_registry_preserves_execution_and_timeout_metadata(self):
         self.registry.unlink();_,r,text=self.invoke(status='TIMEOUT',code=124)
         self.assertEqual(r['router_version'],'UNKNOWN');self.assertEqual(r['router_version_status'],'REGISTRY_MISSING')

@@ -14,7 +14,7 @@ import uuid
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
 sys.path.insert(0, str(PROJECT / 'scripts'))
-from common import catalog, safe_label, sha256, linux_path, EDA, resolve_router
+from common import catalog, safe_label, sha256, linux_path, EDA, resolve_router, resolve_config
 
 class TuningError(RuntimeError):
     pass
@@ -190,7 +190,7 @@ def fingerprints(case, backend, engine, router, probe=True):
         [p for p in tool.iterdir() if p.suffix in {'.py','.so','.dat'} or '.so.' in p.name])
     scripts = [PROJECT/'scripts'/n for n in ['run_case.py','evaluate.py','common.py','diagnostics.py','evaluator_diagnostics.py','linux_supervisor.py']]
     sources = sorted(p for folder in ['src','include'] for p in (PROJECT/folder).glob('*') if p.is_file())
-    files = [Path(source[k]) for k in ['def','lef','thermal']] + [Path(router), PROJECT/'configs/default.json', *tools, *scripts, *sources, PROJECT/'ui/result_store.py']
+    files = [Path(source[k]) for k in ['def','lef','thermal']] + [Path(router), resolve_config(PROJECT/'configs/default.json'), *tools, *scripts, *sources, PROJECT/'ui/result_store.py']
     try:
         hashes = {str(p.resolve()): sha256(p) for p in files}
     except OSError as e:
@@ -206,7 +206,7 @@ def verify_files(plan, check_environment=False):
     for name, expected in plan['fingerprints']['files'].items():
         try:
             file=Path(name)
-            if not file.is_file():file=resolve_router(file)
+            if not file.is_file():file=resolve_config(resolve_router(file))
             if sha256(file) != expected:
                 problems.append('Changed SHA256: ' + name)
         except (OSError,ValueError):

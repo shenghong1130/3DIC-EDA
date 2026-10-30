@@ -36,12 +36,18 @@ def main():
     exe=resolve_router(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe'))
     binary_hash=optional_hash(exe);version=identify_router(binary_hash)
     numeric=version['router_version'] if re.fullmatch(r'v[1-9][0-9]*_[1-9][0-9]*',version['router_version']) else None
+    # New V1/V2 formal configs coexist with the historical default workflow.
+    basic=version['router_version']
+    if basic in {'v1','v2'} and config==(PROJECT/'configs'/(basic+'.json')).resolve() and a.label==basic:
+        numeric=basic
     named=re.fullmatch(r'router_(v[1-9][0-9]*_[1-9][0-9]*)',exe.name)
     if named and not a.comparison and named.group(1)!=numeric:p.error('Numeric Router filename has no matching SHA256 identity; inspect the receipt or use --comparison for a non-version run')
     if numeric and not a.comparison:
         if config!=(PROJECT/'configs'/(numeric+'.json')).resolve() or a.label!=numeric:p.error('Version run requires matching Router/config/label '+numeric+'; use --comparison for an explicit non-version experiment')
         receipt=(json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8')).get('candidates',{}).get(numeric) or json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8'))['versions'].get(numeric,{}))
-        if receipt.get('config_sha256') and sha256(config)!=receipt['config_sha256']:p.error('Numeric version configuration hash changed')
+        formal=json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8')).get('formal_configs',{}).get(numeric,{})
+        expected_config=receipt.get('config_sha256') or formal.get('sha256')
+        if expected_config and sha256(config)!=expected_config:p.error('Numeric version configuration hash changed')
     conv=linux_path if a.backend=='wsl' else lambda x:str(Path(x).resolve())
     args=[conv(exe),'--def',conv(paths[0]),'--lef',conv(paths[1]),'--thermal-report',conv(paths[2]),'--output',conv(output),'--metrics',conv(target/'result.json'),'--config',conv(config),'--time-limit',str(a.time_limit)]
     if a.trace:args+=['--trace',conv(target/'trace.jsonl')]

@@ -6,6 +6,8 @@ Only the reviewed browser profiles and three checksum-pinned synthetic JSONs
 below may be deleted. New/unknown paths, runs, scores, ZIPs, caches and binaries
 are retained. No Router, evaluator, build or browser process is launched/killed.
 Use --report-dir outputs/reports/<new-name> to save a preview audit as well.
+The separate --case001-prune opt-in uses a checksum-pinned historical summary
+and exact reviewed retention policy; ordinary --apply still protects all runs.
 """
 from pathlib import Path
 import argparse
@@ -330,7 +332,17 @@ def main():
     group.add_argument('--dry-run', action='store_true', help='Preview only (default)')
     group.add_argument('--apply', action='store_true', help='Apply the reviewed safe allowlist with an audit trail')
     p.add_argument('--report-dir', type=Path, help='New, non-existing directory under outputs/reports')
+    p.add_argument('--case001-prune', action='store_true', help='Opt-in exact reviewed case001 manifest; tuning and other Cases remain protected')
     a = p.parse_args()
+    if a.case001_prune:
+        if a.report_dir:p.error('case001 pruning uses one fixed final audit; preview writes nothing')
+        try:
+            from cleanup_case001 import execute as prune_case001
+            result=prune_case001(apply=a.apply)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+            return 0
+        except (OSError,ValueError,KeyError,subprocess.SubprocessError) as e:
+            p.exit(2,'Case001 cleanup aborted safely: '+str(e)+'\n')
     if not OUTPUTS.is_dir() or OUTPUTS.resolve() != OUTPUTS.absolute():
         p.error('outputs must be a real directory, not a redirected path')
     try:

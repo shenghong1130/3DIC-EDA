@@ -1,0 +1,504 @@
+{
+  "schema_version": 1,
+  "summary": "outputs/reports/case001_history.json",
+  "summary_sha256": "060d6896498f0a0e4393959c20b812b9a96cb16a39597abdefde52aa0734023e",
+  "keep": {
+    "gen_20261030_stage_a_linux_v2": "V2 representative: SHA6440, ROUTED/PASS, config equal v2.json",
+    "gen_20261030_guarded_linux_new_v3": "V3.1 representative: independently rebuilt SHAe7f9, ROUTED/PASS",
+    "v3_2": "V3.2 candidate representative: PASS, not released",
+    "v3_20261029_230856_release_v3": "Exception: original released old-Final SHA211f PASS/Guide; distinct from V3.1",
+    "v3_20261029_113225_net_order": "Exception: unique evaluator TIMEOUT evidence; NOT_EVALUATED is not official FAIL",
+    "tune_phase1_case001_v2__baseline_7623648c_a001_9ba494": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__congestion_high_7623648c_a001_22341c": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__congestion_low_7623648c_a001_65d947": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__history_high_7623648c_a001_c09ddc": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__history_low_7623648c_a001_152b91": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__iterations_high_7623648c_a001_ab3da8": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__iterations_off_7623648c_a001_7860a4": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__margin_high_7623648c_a001_366f6b": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__thermal_high_7623648c_a001_556845": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__thermal_off_7623648c_a001_41b188": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__via_high_7623648c_a001_880fa6": "Tuning: phase1 experiment_state confirms ownership; immutable complete files",
+    "tune_phase1_case001_v2__via_low_7623648c_a001_87c8fa": "Tuning: phase1 experiment_state confirms ownership; immutable complete files"
+  },
+  "delete": {
+    "gen_20261030_stage_a_linux_new_v3": {
+      "guide_sha256": "48614fa34c9b351e8a5df2d5ed284dde49c2721a5dda451f4cacf36fd5eceb6d",
+      "router_sha256": "10c5321810675b4126e85acf7a90f4780d951196ff086adb85fd9beff50c035e"
+    },
+    "gen_20261030_stage_a_linux_old_final": {
+      "guide_sha256": "09e8c693167ce096225034517cc2137ef35fafbff2a8834055510d9053bc4d07",
+      "router_sha256": "211fdc3e7b422c032685728a1a4df5d10fd3be406b009e06e0e0e79a928a74bd"
+    },
+    "gen_20261030_stage_b_linux_new_v3": {
+      "guide_sha256": "fba689825d6d2b4f360d843efe8404c0bf82dfea87c6d15b7421873f8f0d69fb",
+      "router_sha256": "75c033ae532c7a900a530c8d11d18313f2f39938d18c4f70517272031c908764"
+    },
+    "gen_20261030_stage_c_linux_new_v3": {
+      "guide_sha256": "c43bed2f0415d903e2f6876d4542cc797758018c62ac0b4e0498cafd6ffcd646",
+      "router_sha256": "0092723d4eb0ceb0061134385adae1fa6da84eb054418ed9faa11b6d92895fcb"
+    },
+    "v3_20261029_113225_combined": {
+      "guide_sha256": "f4eddf032116f31470ee3751ef181762a7c78dce59017409579a983de5f8896e",
+      "router_sha256": "47a285c048124b5a6987f2b90171ff1c20fbe12b218b7405cc8aa4669977821a"
+    },
+    "v3_20261029_113225_congestion": {
+      "guide_sha256": "83b0075e15b806072f6f81319200316013c461a9df7764d4cbe406111bbd640c",
+      "router_sha256": "47a285c048124b5a6987f2b90171ff1c20fbe12b218b7405cc8aa4669977821a"
+    },
+    "v3_20261029_113225_legacy": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "47a285c048124b5a6987f2b90171ff1c20fbe12b218b7405cc8aa4669977821a"
+    },
+    "v3_20261029_113225_tree_aware": {
+      "guide_sha256": "ecbcb9f9e891975647c119ba33747f3b8a38923a0ccec5bff51e5457a12cfe90",
+      "router_sha256": "47a285c048124b5a6987f2b90171ff1c20fbe12b218b7405cc8aa4669977821a"
+    },
+    "v3_20261029_113225_v2": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_20261029_230856_induced_v2": {
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_20261029_230856_induced_v3": {
+      "guide_sha256": "09e8c693167ce096225034517cc2137ef35fafbff2a8834055510d9053bc4d07",
+      "router_sha256": "2b8da9ee58477efe65b27951a765816754dc8ffbb59cc633eaaafe3487f6eb57"
+    },
+    "v3_20261029_230856_refined_v2": {
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_20261029_230856_refined_v3": {
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "router_sha256": "6bacd97f19128c356ce1ee9e30aedf3c5994b95b1d27651f39128b7e00928634"
+    },
+    "v3_20261029_230856_release_v2": {
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_20261029_230856_v2": {
+      "guide_sha256": "0f4921187042a7334112d6713599f45e6a9175222d6a6587b009b30391c5cb69",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_20261029_230856_v3": {
+      "guide_sha256": "29accc9e04570677f1ca3369dcde7d2dac5319491a563c363d5a9c48460d528a",
+      "router_sha256": "60004c6dd8b4b9b7df5965ba57058c49353728b72044494c4bd4f6c8e51dd242"
+    },
+    "v3_congestion_20261029_201139_congestion_combined": {
+      "guide_sha256": "c49e10beb4393f106078db1b786d670efad74bb5b7c5e27963a0aac0257b1cb6",
+      "router_sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac"
+    },
+    "v3_congestion_20261029_201139_guarded": {
+      "guide_sha256": "0a3b7fea0ff625f1a0cc6f31f75b49c712a7f81321b322a43cde31c78ec5905b",
+      "router_sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac"
+    },
+    "v3_congestion_20261029_201139_hybrid": {
+      "guide_sha256": "1c59cd8baf310775182f15cda263d5c25a6ce237bc95a598131d246783402e09",
+      "router_sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac"
+    },
+    "v3_congestion_20261029_201139_incremental": {
+      "guide_sha256": "5eb64a23cae213e926aec1cb73b729a19d6742296c6d5237cdf2b46d5a5ae280",
+      "router_sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac"
+    },
+    "v3_congestion_20261029_201139_legacy": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "4173d77702d1fb51316ece49ffb46e30285a33cd23315b583b65b96ec0476fac"
+    },
+    "v3_congestion_20261029_201139_scope_legacy": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "83ec6d3455f559774243895a6d7991a3b4b0af3d8187c8f18e15985d29b46893"
+    },
+    "v3_congestion_20261029_201139_scope_scoped": {
+      "guide_sha256": "e83a04bd7900f0670635abbcc27a3fbae2bc0b9376d116d65984d9b492d6ed80",
+      "router_sha256": "83ec6d3455f559774243895a6d7991a3b4b0af3d8187c8f18e15985d29b46893"
+    },
+    "v3_congestion_20261029_201139_scope_v2": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    },
+    "v3_congestion_20261029_201139_v2": {
+      "guide_sha256": "7c1a2481db0180f3e5cae675ccfbb1855ba0c26ffe7f516b4ab8fcf9c0b26b65",
+      "router_sha256": "6440fcf3211e616534d9192bbc7ceabec99956fc41f1b43e002d2ffa06c0b30f"
+    }
+  },
+  "detached_reports": [
+    {
+      "path": "outputs\\reports\\v3_2\\audit.json",
+      "sha256_before": "70c541326651b70966c80065ad4da303b1c8116db631f2062cba8f43b220e0e4"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_guarded_linux\\open_3d_case001_old_final.json",
+      "sha256_before": "7ff994b2d31763a0b0995b46a20049c5802541ac8acaeb622c07d4eb97277dfb"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_guarded_linux\\results.json",
+      "sha256_before": "e3501c6a36d3fb4ef119b03dd9a77abcba6a3ba327c3ddbe16ba62a4afcde33c"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_research\\protection_before.json",
+      "sha256_before": "facad355edec8de3cdb240197cf49a67c0cd9b4a89dc9218a0fa9366da58d20d"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_new_v3.json",
+      "sha256_before": "4f7d67f10889699ee98076a877c608451f8abe4a30a0fdf746f40bd5169ec423"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_new_v3.log",
+      "sha256_before": "3148e0750e43193813f04a3ead09bb622d2af54abc7b77cc15462e0a5903f9b3"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_new_v3_score.log",
+      "sha256_before": "e2c583937662e6418dfa3d2066a06e55a73c4f4c316ed36e2c492790957c27da"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_old_final.json",
+      "sha256_before": "7b7225cab6e6e7c273b4465a7f466fe5c687add7df8dd3e9d32531ffd5846f18"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_old_final.log",
+      "sha256_before": "dad87ed6587f5894ed125d3413582ce9a6eaf369a8f9258ad1b48c07d1015583"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\open_3d_case001_old_final_score.log",
+      "sha256_before": "fa00e7663da3cc2cb4f640c63a0e52a8eea0f95b1e1da7d40629f2ec0fbe1db5"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_a_linux\\results.json",
+      "sha256_before": "9fb2901988e25287e07dbb7404249ba5db03e20be1fa1abee0a4ac257d3ac4b0"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_b_linux\\open_3d_case001_new_v3.json",
+      "sha256_before": "3e47f0b4533f98372fb69d5f332b96ac6b8e2146c2cc24f3cc861eaec520c06b"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_b_linux\\open_3d_case001_new_v3.log",
+      "sha256_before": "cbeb9819d2b11388fb0deb5a3a3a82385149297209c7916009333129ef90d3e5"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_b_linux\\open_3d_case001_new_v3_score.log",
+      "sha256_before": "4042ad5e1c6a471c37d95596d6905ca153296c56a9b6a22032b5cf4f19b084e5"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_b_linux\\open_3d_case001_old_final.json",
+      "sha256_before": "7ff994b2d31763a0b0995b46a20049c5802541ac8acaeb622c07d4eb97277dfb"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_b_linux\\results.json",
+      "sha256_before": "2080828d01cfe07b3762f3c1f097b8b211f860f797619ad80822b154d68bf24e"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_c_linux\\open_3d_case001_new_v3.json",
+      "sha256_before": "a98437d95a7423698edc049f5aaa26540221f9f3b75b792c6ad1737b2592d513"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_c_linux\\open_3d_case001_new_v3.log",
+      "sha256_before": "437ea2a8db136d282ee0e554a7bea122930089aa9cc5c6f0b595a42c6261b194"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_c_linux\\open_3d_case001_new_v3_score.log",
+      "sha256_before": "e1385f749bcc182256661a188f93c60ebf712e99a4a807b0f9b88dff251b2739"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_c_linux\\open_3d_case001_old_final.json",
+      "sha256_before": "7ff994b2d31763a0b0995b46a20049c5802541ac8acaeb622c07d4eb97277dfb"
+    },
+    {
+      "path": "outputs\\reports\\v3_generation\\20261030_stage_c_linux\\results.json",
+      "sha256_before": "ba79692ea73feca5e31ddcf80fab3f7fa09d8d4758c4f49925a4f30e718c9d7c"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\protection_before.json",
+      "sha256_before": "36a94a63e530a0ff03dbbd573be0540abd149557aa4a19d689e1b4cf729baf81"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_release\\comparisons\\05_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "25cf0c845817b813d46b87f55eb1023211881679a70ca1175839a34f43db233a"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_release\\comparisons\\05_open_3d_case001_v2.record.json",
+      "sha256_before": "84f755d693346ba39ce6766004e458b9eeba5cb7c01a6e743cc075bbf0e8b296"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_release\\comparisons\\05_open_3d_case001_v2.run.log",
+      "sha256_before": "5267347af27ee47e014720556e40a2febaf14ed2f0b2868164fed58b51de354b"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_release\\comparisons\\results.json",
+      "sha256_before": "4fbf82de1acc22ebbec76fe896cb215c5a6eba6783feabd931e0f825aec99309"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\05_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "4095b58d556b737d55c499d3f19d5f7d647b23315781a4c3d6803caafb853684"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\05_open_3d_case001_v2.record.json",
+      "sha256_before": "460088f4c34e8edd5ea5bf110843649effcc71d1ecf45a222fae9c048dad9a12"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\05_open_3d_case001_v2.run.log",
+      "sha256_before": "539bb79a7a568499cb708a61f598614dc8a57148738c6dcf58036164bfb42c89"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\06_open_3d_case001_v3.evaluation.log",
+      "sha256_before": "732d612cdfc3adc5bacc18447a0b8f352bb3eb332d85385dbf1ae0a10f5ec412"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\06_open_3d_case001_v3.record.json",
+      "sha256_before": "c23e7ffd693234cd08bf2d8893b710730368fc931793917f666a8bd15382a2c5"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\06_open_3d_case001_v3.run.log",
+      "sha256_before": "af245a11fabd0f99a3a88f315bf08d591d2e462999890259c9551e47257bfdd4"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_refined\\comparisons\\results.json",
+      "sha256_before": "6e97273aa7f29ad45a4940323e1e8a3f94732bfa75863b0811038b4f16e35e92"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\05_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "cb845ad924bcb594db52ddc73c20e80bd156f8507d1c7ac89db9e606426bb0aa"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\05_open_3d_case001_v2.record.json",
+      "sha256_before": "66905fdc8b8db8b053bbfff777fed52ef52b6fc9588b526c0c3bb2f24d8a6ece"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\05_open_3d_case001_v2.run.log",
+      "sha256_before": "f88b6551a484b2df40d9adf3d385c6741cb517a4f5c7cd28a36fb7c96906fe2b"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\06_open_3d_case001_v3.evaluation.log",
+      "sha256_before": "cc640a0a1fc769f0dd81d99449cfd51549a4024ba57a1cd8f8a47f17a33ef534"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\06_open_3d_case001_v3.record.json",
+      "sha256_before": "8af69bbbb20bb2e79cc1478a4660fad3467d2097b9e25fba8cc8d12dd403783e"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\06_open_3d_case001_v3.run.log",
+      "sha256_before": "9f5c64bce65f7053766de655bc34a8a204a7742859de48fe5a8ad112bcc2e746"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856_induced\\comparisons\\results.json",
+      "sha256_before": "3e61ea71e13de01b38a448df593c2a1fb444a659333fb0648681214e8fb6994a"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\05_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "4c961addc1042e11505796249727381436e5afdf9b42b7228d8ff3705a0a17e1"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\05_open_3d_case001_v2.record.json",
+      "sha256_before": "738a3c422cec5c468a27bfe650b9aed51196e634001738f00564275b5a1d78e0"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\05_open_3d_case001_v2.run.log",
+      "sha256_before": "644bb536be18ce9c407c020e00ae776a97b784e4927fa4fe8212321e26035178"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\06_open_3d_case001_v3.evaluation.log",
+      "sha256_before": "060ac413a68af2a7fb0af66b7f5d75cbbfcdacc9ea05261808e92625d96278fa"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\06_open_3d_case001_v3.record.json",
+      "sha256_before": "f86081e54aebc9558db0f8dd31aec085dff191dfb7d7f80be90a17abf76be831"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\06_open_3d_case001_v3.run.log",
+      "sha256_before": "936f43e2b2392da9b77b5b07cf9fd23f0ec167d3ed3f8e3bc36f3f1f311f6be4"
+    },
+    {
+      "path": "outputs\\reports\\v3_final\\20261029_230856\\comparisons\\results.json",
+      "sha256_before": "1477809cf974bcdeb98fa357f2ad31aa2fe039c4ba69fb3544bc5684207a5f14"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\case001_v2_decomposition.json",
+      "sha256_before": "80bd18d04042ed528de1757d4752f668ee43f6fca71d9cf1a2f49c30f01af2bc"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\protection_before.json",
+      "sha256_before": "6a85245200df3b8910d33b63db90beeec9afbfb321cd1dc1f33b99665db2f461"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\07_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "b9b2bd1c0376f3fc7ecef9ae09a449a8cc5c078fcab4f29eae039c3f64dfc4e4"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\07_open_3d_case001_v2.record.json",
+      "sha256_before": "f53bb103333048dc6ca0c9ed87218379ba5910fb49ca0cd93f47b625b3029352"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\07_open_3d_case001_v2.run.log",
+      "sha256_before": "1ba6fe9bedd8adf367899efe136bb3a93742efb54384d270c5bad4a68cfc5a6f"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\08_open_3d_case001_legacy.evaluation.log",
+      "sha256_before": "c9e1d9d28bb9fb4d07cfcc4254e23f631b9a72236d88858080edf0d2f53c72fd"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\08_open_3d_case001_legacy.record.json",
+      "sha256_before": "4584fec6544ce2db8e754ec145432375014dce571db13b9f359a9c5d1d4599dc"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\08_open_3d_case001_legacy.run.log",
+      "sha256_before": "1d1dc0eaae7beef32cd555cf3b48730aa6ec834b8c839ddd0ee4ab03d78bf23d"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\09_open_3d_case001_scoped.evaluation.log",
+      "sha256_before": "f790e43a11768d757b2dbbb1c6b19805a502eb9c3696e8791245b4e02e0582d2"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\09_open_3d_case001_scoped.record.json",
+      "sha256_before": "418fa9f382416a8fc37958c806f934c7371c64fa4e2d64b7370e6f8565f41685"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\09_open_3d_case001_scoped.run.log",
+      "sha256_before": "46497c69ab6d29cc589d66a1232fcff8b8e726e942965d694387acb7d45fac98"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139_scope\\comparisons\\results.json",
+      "sha256_before": "6f6c90fca51c100ea0fa4b3bb2fcb27308d38afaba192151aa847b5208bc85be"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\13_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "7557b103e31a1c863e4d39361a1d0dd2f591f129009cd0ecf3a0c85ebd2e8612"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\13_open_3d_case001_v2.record.json",
+      "sha256_before": "6397558a816d7832a77a5e3d8f0dbfc376cbfb0ec4be81937c3878cae5dd540c"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\13_open_3d_case001_v2.run.log",
+      "sha256_before": "629a10183e6a1227863ae870d74789f7bfc6a16f1b889a90070976ca974b3314"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\14_open_3d_case001_legacy.evaluation.log",
+      "sha256_before": "d5f179b6e6e622ed981cab8d2abc34c4f73934007ef6d728ae746941a28d34d8"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\14_open_3d_case001_legacy.record.json",
+      "sha256_before": "eeff5294610efcd82a3e9b602e49e0b1859e2bdad53510de6398312bb1a79e00"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\14_open_3d_case001_legacy.run.log",
+      "sha256_before": "b0cbd3330287c1ef0befbad1eb599463fed1299877127ee3a2e66a8e96044862"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\15_open_3d_case001_incremental.evaluation.log",
+      "sha256_before": "3b5efc9eb5657a793d28dc19102929ac4198ad7b4b6831639fef0c38c0cf7ea3"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\15_open_3d_case001_incremental.record.json",
+      "sha256_before": "0d5ce5d5c0f52b6a2b23493a2c91974525d13d27d2ceddb8476f9485a7a4e0eb"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\15_open_3d_case001_incremental.run.log",
+      "sha256_before": "d4c66cd41e895f52816abdaf0b8803d177e54e7eb1286a3e70b734be5ecdf856"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\16_open_3d_case001_hybrid.evaluation.log",
+      "sha256_before": "a079550d9d49be5e596d440e5ac2e82e29d0617440733bd67c1f1ddf435d1d11"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\16_open_3d_case001_hybrid.record.json",
+      "sha256_before": "1931e36b5b32be49954ab81b68cb2a82225b1fab33ee6812640f1def9ade00e8"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\16_open_3d_case001_hybrid.run.log",
+      "sha256_before": "e4b3b781a80e509c414cb539a534fa8dd88aec2fbbd3d9be69595df9bdbbba85"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\17_open_3d_case001_guarded.evaluation.log",
+      "sha256_before": "84f893adc9fffd2333eddcd084e4b833527d6bd4e68d9c4ce73d0d895cceaabb"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\17_open_3d_case001_guarded.record.json",
+      "sha256_before": "a0f3870c3940b5dfd5a6561a8154c971fa8750be394eb4b127df79ba757b776a"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\17_open_3d_case001_guarded.run.log",
+      "sha256_before": "98f2e29d2c874177fe3d87b67a40fdf341902b4802af4b7ec619b3534a5a5bcf"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\18_open_3d_case001_congestion_combined.evaluation.log",
+      "sha256_before": "a3b5f784a8730a8f0b0fe2a17433a0badec9fe56a3a44f3027cbeddb2b891e3c"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\18_open_3d_case001_congestion_combined.record.json",
+      "sha256_before": "e90716367387a826f04d125ead3bf8cda8c56640d1f53c93e1f5879cd7fa31c7"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\18_open_3d_case001_congestion_combined.run.log",
+      "sha256_before": "870e413d5a73db84c6d37daed50562eb1b2076878b7c8f2dc720d752f725a595"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\congestion_20261029_201139\\comparisons\\results.json",
+      "sha256_before": "f3c3c32384cd5a4993a927cc1d25fcb6f0120fb6afff7e7ec6b9bd803546fe4d"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\13_open_3d_case001_v2.evaluation.log",
+      "sha256_before": "1478ded394428bd0e81629123865c1361f42ceca1649b8f11bc87fb3eb15db94"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\13_open_3d_case001_v2.record.json",
+      "sha256_before": "f6b31306d87762e209a30f733eceeb27c78ef523e98bd777ab50cb99b21a5891"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\13_open_3d_case001_v2.run.log",
+      "sha256_before": "b7033a921e27dd65ef6764150f77f6948d264e2a9ad6f200b805b7874a4d8a38"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\14_open_3d_case001_legacy.evaluation.log",
+      "sha256_before": "483c73f81c2e24ed2070f394ad5674eed43d8d4b89747bf0cab1f43b196f1297"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\14_open_3d_case001_legacy.record.json",
+      "sha256_before": "b466ec92400e581790c84b63826776f53e4d397850dbc47ccd512524360b30a3"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\14_open_3d_case001_legacy.run.log",
+      "sha256_before": "fd80d9e51c6bf206a344be4c2565ff21a4655e6e7a1e58029c0628c30210761a"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\16_open_3d_case001_tree_aware.evaluation.log",
+      "sha256_before": "8b9f8611c8285ff82d529eae6dc3ff330b66a5db98f0848411cbaae753735032"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\16_open_3d_case001_tree_aware.record.json",
+      "sha256_before": "89a2257aabd9c83284d91925d491c5fda8a72d3c794cfbc733e890aee8114651"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\16_open_3d_case001_tree_aware.run.log",
+      "sha256_before": "459a0d169d60dd52f29313ed76abfa20af1dabeb1707b38796fb8f730c659341"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\17_open_3d_case001_congestion.evaluation.log",
+      "sha256_before": "7ce2bb92c091fa4624f6d0398208748eec2dab4ba690cb120e7feb5271a96e1d"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\17_open_3d_case001_congestion.record.json",
+      "sha256_before": "e0a0ea715b26b468c3502a723b7e63d7a26ecb2000e5377b463a6035855e6317"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\17_open_3d_case001_congestion.run.log",
+      "sha256_before": "a902db71b39712fcdfa3c49bbe9fbfa905e2284ce0af3bfaba336c3d1b8b71c4"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\18_open_3d_case001_combined.evaluation.log",
+      "sha256_before": "3b05684942a659bb3e597e578a1d7dbfb4463ade1e78f47154c837fd0ec344ec"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\18_open_3d_case001_combined.record.json",
+      "sha256_before": "6472574bf3b61a896efc1cd22b05f72740e1b963e92bb1bc55959aa2a680d9c9"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\18_open_3d_case001_combined.run.log",
+      "sha256_before": "44ff638b85eba5f4d822acc85b9f8c716354fb753a669096c94a81535f040049"
+    },
+    {
+      "path": "outputs\\reports\\v3_algorithm\\20261029_113225\\comparisons\\results.json",
+      "sha256_before": "59596bbe13b59bf460edf3c3f9af0af4cbc2481029ebb9e5401998ae66a531cc"
+    }
+  ]
+}

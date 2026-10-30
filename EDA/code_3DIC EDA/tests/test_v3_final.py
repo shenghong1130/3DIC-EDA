@@ -16,11 +16,24 @@ class ArchiveCompatibility(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);archive=root/'configs/archive';archive.mkdir(parents=True)
             file=archive/'v3_legacy.json';file.write_bytes(b'{"wire":1}')
+            (root/'docs').mkdir()
+            (root/'docs/config_aliases.json').write_text(json.dumps({'aliases':{'configs/v3_legacy.json':{
+                'path':'configs/archive/v3_legacy.json','sha256':common.sha256(file)}}}))
             with patch.object(common,'PROJECT',root):
                 self.assertEqual(common.resolve_config(root/'configs/v3_legacy.json'),file)
                 self.assertEqual(common.resolve_config(root/'other/v3_legacy.json'),root/'other/v3_legacy.json')
                 self.assertEqual(common.resolve_config(root/'configs/v3_final.json'),root/'configs/v3_final.json')
             self.assertEqual(file.read_bytes(),b'{"wire":1}')
+
+    def test_archived_config_hash_mismatch_is_not_silently_substituted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'configs/archive').mkdir(parents=True);(root/'docs').mkdir()
+            file=root/'configs/archive/default.json';file.write_text('{"wire":2}')
+            (root/'docs/config_aliases.json').write_text(json.dumps({'aliases':{'configs/default.json':{
+                'path':'configs/archive/default.json','sha256':'0'*64}}}))
+            with patch.object(common,'PROJECT',root):
+                with self.assertRaisesRegex(ValueError,'identity mismatch'):
+                    common.resolve_config(root/'configs/default.json')
 
     def test_router_redirect_checks_hash_and_workspace_boundary(self):
         import hashlib

@@ -315,5 +315,31 @@
       ],
       "validation_report": "outputs/reports/v3_2/results.json"
     }
+  },
+  "formal_configs": {
+    "v1": {
+      "path": "configs/v1.json",
+      "source": "configs/archive/default.json",
+      "sha256": "f4c192ef20102193f02b5d39eb15be3fadc7183cedaf1a65035c55dcc0f743e5",
+      "evidence": "V1 SHA70dd: toy/sample001 phase2_baseline and phase1 baseline; case001 non-tune V1 absent"
+    },
+    "v2": {
+      "path": "configs/v2.json",
+      "source": "configs/archive/default2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "V2 SHA6440: gen_20261030_stage_a_linux_v2 config values equal default2; CLI time_limit=180"
+    },
+    "v3_1": {
+      "path": "configs/v3_1.json",
+      "source": "configs/v3_1.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "guarded Linux SHAe7f9; research baseline, not default release"
+    },
+    "v3_2": {
+      "path": "configs/v3_2.json",
+      "source": "configs/v3_2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "SHA65df candidate, CANDIDATE_NOT_RELEASED"
+    }
   }
 }

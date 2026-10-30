@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "aliases": {
+    "configs/v3_combined.json": {
+      "path": "configs/archive/v3_combined.json",
+      "sha256": "d2bc1bd4c49040eec71492385d0f482948c898333057c167c9acf5eb4743f68e"
+    },
+    "configs/v3_congestion.json": {
+      "path": "configs/archive/v3_congestion.json",
+      "sha256": "9ad04d0721a93fc86de6f877b8216a44166cae997cf9ca0788cc903107213419"
+    },
+    "configs/v3_congestion_candidate.json": {
+      "path": "configs/archive/v3_congestion_candidate.json",
+      "sha256": "8de9628116621a45ecdcf2fb136eacad89c0b740f8fb2c4145cb1285f1a11463"
+    },
+    "configs/v3_congestion_legacy.json": {
+      "path": "configs/archive/v3_congestion_legacy.json",
+      "sha256": "1aa56ba1d8bc0df4ca0a83fc4860d7b01a6e237ff87ab3efc16053144d78ed96"
+    },
+    "configs/v3_congestion_reroute_only.json": {
+      "path": "configs/archive/v3_congestion_reroute_only.json",
+      "sha256": "7c397fc0d5feff4ff273deb3bde23125fb90ed0531163db35c73cc50918e6189"
+    },
+    "configs/v3_cost_hybrid.json": {
+      "path": "configs/archive/v3_cost_hybrid.json",
+      "sha256": "9951f70f42115a97c7d594ebb7c15ba3db52220fed93d575a5c85eff71438312"
+    },
+    "configs/v3_cost_incremental.json": {
+      "path": "configs/archive/v3_cost_incremental.json",
+      "sha256": "629348b7483eee319b93190da5b9bcdf8487dd48d888e89ce874ead53919aa57"
+    },
+    "configs/v3_legacy.json": {
+      "path": "configs/archive/v3_legacy.json",
+      "sha256": "5bce9b09c4a067019a710e8fb8edf6ed9a587950d045c6d4c0c892ef30214a19"
+    },
+    "configs/v3_net_order.json": {
+      "path": "configs/archive/v3_net_order.json",
+      "sha256": "01bb9d18337b1a00b14df8e64596f8561715c89282bf6f525e7b039d5282bc48"
+    },
+    "configs/v3_reroute_guarded.json": {
+      "path": "configs/archive/v3_reroute_guarded.json",
+      "sha256": "7a98367cc90927cf59854b640930dfbd152fc6341e113a7177a966f42a1e0aa8"
+    },
+    "configs/v3_tree_aware.json": {
+      "path": "configs/archive/v3_tree_aware.json",
+      "sha256": "12c6c84cbf915384bb22c1ef7a24721b822567d902fba8e6f690df1bfe214710"
+    },
+    "configs/baseline.json": {
+      "path": "configs/archive/baseline.json",
+      "sha256": "000e40da7b56543ddc4aad208206678904fc396e8e3abd0995e6cb4659bbb20b"
+    },
+    "configs/case005_debug.json": {
+      "path": "configs/archive/case005_debug.json",
+      "sha256": "dece302d90ad4d1f726b15b7039ded73adb4f70ebb496c32df6852bd1da1e5eb"
+    },
+    "configs/default.json": {
+      "path": "configs/archive/default.json",
+      "sha256": "f4c192ef20102193f02b5d39eb15be3fadc7183cedaf1a65035c55dcc0f743e5"
+    },
+    "configs/default2.json": {
+      "path": "configs/archive/default2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4"
+    },
+    "configs/v3_final.json": {
+      "path": "configs/archive/v3_final.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4"
+    }
+  },
+  "versions": {
+    "v1": {
+      "path": "configs/v1.json",
+      "source": "configs/archive/default.json",
+      "sha256": "f4c192ef20102193f02b5d39eb15be3fadc7183cedaf1a65035c55dcc0f743e5",
+      "evidence": "V1 SHA70dd: toy/sample001 phase2_baseline and phase1 baseline; case001 non-tune V1 absent"
+    },
+    "v2": {
+      "path": "configs/v2.json",
+      "source": "configs/archive/default2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "V2 SHA6440: gen_20261030_stage_a_linux_v2 config values equal default2; CLI time_limit=180"
+    },
+    "v3_1": {
+      "path": "configs/v3_1.json",
+      "source": "configs/v3_1.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "guarded Linux SHAe7f9; research baseline, not default release"
+    },
+    "v3_2": {
+      "path": "configs/v3_2.json",
+      "source": "configs/v3_2.json",
+      "sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "evidence": "SHA65df candidate, CANDIDATE_NOT_RELEASED"
+    }
+  }
+}

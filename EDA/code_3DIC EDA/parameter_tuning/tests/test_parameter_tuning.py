@@ -18,7 +18,7 @@ import records as rec
 import tune_parameters as t
 import analysis as a
 
-BASE=s.load(ROOT.parent/'configs/default.json')
+BASE=s.load(s.resolve_config(ROOT.parent/'configs/default.json'))
 SETTINGS=s.load(ROOT/'experiment_config.json')
 
 class Experiments(unittest.TestCase):
@@ -328,10 +328,13 @@ class Experiments(unittest.TestCase):
         self.assertEqual(self.execute('--resume'),2);self.assertEqual(self.calls,[])
 
     def test_current_report_schema_from_real_history_read_only(self):
-        file=ROOT.parent/'outputs/runs/open_3d_case001/v3/official_latest/evaluation_report.json'
+        file=ROOT.parent/'outputs/reports/case001_history.json'
         if not file.is_file():
             self.skipTest('Optional local historical report is not present')
-        before=s.sha256(file);raw=s.load(file);values=rec.official_metrics(raw)
+        before=s.sha256(file)
+        record=s.load(file)['records']['gen_20261030_stage_a_linux_v2']
+        raw=record['official_reports']['official_latest/evaluation_report.json']
+        values=rec.official_metrics(raw)
         self.assertEqual(values['wirelength_score'],raw['score']['wirelength_score'])
         self.assertEqual(values['official_overflow'],raw['congestion']['total_overflow'])
         self.assertEqual(values['pearson'],raw['thermal_tsv']['correlation_above_ambient'])

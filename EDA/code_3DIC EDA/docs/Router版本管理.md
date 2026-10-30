@@ -8,7 +8,8 @@
 |---|---|---|---|---|
 | V1 | `build/router_v1` | `build/router_baseline` | `024d648dae3fe9051e336b8928502de09bf0654b` | 性能优化前的独立 Router：Prim MST、A*、唯一 TSV、热感知、拥塞重布与 Guide 验证 |
 | V2 | `build/router_v2` | `build/router_optimized` | `a0f8e717ebbeca32ef999c8caf398fec46ba41c2`（version2） | 有界 A* 状态/几何缓存、TSV 热图与候选复用、容量/临时对象优化、增量重布备份和回滚 |
-| V3 Final | 唯一入口 `build/router_v3_final`；登记须另行核验 | 旧候选保留作历史证据 | 本轮基点 `410a512`，新修改待用户提交 | 固定配置、V2 安全重布与 Guide 质量保护；发布结果见主目录第 13 章 |
+| V3.1 | `build/router_v3_1` | 旧 guarded 研究构建同哈希 | `452d2a1`，独立重建核实 | Steiner 拓扑、多目标搜索、协商重布、全局 TSV；研究基线 |
+| V3.2 | `build/router_v3_2` | 构建回执和 source ZIP | 回执中记录源码哈希 | 热点多 Net 联合优化；未发布候选，case001 拥塞退步 |
 
 V3 的实现、候选 SHA256、对照数据及局限见主目录 [算法版本迭代说明](../../../算法版本迭代说明.md)。登记 JSON 中的 V3 状态仍描述正式版本；本轮没有手改登记或覆盖 V1/V2。
 
@@ -69,7 +70,7 @@ python scripts/manage_router_versions.py --verify
   "router_binary": "build/router_v2",
   "router_sha256": "实际文件哈希",
   "router_version_status": "MATCHED",
-  "config_path": "configs/default.json",
+  "config_path": "configs/v2.json",
   "config_overrides": {"time_limit": 600.0},
   "effective_time_limit_seconds": 600.0
 }
@@ -85,38 +86,31 @@ python scripts/manage_router_versions.py --verify
 
 ```powershell
 Set-Location -LiteralPath 'D:\我\大学\program\3DIC EDA\EDA\code_3DIC EDA'
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v1 --label case001_v1_default01 --config configs/default.json --time-limit 600
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v2 --label case001_v2_default01 --config configs/default.json --time-limit 600
+python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v1 --label v1 --config configs/v1.json --time-limit 600
+python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v2 --label v2 --config configs/v2.json --time-limit 600
 ```
 
 不加 `--router` 的 WSL 命令仍执行根目录 `router`，不会自动替换成最新版本。评分器/UI 仍读取相同 Guide、结果与原有清单字段。参数实验脚本接口保持兼容，不修改旧计划/结果；如果旧批次冻结了 `run_case.py` 哈希，本次新增记录功能会触发其原有版本保护，应使用新 Experiment ID，或在原工具环境续跑，不篡改旧指纹。
 
-## 6. V3 Final 构建与后续版本
+## 6. 数字配置与历史报告
 
-日常 V3 只使用 `build/router_v3_final + configs/v3_final.json`。旧 V3 配置原样归档到 `configs/archive/`，旧候选仍保留原路径；`run_case.py` 可解析缺失的旧 V3 配置路径到归档文件，既存运行清单不改写。
+| Router | Config | 新正式运行 Label |
+|---|---|---|
+| `router_v1` | `configs/v1.json` | `v1` |
+| `router_v2` | `configs/v2.json` | `v2` |
+| `router_v3_1` | `configs/v3_1.json` | `v3_1` |
+| `router_v3_2` | `configs/v3_2.json` | `v3_2` |
 
-`validate_v3_final.py` 在临时目录以 `-DGR_V3_FINAL` 编译当前源码，执行核心及工作流测试，再以同一配置实际比较 V2/Final 的 toy、sample001、case001。只有全部官方 PASS、各分项无退步、case001 线长或 Overflow 严格改善，`--apply` 才独占发布唯一 Final 文件。失败保留报告，不发布或留下永久候选；已存在的 Final 不自动覆盖。
+V1 配置保留历史 default 原字节，V2 配置保留 default2 原字节，与保留的同参数对照一致；V2/V3.1/V3.2 配置完全相同。历史 default、default2、baseline、debug、final 均位于 `configs/archive/`。[config_aliases.json](config_aliases.json) 逐项固定兼容别名的 SHA256，解析时不替换成不同参数。
 
-```powershell
-python scripts/validate_v3_final.py --experiment final_check_01 --apply
-```
-
-实验 ID 必须未占用；此命令不运行 case003/005。CMake 另提供 `router_v3_final` 目标，但自行构建不代替质量验证。原 `build.sh` 不带 Final 构建标志，仍覆盖根目录研究 Router，不用于发布 Final。
-
-通过本地发布后，仍须由用户保存对应 Git 源码提交，再进行正式登记。不要对未提交的源码声称已完成版本注册：
-
-```powershell
-$sourceCommit = (git rev-parse HEAD).Trim()
-python scripts/manage_router_versions.py --register v3 --final-entry --source build/router_v3_final --git-commit $sourceCommit --description 'V3 Final：固定配置与 Guide 质量保护'
-python scripts/manage_router_versions.py --verify
-```
-
-`--final-entry` 仅用于 V3：独立提取声明提交的三个生产编译单元，以相同编译选项和 `-DGR_V3_FINAL` 重建，比对 SHA256、验证 `--help`；已有的同一 Final 只核验，不复制覆盖。登记记录 `build_variant=v3_final`，以后 `--verify --rebuild` 复用相同标志。不更改当前工作区、不执行 Git commit/push、不启动布线。未提交源码、不同编译器/选项或不能精确重建时拒绝登记，保持 UNKNOWN。版本标签已存在、文件冲突或登记副本不一致时停止，不覆盖历史版本。
-
-本地验证发布与正式登记是两个步骤。发布后可以运行下列命令；未登记时 UNKNOWN 是正确状态，不表示文件名已经证明版本身份：
+V3.1 是研究基线；V3.2 仍为 CANDIDATE_NOT_RELEASED。旧 Final 二进制通过 [router_artifacts.json](router_artifacts.json) 追溯归档位置，不改名冒充 V3.1。`validate_v3_final.py` 现在只读取历史指标并提供纯数据质量门槛；旧构建/发布流程已退役，拒绝 `--apply`。
 
 ```powershell
-python scripts/run_case.py --case open_3d_case001 --backend wsl --router build/router_v3_final --label case001_final_study01 --config configs/v3_final.json --time-limit 600
+python scripts/research_v3.py --history-only
+python scripts/compare_router_v3.py --history-only
+python scripts/validate_v3_final.py --history-only
+python scripts/summarize.py --history-only
+python scripts/cleanup_outputs.py --case001-prune --dry-run
 ```
 
-后续 V4/V5 仍使用原有显式版本登记流程；本轮不增加其他永久 V3 配置和候选。具体测试、SHA256、性能及发布判定见主目录 [算法版本迭代说明第 13 章](../../../算法版本迭代说明.md#version-13)。
+以上命令不启动 Router、评分器或编译。case001 代表结果的原 Label 见 [case001_history.json](../outputs/reports/case001_history.json)，另保留两份唯一证据例外及全部调参实验。报告中已删除的运行路径改为 `history://case001/...` 来源标识，不能作为文件读取。缺失历史运行不会自动重建；已存在的 Label 不得覆盖或自动重试。真实分数、负收益和发布判断见主目录算法文档。

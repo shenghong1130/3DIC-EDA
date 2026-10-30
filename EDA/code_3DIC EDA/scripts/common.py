@@ -26,12 +26,19 @@ def safe_label(value):
     return value
 
 def resolve_config(path):
-    """Resolve an archived V3 config without rewriting historical run records."""
+    """Resolve explicit, checksum-pinned aliases; never substitute parameters."""
     path=Path(path).resolve()
     if path.is_file():return path
-    if path.parent==(PROJECT/'configs').resolve() and path.name.startswith('v3_') and path.name!='v3_final.json':
-        archived=path.parent/'archive'/path.name
-        if archived.is_file():return archived
+    try:
+        relative=path.relative_to(PROJECT.resolve()).as_posix()
+        row=json.loads((PROJECT/'docs/config_aliases.json').read_text(encoding='utf8'))['aliases'].get(relative)
+        if not row:return path
+        target=(PROJECT/row['path']).resolve()
+        if not target.is_relative_to((PROJECT/'configs/archive').resolve()) or not target.is_file() or sha256(target)!=row['sha256']:
+            raise ValueError('Archived Config identity mismatch: '+relative)
+        return target
+    except (FileNotFoundError,KeyError,ValueError) as e:
+        if isinstance(e,ValueError) and 'identity mismatch' in str(e):raise
     return path
 
 def resolve_router(path):
