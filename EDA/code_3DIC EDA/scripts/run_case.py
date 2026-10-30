@@ -17,6 +17,7 @@ def main():
     p.add_argument('--progress-every',type=int,default=1000);p.add_argument('--monitor-interval',type=float,default=5)
     p.add_argument('--heartbeat-interval',type=float,default=10);p.add_argument('--stall-after',type=float,default=30)
     p.add_argument('--no-monitor',action='store_true',help='Disable new monitoring for an explicit overhead comparison')
+    p.add_argument('--comparison',action='store_true',help='Explicit non-version comparison; allows a numeric Router with different config/label')
     a=p.parse_args()
     if a.list:print(json.dumps(catalog(),ensure_ascii=False,indent=2));return 0
     if a.progress_every<=0 or any(not math.isfinite(x) or x<=0 for x in [a.time_limit,a.monitor_interval,a.heartbeat_interval,a.stall_after]):p.error('Budgets and monitoring intervals must be finite and positive')
@@ -32,8 +33,15 @@ def main():
     if not output.is_relative_to(OUTPUTS.resolve()):p.error('Local helper outputs must be under project outputs/')
     if target.exists() or output.exists():p.error('Run/output already exists; use a new --label (partial logs are history too)')
     config=resolve_config(a.config);cfg=json.loads(config.read_text(encoding='utf8'))
-    exe=(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe')).resolve()
+    exe=resolve_router(a.router or (PROJECT/'router' if a.backend=='wsl' or os.name!='nt' else OUTPUTS/'router.exe'))
     binary_hash=optional_hash(exe);version=identify_router(binary_hash)
+    numeric=version['router_version'] if re.fullmatch(r'v[1-9][0-9]*_[1-9][0-9]*',version['router_version']) else None
+    named=re.fullmatch(r'router_(v[1-9][0-9]*_[1-9][0-9]*)',exe.name)
+    if named and not a.comparison and named.group(1)!=numeric:p.error('Numeric Router filename has no matching SHA256 identity; inspect the receipt or use --comparison for a non-version run')
+    if numeric and not a.comparison:
+        if config!=(PROJECT/'configs'/(numeric+'.json')).resolve() or a.label!=numeric:p.error('Version run requires matching Router/config/label '+numeric+'; use --comparison for an explicit non-version experiment')
+        receipt=(json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8')).get('candidates',{}).get(numeric) or json.loads((PROJECT/'build/router_versions.json').read_text(encoding='utf8'))['versions'].get(numeric,{}))
+        if receipt.get('config_sha256') and sha256(config)!=receipt['config_sha256']:p.error('Numeric version configuration hash changed')
     conv=linux_path if a.backend=='wsl' else lambda x:str(Path(x).resolve())
     args=[conv(exe),'--def',conv(paths[0]),'--lef',conv(paths[1]),'--thermal-report',conv(paths[2]),'--output',conv(output),'--metrics',conv(target/'result.json'),'--config',conv(config),'--time-limit',str(a.time_limit)]
     if a.trace:args+=['--trace',conv(target/'trace.jsonl')]
@@ -49,7 +57,8 @@ def main():
     result={'schema_version':1,'run_id':run_id,'case':case,'dataset':c.get('dataset','custom'),'label':a.label,'started_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'backend':a.backend,
             'inputs':dict(zip(['def','lef','thermal'],map(str,paths))),'input_sha256':dict(zip(['def','lef','thermal'],map(sha256,paths))),'config':cfg,'guide':str(output),'trace':str(target/'trace.jsonl') if a.trace else None,
             'peak_memory_bytes':None,'official_status':'NOT_EVALUATED','command':cmd,'router_sha256':binary_hash,
-            **version,'router_binary':display_path(exe),'config_path':display_path(config),
+            **version,'router_binary':display_path(exe),'config_path':display_path(config),'config_sha256':sha256(config),
+            'version_run_kind':'COMPARISON' if a.comparison else 'VERSION' if numeric else 'LEGACY_OR_UNREGISTERED',
             'config_overrides':{'time_limit':a.time_limit},'effective_time_limit_seconds':a.time_limit,
             'source_sha256':{str(f.relative_to(PROJECT)):sha256(f) for folder in ['src','include'] for f in (PROJECT/folder).glob('*') if f.is_file()},
             'status':'RUNNING','process_status':'RUNNING','returncode':None,'runtime_seconds':None,
@@ -61,6 +70,7 @@ def main():
     for key,value in [('Router Version',version['router_version'].upper()),('Router Binary',result['router_binary']),
                       ('Router SHA256',binary_hash or 'UNAVAILABLE'),('Version Status',version['router_version_status']),
                       ('Version Detail',version['router_version_reason']),('Config File',result['config_path']),
+                      ('Config SHA256',result['config_sha256']),('Run Kind',result['version_run_kind']),
                       ('Config Params',json.dumps(cfg,ensure_ascii=False,sort_keys=True)),
                       ('CLI Overrides',json.dumps(result['config_overrides'])),
                       ('Case',case),('Label',a.label),('Results',display_path(target))]:

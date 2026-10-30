@@ -7,7 +7,7 @@ or overwritten. Large Cases are deliberately not accepted by this command.
 """
 import argparse,csv,datetime,hashlib,json,subprocess,sys,time,os
 from pathlib import Path
-from common import PROJECT,OUTPUTS,sha256,safe_label,resolve_config
+from common import PROJECT,OUTPUTS,sha256,safe_label,resolve_config,resolve_router
 
 VARIANTS=[('v2','build/router_v2','default'),('legacy',None,'v3_legacy'),
           ('net_order',None,'v3_net_order'),('tree_aware',None,'v3_tree_aware'),
@@ -62,14 +62,15 @@ def main(argv=None):
     a=p.parse_args(argv);safe_label(a.experiment)
     backend='wsl' if os.name=='nt' else 'native'
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
-    candidate=a.candidate.resolve()
+    candidate=resolve_router(a.candidate)
     if not candidate.is_file():p.error('Candidate binary not found')
-    cases=a.case or ['toy','sample001','open_3d_case001']
+    cases=a.case or ['toy','sample001']
+    if 'open_3d_case001' in cases:p.error('Historical multi-variant case001 sweeps are disabled. Use one numeric Router/config/label with run_case.py.')
     # Always finish small correctness runs before case001.
     cases=sorted(set(cases),key=['toy','sample001','open_3d_case001'].index)
     base=read(config_file('v3_final' if a.suite=='final' else 'default'))
     variants=[('v2','build/router_v2','v3_final'),('v3',None,'v3_final')] if a.suite=='final' else SCOPED_VARIANTS if a.suite=='congestion_scoped' else CONGESTION_VARIANTS if a.suite=='congestion' else VARIANTS
-    release=PROJECT/'build/router_v3_final'
+    release=resolve_router(PROJECT/'build/router_v3_final')
     if a.suite=='final' and release.is_file() and sha256(release)!=sha256(candidate):
         variants.insert(1,('old_final','build/router_v3_final','v3_final'))
     for _,_,config in variants[1:]:
@@ -91,7 +92,7 @@ def main(argv=None):
             sequence+=1;label=safe_label(f'v3_{a.experiment}_{variant}')
             directory=OUTPUTS/'runs'/case/label
             if directory.exists():raise RuntimeError('Historical Label already exists: '+label)
-            executable=PROJECT/binary if binary else candidate;config_path=config_file(config)
+            executable=resolve_router(PROJECT/binary) if binary else candidate;config_path=config_file(config)
             cmd=[sys.executable,'-B',str(PROJECT/'scripts/run_case.py'),'--case',case,'--label',label,'--backend',backend,'--router',str(executable),'--config',str(config_path),'--time-limit',str(a.router_budget)]
             if case!='open_3d_case001':cmd+=['--trace']
             prefix=report/f'{sequence:02d}_{case}_{variant}'

@@ -6,8 +6,8 @@ directory, compares SHA256 and checks --help; no routing or Git writes occur.
 """
 import argparse,contextlib,datetime,hashlib,json,os,shutil,subprocess,tempfile
 from pathlib import Path
-from common import PROJECT,backend_command,linux_path,sha256
-from router_versions import REGISTRY,VERSION,METHOD,load_registry,verified_record,display_path
+from common import PROJECT,backend_command,linux_path,sha256,resolve_router
+from router_versions import REGISTRY,VERSION,METHOD,load_registry,verified_record,display_path,version_key
 
 MIRROR=PROJECT/'docs/router_versions.json'
 FLAGS=['-std=c++17','-O3','-DNDEBUG','-Wall','-Wextra','-I','include']
@@ -38,7 +38,7 @@ def help_check(path):
     if result.returncode or not all(k in result.stdout for k in required):raise ValueError('Binary does not expose the standard Router CLI: '+str(path))
     return result.stdout.decode('utf8',errors='replace')
 
-def rebuild(commit,source,final=False):
+def rebuild(commit,source,final=False,batch=False):
     values=git_sources(commit);hashes=source_hashes(values)
     # TemporaryDirectory owns only its newly created child of build/. The
     # workspace's source files, old binaries and results are never moved.
@@ -49,7 +49,7 @@ def rebuild(commit,source,final=False):
         for relative,data in values.items():
             f=temp/relative;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(data)
         (temp/'build').mkdir();candidate=temp/'build/candidate'
-        cmd=['g++',*FLAGS,*(['-DGR_V3_FINAL'] if final else []),*SOURCES,'-o','build/candidate']
+        cmd=['g++',*FLAGS,*(['-DGR_V3_FINAL'] if final or batch else []),*(['-DGR_V3_2'] if batch else []),*SOURCES,'-o','build/candidate']
         backend='wsl' if os.name=='nt' else 'native'
         version=subprocess.run(backend_command(['g++','--version'],backend),stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,timeout=20).stdout.decode('utf8')
         target=subprocess.run(backend_command(['g++','-dumpmachine'],backend),stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,timeout=20).stdout.decode().strip()
@@ -90,20 +90,25 @@ def registry_lock():
     try:yield
     finally:lock.unlink()
 
-def register(version,source,ref,description,final=False):
-    if not VERSION.fullmatch(version):raise ValueError('Version must be v1, v2, v3, ...')
+def register(version,source,ref,description,final=False,architecture=False,batch=False):
+    architecture=architecture or batch
+    if not VERSION.fullmatch(version):raise ValueError('Version must be v1, v2, v3_1, v3_2, ...')
+    if architecture and not version.startswith('v3_'):raise ValueError('V3 architecture requires a numeric v3_N version')
     if final and version!='v3':raise ValueError('Final entry is only valid for v3')
-    source=source.resolve();dest=PROJECT/'build'/('router_v3_final' if final else 'router_'+version)
+    source=resolve_router(source);dest=PROJECT/'build'/('router_v3_final' if final else 'router_'+version)
     with registry_lock():
         data=load_registry() if REGISTRY.exists() else {'schema_version':1,'versions':{}}
         if MIRROR.exists() and json.loads(MIRROR.read_text(encoding='utf8'))!=data:raise ValueError('Local/tracked registries disagree; inspect them before registering')
-        if version in data['versions'] or dest.is_symlink() or (dest.exists() and not (final and source==dest.resolve())):raise ValueError('Version/file already exists; never overwrite: '+version)
+        if version in data['versions'] or dest.is_symlink() or (dest.exists() and not ((final or architecture) and source==dest.resolve())):raise ValueError('Version/file already exists; never overwrite: '+version)
         if not source.is_file() or not elf(source):raise ValueError('Registration requires an existing Linux ELF production Router')
         digest=sha256(source);commit=commit_id(ref);hashes=source_hashes(git_sources(commit))
+        for name,candidate in data.get('candidates',{}).items():
+            if name!=version and digest==candidate.get('sha256'):raise ValueError('This binary is already identified as candidate '+name+'; do not create an alias version')
+            if name==version and digest!=candidate.get('sha256'):raise ValueError('Candidate bytes changed; never reuse its immutable version identity')
         for name,record in data['versions'].items():
             if digest==record.get('sha256') or hashes==record.get('verification',{}).get('source_sha256'):
                 raise ValueError('This binary/source is already registered as '+name+'; do not relabel it as '+version)
-        proof=rebuild(commit,source,final=True) if final else rebuild(commit,source)
+        proof=rebuild(commit,source,final=True,batch=True) if batch else rebuild(commit,source,final=True) if final or architecture else rebuild(commit,source)
         entry={'path':dest.relative_to(PROJECT).as_posix(),'source':display_path(source),'git_commit':commit,
                'sha256':digest,'description':description,'verified':True,**proof}
         # Exclusive destination creation, even if another writer raced the lock.
@@ -111,8 +116,14 @@ def register(version,source,ref,description,final=False):
             with source.open('rb') as src,dest.open('xb') as target:shutil.copyfileobj(src,target)
             shutil.copymode(source,dest)
         if final:entry['build_variant']='v3_final'
+        if architecture:entry.update(build_variant='v3_architecture',release_status='VERIFIED_RESEARCH_BASELINE_NOT_DEFAULT',config_path='configs/'+version+'.json',label=version)
+        if batch:entry['build_variant']='v3_hotspot_batch'
+        previous_candidate=data.get('candidates',{}).get(version,{})
+        if previous_candidate.get('validation_report'):entry['validation_report']=previous_candidate['validation_report']
+        if previous_candidate.get('release_status','').startswith('NOT_RELEASED'):entry['release_status']=previous_candidate['release_status']
         if sha256(dest)!=digest:raise ValueError('Copied file changed; registry not published; inspect '+str(dest))
         help_check(dest);data['versions'][version]=entry
+        data.get('candidates',{}).pop(version,None)
         publish_json(REGISTRY,data);publish_json(MIRROR,data)
         print('Registered '+version.upper()+' '+entry['path']+' '+digest)
 
@@ -121,26 +132,32 @@ def main():
     mode.add_argument('--list',action='store_true');mode.add_argument('--verify',action='store_true');mode.add_argument('--register',metavar='vN')
     p.add_argument('--source',type=Path);p.add_argument('--git-commit');p.add_argument('--description');p.add_argument('--rebuild',action='store_true',help='With --verify, independently rebuild again')
     p.add_argument('--final-entry',action='store_true',help='Register the already validated build/router_v3_final with its dedicated build flags')
+    p.add_argument('--v3-architecture',action='store_true',help='Numeric version built with GR_V3_FINAL; independent committed-source rebuild required')
+    p.add_argument('--hotspot-batch',action='store_true',help='Numeric hotspot architecture: GR_V3_FINAL + GR_V3_2; never bypasses committed rebuild proof')
     a=p.parse_args()
     if a.register:
         if not all([a.source,a.git_commit,a.description]):p.error('--register requires --source, --git-commit and --description')
         if a.rebuild:p.error('--rebuild is for --verify')
-        register(a.register,a.source,a.git_commit,a.description,final=True) if a.final_entry else register(a.register,a.source,a.git_commit,a.description)
+        if a.final_entry and (a.v3_architecture or a.hotspot_batch):p.error('Choose one build variant')
+        register(a.register,a.source,a.git_commit,a.description,final=a.final_entry,architecture=a.v3_architecture,batch=a.hotspot_batch)
         return 0
-    if a.source or a.git_commit or a.description or a.final_entry or a.rebuild and not a.verify:p.error('Unexpected registration/verification option')
+    if a.source or a.git_commit or a.description or a.final_entry or a.v3_architecture or a.hotspot_batch or a.rebuild and not a.verify:p.error('Unexpected registration/verification option')
     try:data=load_registry()
     except (OSError,ValueError) as e:print('Registry unavailable: '+str(e));return 1
     valid=True
     if not MIRROR.exists() or json.loads(MIRROR.read_text(encoding='utf8'))!=data:print('Registry mirror differs or is missing');valid=False
     print('| Version | File | SHA256 | Verified | Detail |\n|---|---|---|---|---|')
-    versions=set(data['versions'])|{'v1','v2','v3'}
+    versions=set(data['versions'])|set(data.get('candidates',{}))|{'v1','v2'}
     versions.update(p.name.removeprefix('router_') for p in REGISTRY.parent.glob('router_v*') if VERSION.fullmatch(p.name.removeprefix('router_')))
     if any(not VERSION.fullmatch(v) for v in versions):raise ValueError('Invalid registry version key')
     counts={}
     for record in data['versions'].values():
         if isinstance(record,dict):counts[record.get('sha256')]=counts.get(record.get('sha256'),0)+1
-    for v in sorted(versions,key=lambda v:int(v[1:])):
+    for v in sorted(versions,key=version_key):
         if v not in data['versions']:
+            if v in data.get('candidates',{}):
+                record=data['candidates'][v];file=PROJECT/record['path'];match=file.is_file() and sha256(file)==record.get('sha256');valid=False
+                print('| '+v.upper()+' | '+record['path']+' | '+(sha256(file) if file.is_file() else 'N/A')+' | NO | '+('CANDIDATE_NOT_RELEASED; SHA256 matches receipt' if match else 'Candidate binary missing/hash mismatch')+' |');continue
             file=PROJECT/'build'/('router_v3_final' if v=='v3' and (PROJECT/'build/router_v3_final').exists() else 'router_'+v);detail='UNREGISTERED' if file.exists() else 'NOT_BUILT'
             actual=sha256(file) if file.is_file() else 'N/A'
             if file.exists():valid=False
@@ -150,7 +167,8 @@ def main():
         if ok and a.verify:
             help_check(PROJECT/record['path'])
             if a.rebuild:
-                if record.get('build_variant')=='v3_final':rebuild(record['git_commit'],PROJECT/record['path'],final=True)
+                if record.get('build_variant')=='v3_hotspot_batch':rebuild(record['git_commit'],PROJECT/record['path'],final=True,batch=True)
+                elif record.get('build_variant') in {'v3_final','v3_architecture'}:rebuild(record['git_commit'],PROJECT/record['path'],final=True)
                 else:rebuild(record['git_commit'],PROJECT/record['path'])
         valid=valid and ok
         print('| '+v.upper()+' | '+str(record.get('path'))+' | '+str(record.get('sha256'))+' | '+('YES' if ok else 'NO')+' | '+reason+' |')

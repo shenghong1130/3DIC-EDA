@@ -44,6 +44,9 @@ Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace
     cfg.v3_stage=3;
 #endif
 #endif
+#ifdef GR_V3_2
+    cfg.v3_batch=true;
+#endif
     if(cfg.v3_final){
         cfg.net_order_mode=0;cfg.tree_route_mode=0;cfg.reroute_priority_mode=0;
         cfg.congestion_cost_mode=0;cfg.congestion_scope_mode=0;cfg.reroute_policy_mode=0;
@@ -202,7 +205,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 if(!planar){bool via=l>=1&&l<=20&&ll>=1&&ll<=20?(ll>l?via_up_[l]:via_down_[l]):d.vias.count({std::min(l,ll),std::max(l,ll)});if(!via)return;}
                 if(planar&&cross&&(l==10||l==11))return; // Only access cells on interface layers.
                 auto&res=resource(v);
-                double penalty=cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,cross&&(ll==10||ll==11)?2:1):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
+                int demand=cross&&(ll==10||ll==11)?2:1;
+                if(cfg.v3_batch&&cross&&(ll==10||ll==11))demand=1+int(v3_forced_tsv_&&(ll==10?v:id(xx,yy,10))==v3_forced_tsv_);
+                double penalty=cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
                 double cost=cur.g+base+penalty;bool improved=false;
@@ -256,7 +261,7 @@ Route Router::route(const Net&n){
         if(n.pins.size()>16){++v3_fallbacks_["high_pin_count"];fallback=true;}
         else try{
             auto candidate=route_steiner(n);
-            if(cfg.v3_stage>=2&&n.pins.size()>=3){
+            if(cfg.v3_stage>=2&&n.pins.size()>=3&&!v3_batch_active_){
                 v3_route_deadline_=previous;v3_legacy_route_=true;
                 struct LegacyFlag {bool&v;~LegacyFlag(){v=false;}} flag{v3_legacy_route_};
                 auto reference=route(n);double cost=guide_grid_cost(candidate),old_cost=guide_grid_cost(reference);
@@ -651,7 +656,7 @@ void Router::run(){
     auto order=initial_order();
     for(size_t position=0;position<order.size();position++){size_t i=order[position];if(progress)progress->net(position+1,d.nets.size(),d.nets[i].name,0);check_time();try{routes[i]=route(d.nets[i]);occupy(routes[i],1);if(trace.out&&!trace.truncated)trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}catch(const RouterTimeout&){throw;}catch(const std::bad_alloc&){throw;}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
     int stagnant=0;long long best;{Progress::Scope overflow_log(progress,"OVERFLOW");best=overflow();}Json initial=Json::object();initial["iteration"]=0;initial["overflow_local"]=double(best);rounds.push_back(initial);trace.event("iteration_done",initial);
-    if(cfg.v3_stage>=2){for(int it=1;it<=cfg.iterations;it++){if(progress)progress->pass(d.nets.size(),it);negotiated_round(it);if(v3_rounds_.back().at("accepted_nets").number()==0)break;}}
+    if(cfg.v3_stage>=2){for(int it=1;it<=cfg.iterations;it++){if(progress)progress->pass(d.nets.size(),it);if(cfg.v3_batch){hotspot_round(it);if(v3_batch_rounds_.back().at("accepted_groups").number()==0)break;}else{negotiated_round(it);if(v3_rounds_.back().at("accepted_nets").number()==0)break;}}}
     else for(int it=1;it<=cfg.iterations&&best>0&&stagnant<cfg.stagnation;it++){
         if(progress)progress->pass(d.nets.size(),it);
         Progress::Scope iteration_log(progress,"OPTIMIZATION");
@@ -704,7 +709,7 @@ void Router::result_json(std::ostream&o)const{
     check_time();
     if(cfg.v3_stage)field("v3_algorithm",v3_metadata());
     field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
-    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
+    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_batch?"v3_2_hotspot_multi_net":cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_batch?"whole_group_negotiated_transaction":cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
     if(cfg.v3_final||cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.v3_stage?"steiner_and_multi_target_with_fallback":cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
     if(cfg.v3_final||cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["active_cost_model"]=cfg.v3_stage>=2?"normalized_marginal_negotiated":"legacy_research_cost_mode";modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
     field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
@@ -756,3 +761,4 @@ void Router::write_guide(const std::filesystem::path&p)const{
 }
 
 #include "router_v3_impl.hpp"
+#include "router_batch_impl.hpp"

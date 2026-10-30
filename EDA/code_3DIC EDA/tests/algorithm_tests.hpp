@@ -20,6 +20,10 @@ struct RouterTestAccess {
     static void expire_v3(Router&r){r.v3_route_deadline_=r.elapsed()/2;}
     static size_t thermal_size(const Router&r){return r.v3_thermal_rise_.size();}
     static bool thermal_ready(const Router&r){return r.v3_thermal_ready_;}
+    static bool group(Router&r,const std::vector<size_t>&g,double&wire,Json&detail){return r.reroute_group(g,1,wire,wire,detail);}
+    static void batch_toll(Router&r,Id v,double price){r.v3_batch_prices_[v]=price;}
+    static Json batch_quality(Router&r){auto q=r.batch_quality();Json j=Json::object();j["phi"]=q.phi;j["upper"]=q.upper;j["overflow"]=double(q.overflow);return j;}
+    static void hotspot(Router&r){r.hotspot_round(1);}
 };
 }
 double path_cost(Router&r,const std::vector<Id>&p){

@@ -2482,5 +2482,27 @@
         }
       ]
     }
-  ]
+  ],
+  "current_inventory": {
+    "git_head": "452d2a1d2d47754f09fa7f4ae32a833591a3dba2",
+    "historical_snapshot_preserved": true,
+    "history_redirects": "docs/router_artifacts.json",
+    "archive_root": "outputs/development/router_history",
+    "archived_binary_files": 22,
+    "deleted_identical_duplicate_files": 6,
+    "case001_historical_runs": 41,
+    "case001_deleted_runs": 0,
+    "reason_all_runs_retained": "All 41 labels occur in tracked documentation or experiment reports; unique official and negative evidence retained.",
+    "formal_version_filter": "router_vN or router_vN_M with validated build proof; benchmarks/profiles never registered",
+    "daily_entries": [
+      "build/router_v1",
+      "build/router_v2",
+      "build/router_v3_1",
+      "build/router_v3_2"
+    ],
+    "v3_2_status": "CANDIDATE_NOT_RELEASED_REGRESSION",
+    "v3_1_historical_case001_label": "gen_20261030_guarded_linux_new_v3",
+    "legacy_misleading_label_note": "case003_v3_1 uses SHA256 70ddc978... (V1); label is historical, not a version proof",
+    "v3_2_sha256": "65df8d64ca7de8a57e42c2318baf65ed68143ffe560d6642ff0d5f27020b40fe"
+  }
 }

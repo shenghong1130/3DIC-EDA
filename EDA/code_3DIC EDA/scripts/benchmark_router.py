@@ -4,9 +4,9 @@
 Each new --stage uses new files. Existing stages/binaries are not overwritten.
 Uses the same C++17 -O3 -DNDEBUG options as build.sh; GR_PROFILE is opt-in.
 """
-import argparse,json,subprocess,time
+import argparse,json,subprocess,time,tempfile
 from pathlib import Path
-from common import PROJECT,OUTPUTS,backend_command,linux_path,sha256,peak_rss,safe_label
+from common import PROJECT,OUTPUTS,backend_command,linux_path,sha256,peak_rss,safe_label,resolve_router
 
 REPORT=OUTPUTS/'reports/algorithm_optimization'
 FLAGS=['-std=c++17','-O3','-DNDEBUG','-Wall','-Wextra','-DGR_PROFILE','-I','include']
@@ -14,8 +14,8 @@ FLAGS=['-std=c++17','-O3','-DNDEBUG','-Wall','-Wextra','-DGR_PROFILE','-I','incl
 def save(path,value):
     with path.open('x',encoding='utf8') as f:json.dump(value,f,ensure_ascii=False,indent=2)
 
-def compile_binary(name,main,report):
-    binary=PROJECT/'build'/name
+def compile_binary(name,main,report,workspace):
+    binary=workspace/name
     if binary.exists():raise RuntimeError('Build output exists; choose a new stage: '+str(binary))
     cmd=['g++',*FLAGS,main,'src/parser.cpp','src/router.cpp','-o',str(binary.relative_to(PROJECT)).replace('\\','/')]
     with (report/(name+'.build.log')).open('xb') as log:
@@ -66,23 +66,31 @@ def main():
     if not 1<=a.repeats<=20:p.error('repeats must be between 1 and 20')
     report=REPORT/'stages'/a.stage;report.mkdir(parents=True,exist_ok=False)
     (PROJECT/'build').mkdir(exist_ok=True)
+    (OUTPUTS/'development').mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.benchmark_',dir=OUTPUTS/'development') as temp:
+        return execute(a,report,Path(temp))
+
+def execute(a,report,workspace):
     builds={};source_hashes=None
     if a.reuse_stage:
         safe_label(a.reuse_stage);previous=json.loads((REPORT/'stages'/a.reuse_stage/'builds.json').read_text(encoding='utf8'))
         builds=previous['builds'];source_hashes=previous['source_sha256']
         for record in builds.values():
-            if sha256(Path(record['path']))!=record['sha256']:raise RuntimeError('Reused binary hash changed')
+            actual=resolve_router(record['path'])
+            if not actual.is_file() or sha256(actual)!=record['sha256']:raise RuntimeError('Reused binary unavailable/hash changed; temporary builds require a fresh source build')
+            record['historical_path']=record['path'];record['path']=str(actual)
     else:
         for suffix,source in [('profile','src/main.cpp'),('bench','tests/router_benchmark.cpp'),('core','tests/core_tests.cpp')]:
-            builds[suffix]=compile_binary('router_'+a.stage+'_'+suffix,source,report)
+            builds[suffix]=compile_binary('router_'+a.stage+'_'+suffix,source,report,workspace)
     with (report/'core_test.log').open('xb') as log:
         subprocess.run(backend_command([linux_path(Path(builds['core']['path']))],'wsl',cwd=PROJECT),stdout=log,stderr=subprocess.STDOUT,check=True,timeout=60)
-    save(report/'builds.json',{'stage':a.stage,'reused_from':a.reuse_stage,'builds':builds,'source_sha256':source_hashes or {str(f.relative_to(PROJECT)):sha256(f) for folder in ['src','include'] for f in (PROJECT/folder).glob('*') if f.is_file()}})
+    save(report/'builds.json',{'stage':a.stage,'reused_from':a.reuse_stage,'new_builds_temporary':not bool(a.reuse_stage),'builds':builds,'source_sha256':source_hashes or {str(f.relative_to(PROJECT)):sha256(f) for folder in ['src','include'] for f in (PROJECT/folder).glob('*') if f.is_file()}})
     compare=None
     if a.compare_stage:
         safe_label(a.compare_stage);old=json.loads((REPORT/'stages'/a.compare_stage/'builds.json').read_text(encoding='utf8'))['builds']['bench']
-        if sha256(Path(old['path']))!=old['sha256']:raise RuntimeError('Comparison binary hash changed')
-        save(report/'comparison_binary.json',old);compare=old['path']
+        actual=resolve_router(old['path'])
+        if not actual.is_file() or sha256(actual)!=old['sha256']:raise RuntimeError('Comparison binary unavailable/hash changed')
+        save(report/'comparison_binary.json',old);compare=str(actual)
     if not a.build_only:measure(a.stage,builds['bench']['path'],report,a.repeats,compare)
     return 0
 if __name__=='__main__':raise SystemExit(main())

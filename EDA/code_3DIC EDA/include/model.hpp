@@ -31,6 +31,7 @@ struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time
     double reroute_pass_seconds=20,reroute_wire_growth=0.005;
     bool v3_final=false; // Selected by the formal build, not a JSON option.
     int v3_stage=0; // Internal ablation: 1 Steiner, 2 negotiated, 3 global TSV.
+    bool v3_batch=false; // Numeric V3.2 build; not a JSON parameter.
 };
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);

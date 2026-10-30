@@ -40,6 +40,17 @@ class IdentityTests(unittest.TestCase):
         self.data['versions']['v3']=record('v3',b'v2');self.save();r=self.identify(b'v2')
         self.assertEqual(r['router_version'],'UNKNOWN');self.assertEqual(r['router_version_status'],'AMBIGUOUS');self.assertEqual(r['router_version_matches'],['v2','v3'])
 
+    def test_numeric_versions_and_candidate_are_not_verified_releases(self):
+        self.data['versions']['v3_1']=record('v3_1',b'new baseline')
+        self.data['candidates']={'v3_2':{'path':'build/router_v3_2','config_path':'configs/v3_2.json','label':'v3_2','sha256':digest(b'batch'),'verified':False,'status':'CANDIDATE','source_sha256':{'src/router.cpp':digest(b'batch source')},'build_command':['g++','-DGR_V3_2']}}
+        self.save();self.assertEqual(self.identify(b'new baseline')['router_version'],'v3_1')
+        r=self.identify(b'batch');self.assertEqual(r['router_version'],'v3_2');self.assertEqual(r['router_version_status'],'CANDIDATE')
+        self.assertFalse(versions.verified_record('v3_2',self.data['candidates']['v3_2']))
+        self.assertEqual(self.identify(b'batch changed')['router_version'],'UNKNOWN')
+
+    def test_corrupt_candidate_table_preserves_unknown_fallback(self):
+        self.data['candidates']=[];self.save();self.assertEqual(self.identify(b'v1')['router_version_status'],'REGISTRY_INVALID')
+
 class RunMetadataTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='router version space ');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
@@ -49,7 +60,7 @@ class RunMetadataTests(unittest.TestCase):
         (self.root/'configs/default.json').write_text('{"wire":1,"time_limit":999}',encoding='utf8')
         self.registry=self.root/'build/router_versions.json';self.registry.write_text(json.dumps({'schema_version':1,'versions':{'v1':record('v1',b'v1'),'v2':record('v2',b'v2')}}))
         self.target=self.root/'outputs/runs/toy/new_label';self.launch_record=None
-    def invoke(self,router=None,code=1,status='FINISHED'):
+    def invoke(self,router=None,code=1,status='FINISHED',config=None,label='new_label',comparison=False):
         inputs={'toy':{'def':str(self.root/'inputs/case.def'),'lef':str(self.root/'inputs/case.lef'),'thermal':str(self.root/'inputs/thermal.json')}}
         def launch(*args,**kwargs):
             self.launch_record=json.loads((self.target/'run.json').read_text(encoding='utf8'))
@@ -57,7 +68,8 @@ class RunMetadataTests(unittest.TestCase):
             if code==0:
                 (self.target/'route.guide').write_text('mock Guide');(self.target/'result.json').write_text('{}')
             return {'returncode':code,'runtime_seconds':.001,'process_status':status}
-        args=['run_case.py','--case','toy','--backend','wsl','--label','new_label','--config',str(self.root/'configs/default.json'),'--time-limit','12','--no-monitor']
+        args=['run_case.py','--case','toy','--backend','wsl','--label',label,'--config',str(config or self.root/'configs/default.json'),'--time-limit','12','--no-monitor']
+        if comparison:args+=['--comparison']
         if router is not None:args+=['--router',str(router)]
         out=io.StringIO()
         with patch.object(run_case,'PROJECT',self.root),patch.object(run_case,'OUTPUTS',self.root/'outputs'),patch.object(run_case,'catalog',return_value=inputs),patch.object(run_case,'run_dir',return_value=self.target),patch.object(run_case,'timed_process',side_effect=launch),patch.object(versions,'PROJECT',self.root),patch.object(versions,'REGISTRY',self.registry),patch.object(sys,'argv',args),contextlib.redirect_stdout(out):
@@ -92,6 +104,19 @@ class RunMetadataTests(unittest.TestCase):
         data=json.loads(self.registry.read_text());data['versions']['v3']=record('v3',b'v1');self.registry.write_text(json.dumps(data))
         _,r,text=self.invoke();self.assertEqual(r['router_version'],'UNKNOWN');self.assertEqual(r['router_version_status'],'AMBIGUOUS')
         self.assertEqual(r['router_version_matches'],['v1','v3']);self.assertIn('Ambiguous SHA256',text)
+
+    def test_numeric_router_requires_matching_config_and_label(self):
+        data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))
+        exe=self.root/'build/router_v3_1';exe.write_bytes(b'numeric');config=self.root/'configs/v3_1.json';config.write_text('{"wire":1}')
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):self.invoke(exe)
+        self.assertFalse(self.target.exists())
+        self.target=self.root/'outputs/runs/toy/v3_1'
+        _,r,_=self.invoke(exe,config=config,label='v3_1');self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_sha256'],digest(config.read_bytes()))
+
+    def test_numeric_mismatch_is_only_an_explicit_comparison(self):
+        data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))
+        exe=self.root/'build/router_v3_1';exe.write_bytes(b'numeric')
+        _,r,_=self.invoke(exe,comparison=True);self.assertEqual(r['version_run_kind'],'COMPARISON')
 
 class RegistrationSafetyTests(unittest.TestCase):
     def setUp(self):

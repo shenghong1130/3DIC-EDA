@@ -106,7 +106,8 @@ int Router::v3_fixed(Id v){
 double Router::v3_penalty(Id v,int demand){
     const auto&r=resource(v);double cap=std::max(1,r.capacity),before=double(r.usage)+v3_fixed(v),after=before+demand;
     double a=std::max(0.0,before-r.capacity)/cap,b=std::max(0.0,after-r.capacity)/cap;
-    return cfg.congestion*(v3_present_*(b*b-a*a)+0.05*std::pow(std::min(1.0,after/cap),4))+cfg.history*r.history;
+    double toll=0;if(v3_batch_active_){auto found=v3_batch_prices_.find(v);if(found!=v3_batch_prices_.end())toll=found->second;}
+    return cfg.congestion*(v3_present_*(b*b-a*a)+0.05*std::pow(std::min(1.0,after/cap),4))+cfg.history*r.history+toll;
 }
 double Router::v3_marginal(const Route&r,int uncertainty){
     double value=0;int tx=0,ty=0,tl=0;if(r.cross)decode(r.tsv,tx,ty,tl);Id upper=r.cross?id(tx,ty,11):0;
@@ -269,11 +270,12 @@ void Router::optimize_tsv_global(){
     }catch(...){for(auto it=saved.rbegin();it!=saved.rend();++it)restore(*it);throw;}
 }
 Json Router::v3_metadata()const{
-    Json out=Json::object();out["generation"]="steiner_negotiated_tsv_research";out["stage"]=cfg.v3_stage;
+    Json out=Json::object();out["generation"]=cfg.v3_batch?"v3_2_hotspot_multi_net":"steiner_negotiated_tsv_research";out["stage"]=cfg.v3_stage;
+    if(cfg.v3_batch){Json batches=Json::array();for(const auto&row:v3_batch_rounds_)batches.push(row);out["hotspot_batches"]=batches;out["batch_quality_scope"]="whole materialized resource state; relative-wire proxy, normalized projected overflow, fixed TSV; not an official score";}
     auto count=[&](const char*key){auto it=v3_counts_.find(key);return it==v3_counts_.end()?0LL:it->second;};
     out["topology"]=count("steiner_topologies_proposed")?"bounded_hanan_steiner_with_terminal_mst_fallback":"terminal_topology_no_steiner_point";
     out["path_search"]=count("multi_target_searches")?"direct_astar_and_exact_l1_kdtree_multi_target":"direct_terminal_astar";
-    out["congestion"]=count("negotiated_rounds")?"negotiated_projected_fixed_approximation":cfg.v3_stage>=2?"no_negotiated_round_executed":"legacy_congestion";
+    out["congestion"]=count("hotspot_rounds")?"hotspot_multi_net_negotiated":count("negotiated_rounds")?"negotiated_projected_fixed_approximation":cfg.v3_stage>=2?"no_negotiated_round_executed":"legacy_congestion";
     out["tsv"]=count("global_tsv_passes")?"global_density_local_search":"local_tsv";out["official_metrics"]=false;
     Json counts=Json::object();for(auto[k,v]:v3_counts_)counts[k]=double(v);out["counters"]=counts;
     Json fallback=Json::object();for(auto[k,v]:v3_fallbacks_)fallback[k]=double(v);out["fallback_reasons"]=fallback;

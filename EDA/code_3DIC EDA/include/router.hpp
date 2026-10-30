@@ -88,6 +88,13 @@ private:
     Route route_steiner(const Net&);
     Json v3_metadata()const;
     void negotiated_round(int);
+    void hotspot_round(int);
+    struct BatchQuality {double phi=0,upper=0;long long overflow=0;size_t hotspots=0;};
+    BatchQuality batch_quality();
+    bool reroute_group(const std::vector<size_t>&,int,double&,double,Json&);
+    bool v3_batch_active_=false;
+    std::unordered_map<Id,double> v3_batch_prices_;
+    std::vector<Json> v3_batch_rounds_;
     void optimize_tsv_global();
     void build_v3_thermal(const Json&);
     size_t v3_thermal_cell(Id)const;

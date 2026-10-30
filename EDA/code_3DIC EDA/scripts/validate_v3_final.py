@@ -49,6 +49,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--experiment',required=True)
     p.add_argument('--apply',action='store_true');p.add_argument('--router-budget',type=int,default=180);p.add_argument('--evaluation-budget',type=int,default=180)
     a=p.parse_args();safe_label(a.experiment)
+    if a.apply:p.error('Legacy Final publication is retired. Numeric versions require a committed-source identity and a reviewed release decision.')
     if not 1<=a.router_budget<=900 or not 1<=a.evaluation_budget<=900:p.error('Budgets must be 1..900 seconds')
     report=OUTPUTS/'reports/v3_final'/a.experiment;report.mkdir(parents=True,exist_ok=True)
     if (report/'comparisons').exists() or (report/'validated_build.json').exists():p.error('Experiment already exists; use a new ID')

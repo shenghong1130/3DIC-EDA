@@ -16,6 +16,7 @@ from support import (HERE, PROJECT, TuningError, load, atomic, immutable, locked
     safe_label, sha256, utc, validate_state)
 from records import (read_optional, run_errors, artifact_errors, artifacts,
     official_state, collect)
+from common import resolve_router
 
 TERMINAL = {'COMPLETED','ROUTER_FAILED','EVALUATION_FAILED','INTERRUPTED','BLOCKED'}
 RETRYABLE = TERMINAL - {'COMPLETED'}
@@ -56,7 +57,7 @@ def prepare(args, report):
                 ('suite',args.suite),('router_timeout',args.router_timeout),('evaluation_timeout',args.evaluation_timeout)]:
             if value is not None and value != plan[key]:
                 raise TuningError('Frozen plan differs at '+key+'; use a new --experiment')
-        if args.router is not None and str(args.router.resolve()) != plan['router_path']:
+        if args.router is not None and resolve_router(args.router) != resolve_router(plan['router_path']):
             raise TuningError('Frozen Router path differs; use a new experiment')
         if str(args.plan_config.resolve()) != plan['plan_config_path']:
             raise TuningError('Different plan-config path; use the original or a new experiment')
@@ -79,7 +80,7 @@ def prepare(args, report):
         raise TuningError('Windows native official evaluation is unsupported; use --backend wsl')
     baseline = load(PROJECT/'configs/default.json')
     rows = variants(baseline, settings, suite)
-    router = (args.router or (PROJECT/'router' if backend == 'wsl' or os.name != 'nt' else PROJECT/'outputs/router.exe')).resolve()
+    router = resolve_router(args.router or (PROJECT/'router' if backend == 'wsl' or os.name != 'nt' else PROJECT/'outputs/router.exe'))
     rt = args.router_timeout if args.router_timeout is not None else settings['router_timeout']
     et = args.evaluation_timeout if args.evaluation_timeout is not None else settings['evaluation_timeout']
     monitor = settings['monitoring']

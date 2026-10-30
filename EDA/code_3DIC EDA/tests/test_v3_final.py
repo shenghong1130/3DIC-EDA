@@ -22,6 +22,17 @@ class ArchiveCompatibility(unittest.TestCase):
                 self.assertEqual(common.resolve_config(root/'configs/v3_final.json'),root/'configs/v3_final.json')
             self.assertEqual(file.read_bytes(),b'{"wire":1}')
 
+    def test_router_redirect_checks_hash_and_workspace_boundary(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'docs').mkdir();(root/'history').mkdir();file=root/'history/old';file.write_bytes(b'original')
+            registry=root/'docs/router_artifacts.json';registry.write_text(json.dumps({'artifacts':{'build/old':{'path':'history/old','sha256':hashlib.sha256(b'original').hexdigest()}}}))
+            with patch.object(common,'PROJECT',root):
+                self.assertEqual(common.resolve_router(root/'build/old'),file)
+                file.write_bytes(b'changed')
+                with self.assertRaisesRegex(ValueError,'identity mismatch'):common.resolve_router(root/'build/old')
+                self.assertEqual(common.resolve_router(root/'other/old'),root/'other/old')
+
 
 class FinalEntry(unittest.TestCase):
     def setUp(self):
@@ -45,6 +56,18 @@ class FinalEntry(unittest.TestCase):
         config.write_text('{"tree_route_mode":1}',encoding='utf8')
         self.assertNotEqual(f.run_router('--config',str(config)).returncode,0)
 
+
+class NumericHotspotEntry(unittest.TestCase):
+    def test_production_build_enters_hotspot_architecture(self):
+        exe=os.environ.get('V3_2_EXE')
+        if not exe:self.skipTest('Set V3_2_EXE to the temporary numeric build')
+        fixture=test_workflow.ParserIntegration(methodName='runTest');fixture.setUp();self.addCleanup(fixture.tearDown);fixture.exe=Path(exe)
+        config=fixture.dir/'v3_2.json';config.write_text(json.dumps({'wire':1,'via':1,'thermal':3}),encoding='utf8')
+        run=fixture.run_router('--config',str(config));self.assertEqual(run.returncode,0,run.stderr.decode(errors='replace'))
+        data=json.loads((fixture.dir/'result.json').read_text(encoding='utf8'))
+        self.assertEqual(data['v3_final']['strategy'],'v3_2_hotspot_multi_net')
+        self.assertEqual(data['v3_algorithm']['generation'],'v3_2_hotspot_multi_net')
+        self.assertIn('hotspot_batches',data['v3_algorithm'])
 
 class ReleaseGate(unittest.TestCase):
     def test_no_release_on_tradeoff_or_missing_official_report(self):

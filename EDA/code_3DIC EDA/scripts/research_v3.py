@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 import zipfile
-from common import PROJECT,OUTPUTS,backend_command,linux_path,safe_label,sha256,catalog
+from common import PROJECT,OUTPUTS,backend_command,linux_path,safe_label,sha256,catalog,resolve_router
 from manage_router_versions import git_sources
 
 
@@ -87,7 +87,7 @@ def main():
         refs=[('v2','a0f8e717ebbeca32ef999c8caf398fec46ba41c2',[]),('old_final','e30e0ac26f1e8542077bac24158586043bd2aec5',['-DGR_V3_FINAL'])]
         for name,ref,macros in refs:
             if not windows:
-                exe=PROJECT/'build'/('router_v2' if name=='v2' else 'router_v3_final');variants.append((name,exe));continue
+                exe=resolve_router(PROJECT/'build'/('router_v2' if name=='v2' else 'router_v3_final'));variants.append((name,exe));continue
             folder=work/name;folder.mkdir();values=git_sources(ref)
             for relative,data in values.items():path=folder/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
             exe=work/(name+suffix);command=compile_at(folder,exe,macros,name+'_build.log');variants.append((name,exe))
@@ -101,7 +101,9 @@ def main():
             for name in source_hashes:z.write(PROJECT/name,name.replace('\\','/'))
             z.writestr('manifest.json',json.dumps(manifest,indent=2))
         variants.append(('new_v3',exe))
-        for case in ['toy','sample001','open_3d_case001']:
+        # Historical sweeps remain available for small compatibility fixtures;
+        # full case001 is only launched once via its numeric version Label.
+        for case in ['toy','sample001']:
             for name,executable in variants:
                 if sha256(config)!=config_sha or any(sha256(PROJECT/k)!=v for k,v in source_hashes.items()):raise RuntimeError('Source/config changed during stage')
                 if reference and name!='new_v3':

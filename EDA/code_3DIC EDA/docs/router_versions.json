@@ -88,6 +88,232 @@
         "build_stderr": "w\u0000s\u0000l\u0000:\u0000 \u0000A\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000y\u0000 \u0000c\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000a\u0000t\u0000i\u0000o\u0000n\u0000 \u0000w\u0000a\u0000s\u0000 \u0000d\u0000e\u0000t\u0000e\u0000c\u0000t\u0000e\u0000d\u0000 \u0000b\u0000u\u0000t\u0000 \u0000n\u0000o\u0000t\u0000 \u0000m\u0000i\u0000r\u0000r\u0000o\u0000r\u0000e\u0000d\u0000 \u0000i\u0000n\u0000t\u0000o\u0000 \u0000W\u0000S\u0000L\u0000.\u0000 \u0000W\u0000S\u0000L\u0000 \u0000i\u0000n\u0000 \u0000N\u0000A\u0000T\u0000 \u0000m\u0000o\u0000d\u0000e\u0000 \u0000d\u0000o\u0000e\u0000s\u0000 \u0000n\u0000o\u0000t\u0000 \u0000s\u0000u\u0000p\u0000p\u0000o\u0000r\u0000t\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000i\u0000e\u0000s\u0000.\u0000\r\u0000\n\u0000",
         "verified_at": "2026-10-28T19:37:10.782026+00:00"
       }
+    },
+    "v3_1": {
+      "path": "build/router_v3_1",
+      "source": "C:\\Users\\SCSM11\\AppData\\Local\\Temp\\gr_numeric_baseline_eb0e4xtj\\baseline",
+      "git_commit": "452d2a1d2d47754f09fa7f4ae32a833591a3dba2",
+      "sha256": "e7f9ae4a6aeda89b940940f6a3dbc097aaedef636cd39fa8f10d04c31bedd62f",
+      "description": "Steiner/multi-target/negotiated/global TSV committed research baseline; historical guarded Linux results; not the old Final",
+      "verified": true,
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "compiler_target": "x86_64-linux-gnu",
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "-DGR_V3_FINAL",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/candidate"
+      ],
+      "verification": {
+        "method": "independent_git_rebuild_sha256_and_cli_help",
+        "rebuilt_sha256": "e7f9ae4a6aeda89b940940f6a3dbc097aaedef636cd39fa8f10d04c31bedd62f",
+        "source_sha256": {
+          "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+          "include/model.hpp": "368abbaf7a04655efacd7f69378ac899971ebeddebf12da395fdf38b78cc48bd",
+          "include/progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+          "include/router.hpp": "dd9e50ee28a18cf1ce91bb24fd2f91bb059062ec5dec21614fce46a3be64111e",
+          "include/router_v3_impl.hpp": "05752c8879d9b227b3458c7299d837e9b0414250999e914eda4c714fdd74581c",
+          "include/v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe",
+          "src/main.cpp": "533cfc062369b197413a2351012c945846107586c17116dfd6307b21f152edbe",
+          "src/parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+          "src/router.cpp": "55abdd0b0ebcee1fff9c8393d8dbade2474e81215567dbe3a396743ad8a1e44b"
+        },
+        "cli_help_returncode": 0,
+        "cli_required_options_verified": true,
+        "cli_help": "router --def input.def --lef input.lef --thermal-report thermal.json --output output.guide [--metrics result.json] [--trace trace.jsonl] [--config config.json] [--time-limit seconds] [--iterations N] [--progress-dir directory] [--progress-every 1000] [--monitor-interval 5] [--heartbeat-interval 10]\n",
+        "build_stdout": "",
+        "build_stderr": "w\u0000s\u0000l\u0000:\u0000 \u0000A\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000y\u0000 \u0000c\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000a\u0000t\u0000i\u0000o\u0000n\u0000 \u0000w\u0000a\u0000s\u0000 \u0000d\u0000e\u0000t\u0000e\u0000c\u0000t\u0000e\u0000d\u0000 \u0000b\u0000u\u0000t\u0000 \u0000n\u0000o\u0000t\u0000 \u0000m\u0000i\u0000r\u0000r\u0000o\u0000r\u0000e\u0000d\u0000 \u0000i\u0000n\u0000t\u0000o\u0000 \u0000W\u0000S\u0000L\u0000.\u0000 \u0000W\u0000S\u0000L\u0000 \u0000i\u0000n\u0000 \u0000N\u0000A\u0000T\u0000 \u0000m\u0000o\u0000d\u0000e\u0000 \u0000d\u0000o\u0000e\u0000s\u0000 \u0000n\u0000o\u0000t\u0000 \u0000s\u0000u\u0000p\u0000p\u0000o\u0000r\u0000t\u0000 \u0000l\u0000o\u0000c\u0000a\u0000l\u0000h\u0000o\u0000s\u0000t\u0000 \u0000p\u0000r\u0000o\u0000x\u0000i\u0000e\u0000s\u0000.\u0000\r\u0000\n\u0000",
+        "verified_at": "2026-10-29T21:08:49.960471+00:00"
+      },
+      "build_variant": "v3_architecture",
+      "release_status": "VERIFIED_RESEARCH_BASELINE_NOT_DEFAULT",
+      "config_path": "configs/v3_1.json",
+      "label": "v3_1",
+      "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "historical_runs": {
+        "toy": "gen_20261030_guarded_linux_new_v3",
+        "sample001": "gen_20261030_guarded_linux_new_v3",
+        "open_3d_case001": "gen_20261030_guarded_linux_new_v3"
+      }
+    }
+  },
+  "candidates": {
+    "v3_2": {
+      "version": "v3_2",
+      "path": "build/router_v3_2",
+      "config_path": "configs/v3_2.json",
+      "label": "v3_2",
+      "sha256": "65df8d64ca7de8a57e42c2318baf65ed68143ffe560d6642ff0d5f27020b40fe",
+      "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "git_head": "452d2a1d2d47754f09fa7f4ae32a833591a3dba2",
+      "verified": false,
+      "status": "CANDIDATE",
+      "release_status": "NOT_RELEASED_REGRESSION",
+      "source_sha256": {
+        "src\\main.cpp": "51889f4baacc65efb14f5965f1af662d510ef13e2f38cc0d7eba564a602b3280",
+        "src\\parser.cpp": "dcad79aff48139c6c31864cd04d3f3126927417228882811492be312d4c80ddf",
+        "src\\router.cpp": "d9fa6e7a2ca82c259b70be0e3879d0c9e57024aed2fc2ad18a7e6a6bbb69cc41",
+        "include\\json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+        "include\\model.hpp": "f3d587480200fa10b8e1cedc7184b370c7edcb91b979e25b8ed5b33d029f512c",
+        "include\\progress.hpp": "2e2c1cc7ec10bc919bb4baa648af6bd5a07c861cb5afc4836f94c688996d68e7",
+        "include\\router.hpp": "9bb1368e83e0e899a8e7b6aa00246aa418220618b2246e42df2f61810c3a664d",
+        "include\\router_batch_impl.hpp": "6eb1c1e548732700c6d43395051688a9ac7b86bf18bdcb0395b3f217069f4764",
+        "include\\router_v3_impl.hpp": "31b1075ecf6931ff3b5407d25923ac5b05b63edcac678e8d10b1fad9a5df4eb4",
+        "include\\v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+      },
+      "test_sha256": {
+        "tests\\algorithm_tests.hpp": "f8a19afe26460ba0727021a370776f97322f98dbe0b832b6896676fbd427f831",
+        "tests\\congestion_tests.hpp": "7a9528e503ed3a98e6802d97ed9f837a68a72ac26b571adb563106182798ed9d",
+        "tests\\core_tests.cpp": "666bdd8c065a5c060349b2b948d4fccffab59833757b0bd6e633f241fdc06436",
+        "tests\\guide_quality_tests.hpp": "e4233ee6aab18da975533a1841bd33a9f269e88e1af5493a3043fe54cc41133e",
+        "tests\\hotspot_tests.hpp": "fa8be02464e5781417a3804cc218b225df538dffd884e035bc0206e0df02f072",
+        "tests\\quality_audit.cpp": "7bc1d0d3b0d584b74a4f6d4c8a6c1c83c1ee58c87580faaa1f3d660edf3add0b",
+        "tests\\router_benchmark.cpp": "8edc801d0378f0e7e16171293d7cf1d63e5556e632d40ddeb5f620f6f1246749",
+        "tests\\test_cleanup_outputs.py": "ba959239802b7f5191f27f32b8006624dd7ed6dc5264221d8bfe63aa28d332b2",
+        "tests\\test_congestion_analysis.py": "a66fb5ad4dd41e871a9747dba2ff69b5eb5638320d251319d648a68c90f1fea6",
+        "tests\\test_diagnostics.py": "839adffa5140a2306f0f8b586a4b1f1663d2edd738ff41719f73e3d8c71fcc62",
+        "tests\\test_router_versions.py": "488a33d98f9151ff561fc08453e3927921646f7d9d59cb7e6eea555ecaeb4476",
+        "tests\\test_ui_store.py": "392ab82c4ee9b959609e04db9c74ed623469c452fec746130767b87d5288a900",
+        "tests\\test_v3_final.py": "0255feafaf59d7ea50e2e70bd8260c1a99fda2f85b81c7419fbe94f12fbd0db4",
+        "tests\\test_workflow.py": "cc5e0415669132108771af7bf80bc99ba3019308ebcf392e38d632e76b7facaa",
+        "tests\\tree_aware_tests.hpp": "d2dd8826fd1df238fab15a605e0dd0e7b586b08def947b5f6fae1e0e54e84604",
+        "tests\\v3_generation_tests.hpp": "035a057f258f385282636032e4427ebbfca179ec88e4c39aa31756a856eb0935"
+      },
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-DNDEBUG",
+        "-Wall",
+        "-Wextra",
+        "-I",
+        "include",
+        "-DGR_V3_FINAL",
+        "-DGR_V3_2",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "/mnt/d/我/大学/program/3DIC EDA/EDA/code_3DIC EDA/outputs/development/.v3_2_validate_1nndj6vn/router"
+      ],
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "source_state": "UNCOMMITTED_ALGORITHM; immutable source snapshot, not an independent Git rebuild",
+      "checks": [
+        {
+          "log": "validation_core_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_core.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_router_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_legacy_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "validation_old_architecture_build.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_workflow.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_router_versions.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_v3_final.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_ui_store.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_congestion_analysis.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "test_diagnostics.py.log",
+          "returncode": 0
+        },
+        {
+          "log": "toy_temporary.log",
+          "returncode": 0
+        },
+        {
+          "log": "sample001_temporary.log",
+          "returncode": 0
+        }
+      ],
+      "micro": [
+        {
+          "case": "toy",
+          "net_count": 203,
+          "metrics": {
+            "nets": 203,
+            "official_status": "NOT_EVALUATED",
+            "overflow_local": 1290,
+            "routed_nets": 203,
+            "runtime_seconds": 0.268593183,
+            "thermal_correlation_local": 0.0497479630890668,
+            "tsv_count": 3,
+            "via_count": 345,
+            "wirelength_dbu_local": 9212700
+          },
+          "trace_replay": {
+            "complete": true,
+            "events": 1357,
+            "strategies": []
+          },
+          "guide_sha256": "5bc6e517dfb15c6129730b4d88ecb13259a921312cb278e7e5ffe01dcc34105d",
+          "official_status": "NOT_EVALUATED",
+          "temporary_outputs": true
+        },
+        {
+          "case": "sample001",
+          "net_count": 203,
+          "metrics": {
+            "nets": 203,
+            "official_status": "NOT_EVALUATED",
+            "overflow_local": 3140,
+            "routed_nets": 203,
+            "runtime_seconds": 0.221146386,
+            "thermal_correlation_local": 0.00109406671048192,
+            "tsv_count": 3,
+            "via_count": 185,
+            "wirelength_dbu_local": 1710000
+          },
+          "trace_replay": {
+            "complete": true,
+            "events": 762,
+            "strategies": [
+              "bounded_hanan_steiner",
+              "mst_astar"
+            ]
+          },
+          "guide_sha256": "61bdaa0736b8118f16d0c47bcb4955af7739695cf9b930eaf5fc03559243113a",
+          "official_status": "NOT_EVALUATED",
+          "temporary_outputs": true
+        }
+      ],
+      "validation_report": "outputs/reports/v3_2/results.json"
     }
   }
 }

@@ -33,6 +33,20 @@ def resolve_config(path):
         archived=path.parent/'archive'/path.name
         if archived.is_file():return archived
     return path
+
+def resolve_router(path):
+    """Narrow, hash-checked redirects for archived historical build paths."""
+    path=Path(path).resolve()
+    if path.is_file():return path
+    try:
+        relative=path.relative_to(PROJECT.resolve()).as_posix()
+        records=json.loads((PROJECT/'docs/router_artifacts.json').read_text(encoding='utf8'))['artifacts']
+        row=records.get(relative)
+        if not row:return path
+        target=(PROJECT/row['path']).resolve()
+        if not target.is_relative_to(PROJECT.resolve()) or not target.is_file() or sha256(target)!=row['sha256']:raise ValueError('Archived Router identity mismatch: '+relative)
+        return target
+    except (FileNotFoundError,KeyError):return path
 def run_dir(case,label):return OUTPUTS/'runs'/safe_label(case)/safe_label(label)
 def save(path,value):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

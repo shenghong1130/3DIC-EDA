@@ -14,7 +14,7 @@ import uuid
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
 sys.path.insert(0, str(PROJECT / 'scripts'))
-from common import catalog, safe_label, sha256, linux_path, EDA
+from common import catalog, safe_label, sha256, linux_path, EDA, resolve_router
 
 class TuningError(RuntimeError):
     pass
@@ -157,7 +157,7 @@ def commands(plan, variant, label):
     monitor = plan['monitoring']
     run = common + [str(PROJECT/'scripts/run_case.py'), '--case', plan['case'],
         '--backend', plan['backend'], '--label', label, '--router', plan['router_path'],
-        '--config', variant['config_path'], '--time-limit', str(plan['router_timeout'])]
+        '--config', variant['config_path'], '--time-limit', str(plan['router_timeout']), '--comparison']
     for key in ['progress_every', 'monitor_interval', 'heartbeat_interval', 'stall_after']:
         run += ['--' + key.replace('_','-'), str(monitor[key])]
     evaluate = common + [str(PROJECT/'scripts/evaluate.py'), '--case', plan['case'],
@@ -205,9 +205,11 @@ def verify_files(plan, check_environment=False):
     problems = []
     for name, expected in plan['fingerprints']['files'].items():
         try:
-            if sha256(Path(name)) != expected:
+            file=Path(name)
+            if not file.is_file():file=resolve_router(file)
+            if sha256(file) != expected:
                 problems.append('Changed SHA256: ' + name)
-        except OSError:
+        except (OSError,ValueError):
             problems.append('Missing: ' + name)
     for row in plan['variants']:
         try:
