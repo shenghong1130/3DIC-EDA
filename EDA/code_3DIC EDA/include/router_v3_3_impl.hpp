@@ -42,10 +42,13 @@ void Router::calibrated_hotspot_round(int iteration){
     size_t visits=0;bool bounded=false;int mandatory_hits=0;
     for(size_t i=0;i<routes.size()&&!bounded;i++){
         if(i%64==0)check_time();
-        if(d.nets[i].pins.size()>32)continue;
+        if(!cfg.v3_geometry_bounded&&d.nets[i].pins.size()>32)continue;
         std::unordered_set<Id> mandatory;for(const auto&p:d.nets[i].pins)mandatory.insert(pin_node(p));
         if(routes[i].cross){int x,y,l;decode(routes[i].tsv,x,y,l);mandatory.insert(routes[i].tsv);mandatory.insert(id(x,y,11));}
-        for(Id v:routes[i].nodes){
+        std::vector<Id> occupied;
+        if(cfg.v3_geometry_bounded){occupied.reserve(routes[i].resource_demand.size());for(auto[v,count]:routes[i].resource_demand)if(count>0)occupied.push_back(v);}
+        else occupied.assign(routes[i].nodes.begin(),routes[i].nodes.end());
+        for(Id v:occupied){
             if(++visits>2000000){bounded=true;break;}
             auto it=owners.find(v);if(it==owners.end())continue;
             if(mandatory.count(v)){++mandatory_hits;continue;}
@@ -60,7 +63,7 @@ void Router::calibrated_hotspot_round(int iteration){
     try{
         for(auto[key,hot]:ranked){
             (void)key;check_time();if(groups>=48){stop="group_budget";break;}
-            std::vector<size_t> group;for(size_t i:owners.at(hot))if(attempts[i]<2&&routes[i].nodes.count(hot))group.push_back(i);
+            std::vector<size_t> group;for(size_t i:owners.at(hot))if(attempts[i]<2&&(routes[i].nodes.count(hot)||(cfg.v3_geometry_bounded&&std::any_of(routes[i].resource_demand.begin(),routes[i].resource_demand.end(),[&](auto p){return p.first==hot&&p.second>0;}))))group.push_back(i);
             if(group.empty())continue;
             std::sort(group.begin(),group.end(),[&](size_t a,size_t b){return routes[a].nodes.size()!=routes[b].nodes.size()?routes[a].nodes.size()<routes[b].nodes.size():a<b;});if(group.size()>4)group.resize(4);
             auto signature=group;std::sort(signature.begin(),signature.end());if(!seen.insert(signature).second)continue;

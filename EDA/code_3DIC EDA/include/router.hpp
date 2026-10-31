@@ -66,6 +66,11 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+    bool v35_access_active_=false;
+    Route route_v35_access(const Net&);
+    Route route_v35_local(const Net&,const Route&);
+    std::vector<Id> v35_warm_sites_;
+    void build_v35_model();
     bool v34_model_ready_=false;
     std::vector<unsigned char> v34_tsv_blocked_;
     std::vector<Id> v34_active_pin_cells_;

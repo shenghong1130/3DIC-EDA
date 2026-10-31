@@ -53,6 +53,9 @@ Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace
 #ifdef GR_V3_4
     cfg.v3_batch=true;cfg.v3_calibrated=true;cfg.v3_rules_20261029=true;
 #endif
+#ifdef GR_V3_5
+    cfg.v3_batch=true;cfg.v3_calibrated=true;cfg.v3_rules_20261029=true;cfg.v3_geometry_bounded=true;
+#endif
     if(cfg.v3_final){
         cfg.net_order_mode=0;cfg.tree_route_mode=0;cfg.reroute_priority_mode=0;
         cfg.congestion_cost_mode=0;cfg.congestion_scope_mode=0;cfg.reroute_policy_mode=0;
@@ -254,7 +257,7 @@ Id Router::select_tsv(const Net&n){
     // An overlapping M10/M11 Pin pair already implies a cross-Die Guide
     // overlap at a forbidden site. There is no explicit fixed-TSV exemption
     // in the announcement: report infeasibility rather than waive the rule.
-    if(cfg.v3_rules_20261029&&!shared.empty())throw std::runtime_error("No legal TSV: interface Pin overlap forces a forbidden Pin GCell: "+n.name);
+    if(cfg.v3_rules_20261029&&!cfg.v3_geometry_bounded&&!shared.empty())throw std::runtime_error("No legal TSV: interface Pin overlap forces a forbidden Pin GCell: "+n.name);
     if(!cfg.v3_rules_20261029&&!shared.empty())return id(shared[0].first,shared[0].second,10);
     if(cfg.v3_rules_20261029&&!v34_model_ready_)build_v34_model();
     // Heat is immutable inside run(). Outside it, callers may edit the public
@@ -287,6 +290,7 @@ Id Router::select_tsv(const Net&n){
     }return answer;
 }
 Route Router::route(const Net&n){
+    if(cfg.v3_geometry_bounded&&!v35_access_active_)return route_v35_access(n);
     std::vector<Id> previous_pin_cells;
     if(cfg.v3_rules_20261029){if(!v34_model_ready_)build_v34_model();auto cells=own_pin_cells(n);previous_pin_cells=std::move(v34_active_pin_cells_);v34_active_pin_cells_=std::move(cells);}
     struct PinContext {Router&r;std::vector<Id>&old;~PinContext(){if(r.cfg.v3_rules_20261029)r.v34_active_pin_cells_=std::move(old);}} pin_context{*this,previous_pin_cells};
@@ -534,13 +538,14 @@ void Router::prune_routes(){
                 tree.emplace_back(a,b);adjacency[a].push_back(b);adjacency[b].push_back(a);
             }
             std::vector<bool> mandatory(nodes.size(),false),active(nodes.size(),true);std::vector<size_t> degree(nodes.size());
-            for(const auto&p:d.nets[index].pins)mandatory[slots.at(pin_node(p))]=true;
+            if(cfg.v3_geometry_bounded&&!old.pin_access_nodes.empty()){for(Id v:old.pin_access_nodes)mandatory[slots.at(v)]=true;}
+            else for(const auto&p:d.nets[index].pins)mandatory[slots.at(pin_node(p))]=true;
             if(old.cross){int x,y,l;decode(old.tsv,x,y,l);mandatory[slots.at(old.tsv)]=true;mandatory[slots.at(id(x,y,11))]=true;}
             std::queue<size_t> leaves;for(size_t k=0;k<nodes.size();k++){degree[k]=adjacency[k].size();if(degree[k]<=1&&!mandatory[k])leaves.push(k);}
             while(!leaves.empty()){size_t a=leaves.front();leaves.pop();if(!active[a]||mandatory[a]||degree[a]>1)continue;active[a]=false;
                 for(size_t b:adjacency[a])if(active[b]){--degree[b];if(degree[b]<=1&&!mandatory[b])leaves.push(b);}
             }
-            Route candidate;candidate.cross=old.cross;candidate.tsv=old.tsv;
+            Route candidate;candidate.cross=old.cross;candidate.tsv=old.tsv;candidate.pin_access_nodes=old.pin_access_nodes;
             for(size_t k=0;k<nodes.size();k++)if(active[k])candidate.nodes.insert(nodes[k]);
             if(candidate.nodes.size()==old.nodes.size())continue;
             for(Id v:old.steiner_points)if(candidate.nodes.count(v))candidate.steiner_points.push_back(v);
@@ -575,7 +580,11 @@ void Router::validate(const Net&n,const Route&r)const{
     if(r.nodes.empty())throw std::runtime_error("Empty route: "+n.name);
     std::unordered_map<Id,std::vector<Id>> adj;for(auto&e:r.edges){adj[e.a].push_back(e.b);adj[e.b].push_back(e.a);int x,y,l,xx,yy,ll;decode(e.a,x,y,l);decode(e.b,xx,yy,ll);if(l==ll){if(std::abs(x-xx)+std::abs(y-yy)!=1)throw std::runtime_error("Nonadjacent planar edge");if((d.layers.at(l).direction=="HORIZONTAL"&&y!=yy)||(d.layers.at(l).direction=="VERTICAL"&&x!=xx))throw std::runtime_error("Nonpreferred direction");}else{if(x!=xx||y!=yy||std::abs(l-ll)!=1)throw std::runtime_error("Illegal via edge");if(std::min(l,ll)==10){if(!n.cross||e.a!=r.tsv)throw std::runtime_error("Unexpected TSV edge");}else if(!d.vias.count({std::min(l,ll),std::max(l,ll)}))throw std::runtime_error("Via absent in LEF");}}
     std::unordered_set<Id> visited;std::vector<Id> stack{*r.nodes.begin()};while(!stack.empty()){Id a=stack.back();stack.pop_back();if(!visited.insert(a).second)continue;for(Id b:adj[a])stack.push_back(b);}if(visited.size()!=r.nodes.size())throw std::runtime_error("Disconnected route: "+n.name);
-    for(auto&p:n.pins)if(!r.nodes.count(pin_node(p)))throw std::runtime_error("Uncovered pin: "+p.name);
+    for(size_t k=0;k<n.pins.size();k++){
+        const auto&p=n.pins[k];Id access=cfg.v3_geometry_bounded&&!r.pin_access_nodes.empty()?r.pin_access_nodes.at(k):pin_node(p);
+        if(!r.nodes.count(access))throw std::runtime_error("Uncovered pin: "+p.name);
+        if(cfg.v3_geometry_bounded){bool valid=false;for(auto rect:pin_geometry(p))geometry_cells(rect,[&](Id v,const Rect&){valid|=v==access;});if(!valid)throw std::runtime_error("Access outside real Pin geometry: "+p.name);}
+    }
     for(auto&g:r.guides){if(g.x1<d.die.x1||g.y1<d.die.y1||g.x2>d.die.x2||g.y2>d.die.y2)throw std::runtime_error("Guide outside die");if(!n.cross&&((g.layer<=10)!=(n.pins.front().layer<=10)))throw std::runtime_error("Inner net crossed die");}
     if(n.cross){int overlaps=0;for(Id a:r.nodes){int x,y,l;decode(a,x,y,l);if(l==10&&r.nodes.count(id(x,y,11)))overlaps++;}if(overlaps!=1)throw std::runtime_error("Nonunique TSV overlap: "+n.name);}
 }
@@ -777,7 +786,8 @@ Json Router::route_json(const Net&n,const Route&r)const{
     Json j=Json::object();j["net"]=n.name;j["cross_die"]=n.cross;j["nodes"]=numbers(std::vector<Id>(r.nodes.begin(),r.nodes.end()));Json edges=Json::array();int vias=0;
     for(auto&e:r.edges){Json v=Json::array();v.push(double(e.a));v.push(double(e.b));edges.push(v);int x,y,l,xx,yy,ll;decode(e.a,x,y,l);decode(e.b,xx,yy,ll);if(l!=ll&&std::min(l,ll)!=10)vias++;}j["edges"]=edges;
     Json gs=Json::array();for(auto&r:r.guides){Json g=numbers(std::vector<double>{r.x1,r.y1,r.x2,r.y2,double(r.layer)});gs.push(g);}j["guides"]=gs;
-    Json ps=Json::array();for(auto&p:n.pins){Json v=Json::object();v["name"]=p.name;v["x"]=p.x;v["y"]=p.y;v["layer"]=p.layer;v["node"]=double(pin_node(p));ps.push(v);}j["pins"]=ps;
+    Json ps=Json::array();for(size_t k=0;k<n.pins.size();k++){auto&p=n.pins[k];Json v=Json::object();v["name"]=p.name;v["x"]=p.x;v["y"]=p.y;v["layer"]=p.layer;v["node"]=double(pin_node(p));if(!r.pin_access_nodes.empty())v["access_node"]=double(r.pin_access_nodes.at(k));ps.push(v);}j["pins"]=ps;
+    if(!r.pin_access_nodes.empty())j["pin_access_nodes"]=numbers(r.pin_access_nodes);
     if(!r.steiner_points.empty())j["steiner_topology_nodes"]=numbers(r.steiner_points);
     j["wirelength_dbu_local"]=wirelength(r);j["via_count"]=vias;j["tsv_count"]=n.cross?1:0;j["tsv_node"]=n.cross?Json(double(r.tsv)):Json();j["status"]="ROUTED";return j;
 }
@@ -867,3 +877,4 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #include "router_batch_impl.hpp"
 #include "router_v3_3_impl.hpp"
 #include "router_v3_4_impl.hpp"
+#include "router_v3_5_impl.hpp"

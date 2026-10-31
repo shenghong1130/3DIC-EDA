@@ -1,0 +1,106 @@
+// REFERENCE_20261029: announcement-derived model, NEVER an official evaluator.
+#include "physical_resources.hpp"
+#include <iostream>
+#include <numeric>
+#include <iomanip>
+#include <unordered_set>
+#include <unordered_map>
+#include <cstdlib>
+#include <sys/resource.h>
+using namespace gr;
+namespace {
+struct StreamJson {
+    std::istream& in;
+    char peek(){in>>std::ws;int c=in.peek();if(c==EOF)throw std::runtime_error("Truncated Thermal JSON");return char(c);}
+    void take(char c){if(peek()!=c)throw std::runtime_error("Unexpected Thermal JSON token");in.get();}
+    std::string string(){take('"');std::string raw="\"";bool escape=false;char c;while(in.get(c)){raw+=c;if(c=='"'&&!escape)return Json::parse(raw).string();if(c=='\\'&&!escape)escape=true;else escape=false;if(raw.size()>1048576)throw std::runtime_error("Thermal string too large");}throw std::runtime_error("Unclosed Thermal string");}
+    double number(){in>>std::ws;std::string v;while(in.good()){char c=char(in.peek());if(std::string("-+0123456789.eE").find(c)==std::string::npos)break;v+=char(in.get());if(v.size()>128)throw std::runtime_error("Thermal numeric token too long");}return Json::parse(v).number();}
+    void skip(int depth=0){if(depth>64)throw std::runtime_error("Thermal nesting too deep");char c=peek();if(c=='"'){string();return;}if(c=='['||c=='{'){take(c);char end=c=='['?']':'}';if(peek()==end){take(end);return;}for(;;){if(c=='{'){string();take(':');}skip(depth+1);if(peek()==end){take(end);return;}take(',');}}else{std::string v;while(in.good()){char a=char(in.peek());if(a==','||a==']'||a=='}'||std::isspace((unsigned char)a))break;v+=char(in.get());if(v.size()>128)throw std::runtime_error("Thermal value too large");}Json::parse(v);}}
+};
+struct XY {double x,y;bool operator==(const XY&b)const{return x==b.x&&y==b.y;}};
+struct XYHash {size_t operator()(const XY&a)const{return std::hash<double>{}(a.x)^(std::hash<double>{}(a.y)<<1);}};
+struct Thermal {std::vector<double> xs,ys,heat;double ambient=25;size_t samples=0,unique=0;};
+Thermal thermal(const Design&d,const std::string&path,size_t max_xy){
+    Thermal t;auto axis=[&](char a,double lo,double hi){auto v=d.grid.at(a);std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());if(v.front()>lo)v.insert(v.begin(),lo);if(v.back()<hi)v.push_back(hi);return v;};t.xs=axis('X',d.die.x1,d.die.x2);t.ys=axis('Y',d.die.y1,d.die.y2);
+    size_t nx=t.xs.size()-1,ny=t.ys.size()-1;if(!nx||!ny||nx>10000000/ny)throw std::runtime_error("Thermal grid exceeds 10M cells");
+    std::ifstream in(path);if(!in)throw std::runtime_error("Cannot open Thermal JSON");StreamJson s{in};std::unordered_map<XY,std::pair<double,size_t>,XYHash> xy;bool got_nodes=false,got_ambient=false;
+    s.take('{');while(s.peek()!='}'){
+        auto key=s.string();s.take(':');if(key=="meta"){
+            s.take('{');while(s.peek()!='}'){auto k=s.string();s.take(':');if(k=="ambientTemp"){t.ambient=s.number();got_ambient=true;}else s.skip();if(s.peek()=='}')break;s.take(',');}s.take('}');
+        }else if(key=="nodes"){
+            if(got_nodes)throw std::runtime_error("Duplicate Thermal nodes");got_nodes=true;s.take('[');while(s.peek()!=']'){s.take('[');double x=s.number();s.take(',');double y=s.number();s.take(',');s.number();s.take(',');double value=s.number();s.take(']');XY k{std::round(x*1e9)/1e9,std::round(y*1e9)/1e9};auto it=xy.find(k);if(it==xy.end()){if(xy.size()>=max_xy)throw std::runtime_error("Thermal XY aggregation memory budget exceeded");it=xy.emplace(k,std::make_pair(0.0,0)).first;}it->second.first+=value;++it->second.second;++t.samples;if(s.peek()==']')break;s.take(',');}s.take(']');
+        }else s.skip();if(s.peek()=='}')break;s.take(',');
+    }s.take('}');in>>std::ws;if(in.peek()!=EOF||!got_nodes||!got_ambient||!t.samples)throw std::runtime_error("Incomplete/invalid Thermal JSON");
+    t.unique=xy.size();t.heat.assign(nx*ny,0);std::vector<unsigned> count(t.heat.size(),0);
+    for(auto&[k,v]:xy){double x=d.die.x1+k.x*d.dbu,y=d.die.y1+k.y*d.dbu;if(x<t.xs.front()||x>t.xs.back()||y<t.ys.front()||y>t.ys.back())continue;size_t index=size_t(PhysicalGrid::locate(t.ys,y))*nx+PhysicalGrid::locate(t.xs,x);t.heat[index]+=v.first/v.second;++count[index];}xy.clear();xy.rehash(0);
+    bool known=false;for(size_t i=0;i<t.heat.size();i++){if(count[i]){t.heat[i]/=count[i];known=true;}else t.heat[i]=std::numeric_limits<double>::quiet_NaN();}if(!known)throw std::runtime_error("No Thermal samples mapped to grid");
+    for(size_t y=0;y<ny;y++){double previous=std::numeric_limits<double>::quiet_NaN();for(size_t x=0;x<nx;x++){double&v=t.heat[y*nx+x];if(std::isfinite(v))previous=v;else if(std::isfinite(previous))v=previous;}}
+    for(size_t x=0;x<nx;x++){double previous=std::numeric_limits<double>::quiet_NaN();for(size_t y=0;y<ny;y++){double&v=t.heat[y*nx+x];if(std::isfinite(v))previous=v;else if(std::isfinite(previous))v=previous;}}
+    double next=t.ambient;for(size_t i=t.heat.size();i-->0;){if(std::isfinite(t.heat[i]))next=t.heat[i];else t.heat[i]=next;}for(auto&v:t.heat)v=std::max(0.0,v-t.ambient);return t;
+}
+bool positive(const Rect&a,const Rect&b){return std::max(a.x1,b.x1)<std::min(a.x2,b.x2)&&std::max(a.y1,b.y1)<std::min(a.y2,b.y2);}
+Rect intersection(const Rect&a,const Rect&b){return {std::max(a.x1,b.x1),std::max(a.y1,b.y1),std::min(a.x2,b.x2),std::min(a.y2,b.y2),10};}
+bool contains(const Rect&r,double x,double y){return x>=r.x1&&x<=r.x2&&y>=r.y1&&y<=r.y2;}
+}
+int main(int argc,char**argv){try{
+    if(argc<6)throw std::runtime_error("reference_scorer input.lef input.def thermal.json Guide output-dir [--model-only] [--memory-mb N]");
+    auto started=std::chrono::steady_clock::now();bool model_only=false;size_t memory_mb=1536;for(int i=6;i<argc;i++){std::string a=argv[i];if(a=="--model-only")model_only=true;else if(a=="--memory-mb"&&i+1<argc)memory_mb=std::stoull(argv[++i]);else throw std::runtime_error("Unknown reference option: "+a);}if(memory_mb<256||memory_mb>8192)throw std::runtime_error("Memory budget must be 256..8192 MiB");
+    rlimit limit{rlim_t(memory_mb)*1024*1024,rlim_t(memory_mb)*1024*1024};if(setrlimit(RLIMIT_AS,&limit))throw std::runtime_error("Cannot enforce reference memory limit");
+    std::filesystem::path out=argv[5];if(!std::filesystem::is_directory(out))throw std::runtime_error("Output directory must be reserved by caller");
+    Design d;parse_lef(argv[1],d);parse_def(argv[2],d);PhysicalModel model(d);const auto&g=model.grid;Id plane=g.plane;
+    std::vector<int> usage;if(!model_only){if(21*plane*sizeof(int)>memory_mb*1024*1024/3)throw std::runtime_error("Usage array exceeds one third of reference memory budget");usage.assign(size_t(21*plane),0);}
+    Json errors=Json::array();std::map<std::string,long long> error_counts;auto error=[&](std::string code,std::string net,std::string detail){++error_counts[code];if(errors.arr.size()<100){Json e=Json::object();e["rule"]=code;e["net"]=net;e["detail"]=detail;errors.push(e);}};
+    std::map<std::string,const Net*> expected;for(const auto&n:d.nets)expected[n.name]=&n;std::set<std::string> seen;
+    struct Tsv {std::string net;double x,y;Id node;};std::vector<Tsv> tsvs;double planar=0,via_cost=0,tsv_cost=0,hpwl_lower=0;size_t guide_rects=0,via_count=0;
+    if(!model_only){std::ifstream input(argv[4]);if(!input)throw std::runtime_error("Cannot read Guide");std::string name,token;
+        while(input>>name){if(!expected.count(name))throw std::runtime_error("Guide contains undefined Net: "+name);if(!seen.insert(name).second)throw std::runtime_error("Duplicate Guide Net: "+name);const Net&n=*expected.at(name);input>>token;if(token!="(")throw std::runtime_error("Guide: expected (");std::vector<Rect> guides;
+            while(input>>token&&token!=")"){size_t consumed=0;double x1=std::stod(token,&consumed);if(consumed!=token.size())throw std::runtime_error("Invalid Guide coordinate");Rect r;r.x1=x1;std::string layer;if(!(input>>r.y1>>r.x2>>r.y2>>layer))throw std::runtime_error("Truncated Guide");r.layer=layer_number(layer);if(!d.layers.count(r.layer)||!std::isfinite(r.x1)||!std::isfinite(r.y1)||!std::isfinite(r.x2)||!std::isfinite(r.y2)||r.x1>=r.x2||r.y1>=r.y2){error("GUIDE_RECTANGLE",name,"Nonpositive rectangle or undeclared layer");continue;}if(guides.size()>=2000000)throw std::runtime_error("Per-Net Guide budget exceeded");guides.push_back(r);++guide_rects;}
+            if(token!=")")throw std::runtime_error("Unclosed Guide Net");std::unordered_set<Id> nodes,own;std::map<std::string,std::unordered_set<Id>> terminals;
+            for(const auto&p:n.pins)for(auto r:physical_pin_rects(d,p))g.cells(r,[&](Id v,int,int,Rect){own.insert(v);terminals[p.name].insert(v);});
+            std::vector<Rect> lower,upper;
+            for(auto r:guides){int xa=g.nx,xb=-1,ya=g.ny,yb=-1;bool overlap=false;
+                if(r.x1<g.xs.front()||r.x2>g.xs.back()||r.y1<g.ys.front()||r.y2>g.ys.back())error("GUIDE_DIEAREA",name,"Rectangle exceeds DIEAREA (conservative clipping policy)");
+                auto aligned=[](const auto&a,double v){return std::binary_search(a.begin(),a.end(),v);};if(!aligned(g.xs,r.x1)||!aligned(g.xs,r.x2)||!aligned(g.ys,r.y1)||!aligned(g.ys,r.y2))error("GUIDE_ALIGNMENT",name,"Guide boundary is not on a clipped DEF GCell line");
+                g.cells(r,[&](Id v,int x,int y,Rect q){if(q.x1>=q.x2||q.y1>=q.y2)return;nodes.insert(v);overlap=true;xa=std::min(xa,x);xb=std::max(xb,x);ya=std::min(ya,y);yb=std::max(yb,y);});if(!overlap)error("GUIDE_GCELL_OVERLAP",name,"No positive-area GCell overlap");
+                if(overlap&&(d.layers.at(r.layer).direction=="HORIZONTAL"?yb>ya:xb>xa))error("PREFERRED_DIRECTION",name,"Rectangle crosses multiple GCells perpendicular to layer direction");if(!n.cross&&((r.layer<=10)!=(n.pins.front().layer<=10)))error("DIE_OWNERSHIP",name,"Intra-Die Net uses opposite Die");if(r.layer==10)lower.push_back(r);if(r.layer==11)upper.push_back(r);
+            }
+            if(nodes.size()>2000000)throw std::runtime_error("Per-Net cell workspace exceeds 2M nodes; reference incomplete, not illegal");
+            std::vector<Rect> candidates;std::set<std::array<double,4>> unique;
+            for(auto a:lower)for(auto b:upper)if(positive(a,b)){auto r=intersection(a,b);if(unique.insert({r.x1,r.y1,r.x2,r.y2}).second)candidates.push_back(r);}
+            Id tsv=0;bool selected=false;Rect selected_rect;
+            if(n.cross){if(!d.tsv_cut||!d.vias.count({10,11}))error("TSV_DECLARATION",name,"LEF lacks declared TSV cut or M10/M11 Via");if(candidates.size()==1){selected=true;selected_rect=candidates[0];}else if(candidates.size()==2){std::vector<Rect> without;for(auto r:candidates){bool all=true,any=false;for(auto&p:n.pins)if(p.layer==10||p.layer==11){any=true;all&=contains(r,p.x,p.y);}if(!any||!all)without.push_back(r);}if(without.size()==1){selected=true;selected_rect=without[0];}else if(without.empty()){selected=true;selected_rect=*std::max_element(candidates.begin(),candidates.end(),[](auto a,auto b){return (a.x2-a.x1)*(a.y2-a.y1)<(b.x2-b.x1)*(b.y2-b.y1);});}}
+                if(!selected)error("UNIQUE_TSV",name,"Cannot identify one TSV from one/two documented overlap candidates");else{double x=(selected_rect.x1+selected_rect.x2)/2,y=(selected_rect.y1+selected_rect.y2)/2;tsv=g.id(PhysicalGrid::locate(g.xs,x),PhysicalGrid::locate(g.ys,y),10);tsvs.push_back({name,x,y,tsv});double h=2.5*d.dbu;if(x-h<g.xs.front()||x+h>g.xs.back()||y-h<g.ys.front()||y+h>g.ys.back())error("TSV_FOOTPRINT",name,"5um TSV footprint outside DIEAREA");}}
+            else if(!candidates.empty())error("INTRA_DIE_TSV",name,"Intra-Die Net creates M10/M11 overlap");
+            // Full-cell guides: preferred-axis adjacency, declared adjacent Via,
+            // and ONLY the selected TSV provide electrical graph connections.
+            std::unordered_set<Id> visited;std::vector<Id> todo;if(!nodes.empty())todo.push_back(*nodes.begin());
+            while(!todo.empty()){Id v=todo.back();todo.pop_back();if(!visited.insert(v).second)continue;int x=v%g.nx,y=v/g.nx%g.ny,l=v/plane;auto add=[&](int xx,int yy,int ll){if(xx<0||xx>=g.nx||yy<0||yy>=g.ny||!d.layers.count(ll))return;Id w=g.id(xx,yy,ll);if(nodes.count(w)&&!visited.count(w))todo.push_back(w);};if(d.layers.at(l).direction=="HORIZONTAL"){add(x-1,y,l);add(x+1,y,l);}else{add(x,y-1,l);add(x,y+1,l);}for(int ll:{l-1,l+1}){int low=std::min(l,ll);if(low==10){if(selected&&v%plane==tsv%plane)add(x,y,ll);}else if(d.vias.count({low,low+1}))add(x,y,ll);}}
+            if(nodes.empty()||visited.size()!=nodes.size())error("NET_CONNECTIVITY",name,"Guide cells are disconnected under preferred-direction/Via/selected-TSV graph");
+            for(auto&[p,cells]:terminals){bool hit=false;for(Id v:cells)if(visited.count(v)){hit=true;break;}if(!hit)error("PIN_ACCESS",name,p);}
+            std::map<Id,int> demand;for(Id v:nodes){int x=v%g.nx,y=v/g.nx%g.ny,l=v/plane;planar+=d.layers.at(l).direction=="HORIZONTAL"?g.xs[x+1]-g.xs[x]:g.ys[y+1]-g.ys[y];if(!own.count(v))demand[v]=1;}
+            // Documented rectangle-overlap charging; a lower rectangle is
+            // charged at most once for each adjacent layer. Constants 3/6
+            // are hash-pinned OLD ELF defaults, not an unpublished new formula.
+            for(auto a:guides)if(a.layer!=10)for(auto b:guides)if(b.layer==a.layer+1&&positive(a,b)&&d.vias.count({a.layer,b.layer})){auto r=intersection(a,b);int x=PhysicalGrid::locate(g.xs,(r.x1+r.x2)/2),y=PhysicalGrid::locate(g.ys,(r.y1+r.y2)/2);via_cost+=3*std::max(g.xs[x+1]-g.xs[x],g.ys[y+1]-g.ys[y]);++via_count;break;}
+            if(selected){int x=tsv%g.nx,y=tsv/g.nx%g.ny;tsv_cost+=6*std::max(g.xs[x+1]-g.xs[x],g.ys[y+1]-g.ys[y]);double h=2.5*d.dbu,cx=(selected_rect.x1+selected_rect.x2)/2,cy=(selected_rect.y1+selected_rect.y2)/2;for(int l:{10,11})g.cells({cx-h,cy-h,cx+h,cy+h,l},[&](Id v,int xx,int yy,Rect q){if(own.count(v))return;const auto&t=model.tracks[l];bool horizontal=d.layers.at(l).direction=="HORIZONTAL";double clo=horizontal?g.ys[yy]:g.xs[xx],chi=horizontal?g.ys[yy+1]:g.xs[xx+1],lo=horizontal?q.y1:q.x1,hi=horizontal?q.y2:q.x2;auto cb=std::lower_bound(t.begin(),t.end(),clo),ce=chi==(horizontal?g.ys.back():g.xs.back())?std::upper_bound(t.begin(),t.end(),chi):std::lower_bound(t.begin(),t.end(),chi);auto a=std::max(cb,std::lower_bound(t.begin(),t.end(),lo)),b=std::min(ce,std::upper_bound(t.begin(),t.end(),hi));demand[v]=std::max(demand[v],std::max(1,int(b-a)));});}
+            for(auto[v,count]:demand)usage.at(size_t(v))+=count;
+            double xl=1e100,yl=1e100,xh=-1e100,yh=-1e100;for(auto&p:n.pins){xl=std::min(xl,p.x);xh=std::max(xh,p.x);yl=std::min(yl,p.y);yh=std::max(yh,p.y);}hpwl_lower+=xh-xl+yh-yl;
+        }if(!input.eof())throw std::runtime_error("Guide read failed");for(auto&[name,n]:expected)if(!seen.count(name))error("MISSING_NET",name,"No Guide for DEF Net");
+    }
+    Json layer_stats=Json::object(),capacity_axes=Json::object();std::array<long long,21> over{},fixed_over{},demands{},fixed_units{},routed_units{};std::array<size_t,21> hotspots{},zero{};std::array<double,21> phi{};std::ofstream csv;
+    if(!model_only){csv.open(out/"resources.csv");csv.exceptions(std::ios::badbit|std::ios::failbit);csv<<"node,col,row,layer,capacity,fixed_demand,routing_demand,demand,overflow\n";}
+    std::vector<unsigned char> emitted;if(!model_only)emitted.assign(size_t((21*plane+7)/8),0);
+    auto record=[&](Id v,int cap,int fixed){int l=v/plane,routing=model_only?0:usage[size_t(v)];long long total=static_cast<long long>(fixed)+routing,overflow=std::max<long long>(0,total-cap);over[l]+=overflow;fixed_over[l]+=std::max(0,fixed-cap);demands[l]+=total;fixed_units[l]+=fixed;routed_units[l]+=routing;hotspots[l]+=overflow>0;zero[l]+=cap==0&&total>0;if(cap>0)phi[l]+=double(overflow)*overflow/(double(cap)*cap);if(!model_only){emitted[size_t(v)/8]|=1<<(v%8);csv<<v<<','<<v%g.nx<<','<<v/g.nx%g.ny<<','<<l<<','<<cap<<','<<fixed<<','<<routing<<','<<total<<','<<overflow<<'\n';}};
+    model.build(record);
+    if(!model_only)for(auto&[l,layer]:d.layers){(void)layer;for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){Id v=g.id(x,y,l);if(usage[size_t(v)]&&!(emitted[size_t(v)/8]&(1<<(v%8))))record(v,model.capacity(x,y,l),0);}}
+    for(auto&t:tsvs)if(model.blocked[size_t(t.node%plane)])error("TSV_PIN_OBS",t.net,"Selected TSV center GCell contains physical Pin/OBS on a routing layer");
+    long long total_over=0,baseline=0;double total_phi=0;for(auto&[l,layer]:d.layers){Json row=Json::object();row["demand"]=double(demands[l]);row["fixed_demand"]=double(fixed_units[l]);row["routing_demand"]=double(routed_units[l]);row["overflow"]=double(over[l]);row["fixed_baseline_overflow"]=double(fixed_over[l]);row["hotspot_cells"]=double(hotspots[l]);row["zero_capacity_demand_cells"]=double(zero[l]);row["normalized_overflow_squared"]=phi[l];long long sum=0;for(int c:model.capacities[l])sum+=c;row["capacity"]=double(sum*(layer.direction=="HORIZONTAL"?g.nx:g.ny));layer_stats[std::to_string(l)]=row;capacity_axes[std::to_string(l)]=numbers(model.capacities[l]);total_over+=over[l];baseline+=fixed_over[l];total_phi+=phi[l];}
+    Json result=Json::object();result["schema_version"]=1;result["ruleset"]="REFERENCE_20261029";result["official"]=false;result["static_legality"]=model_only?"NOT_CHECKED":error_counts.empty()?"REFERENCE_VALID":"REFERENCE_INVALID";result["errors"]=errors;Json counts=Json::object();for(auto&[k,v]:error_counts)counts[k]=double(v);result["error_counts"]=counts;
+    result["nets"]=double(d.nets.size());result["evaluated_nets"]=double(seen.size());result["guide_rectangles"]=double(guide_rects);result["tsv_count"]=double(tsvs.size());result["grid_cols"]=g.nx;result["grid_rows"]=g.ny;result["overflow"]=double(total_over);result["fixed_baseline_overflow"]=double(baseline);result["routing_induced_overflow"]=double(total_over-baseline);result["normalized_overflow_squared"]=total_phi;result["congestion_score"]=Json();result["thermal_score"]=Json();result["wirelength_score"]=Json();result["total_score"]=Json();result["by_layer"]=layer_stats;
+    result["wirelength_dbu"]=model_only?Json():Json(planar+via_cost+tsv_cost);result["planar_wirelength_dbu"]=planar;result["via_cost_dbu"]=via_cost;result["tsv_cost_dbu"]=tsv_cost;result["via_overlap_count"]=double(via_count);result["pin_hpwl_2d_lower_bound_dbu"]=hpwl_lower;result["wirelength_units"]="DEF DBU; divide by dbu_per_micron";result["dbu_per_micron"]=d.dbu;
+    if(!model_only){auto t=thermal(d,argv[3],std::max<size_t>(1000,memory_mb*1024*1024/256));size_t tx=t.xs.size()-1;std::vector<int> density(t.heat.size(),0);for(auto&p:tsvs)++density[size_t(PhysicalGrid::locate(t.ys,p.y))*tx+PhysicalGrid::locate(t.xs,p.x)];long double s=0,ss=0,sd=0,dd=0,cross=0;for(size_t i=0;i<t.heat.size();i++){long double h=t.heat[i],n=density[i];s+=h;ss+=h*h;sd+=n;dd+=n*n;cross+=h*n;}long double size=t.heat.size(),den=(ss-s*s/size)*(dd-sd*sd/size);result["thermal_correlation"]=den>1e-24?Json(double((cross-s*sd/size)/std::sqrt(den))):Json();result["thermal_samples"]=double(t.samples);result["thermal_unique_xy"]=double(t.unique);result["thermal_grid_cells"]=double(t.heat.size());}
+    Json stats=Json::object();stats["track_coordinates"]=double(model.coordinates);stats["geometry_cell_intervals"]=double(model.intervals);stats["geometry_rectangles"]=double(model.rectangles);stats["no_track_pin_shapes"]=double(model.min_pin_shapes);stats["fixed_cells"]=double(model.fixed_cells);stats["blocked_xy"]=double(std::count(model.blocked.begin(),model.blocked.end(),1));stats["maximum_stripe_bytes"]=double(model.max_workspace_bytes);stats["temporary_spool_bytes"]=double(model.spool_bytes);result["physical_workspace"]=stats;
+    Json assumptions=Json::array();for(auto text:{"TSV exclusion checks center GCell, union of Pin/OBS on ALL routing layers; no fixed-Pin exemption", "Pin may connect through any positive-area geometry/GCell overlap; internally common terminal geometry is assumed", "No-Track Pin takes nearest in-cell Track; zero-capacity Pin uses one shared virtual Track", "TSV footprint is 5x5um; per-Net Guide/TSV demand uses max, then own-Pin cells are exempt", "Grid-aligned preferred-axis connectivity; strict DIEAREA clipping policy", "Via/TSV wire ratios 3/6 are old official ELF defaults; overlap charging conventions remain model assumptions", "Exact FLUTE baseline is unavailable here: Wirelength Score N/A; 2D HPWL is only a lower bound", "Thermal XY averages Z first, then GCell averages and horizontal/vertical fill; undocumented fill details are assumptions", "20261029 congestion penalty formula and G_case are unknown; congestion/thermal/total scores N/A"})assumptions.push(text);result["model_assumptions"]=assumptions;
+    result["runtime_seconds"]=std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();rusage ru{};getrusage(RUSAGE_SELF,&ru);result["peak_rss_bytes"]=double(ru.ru_maxrss)*1024;result["memory_limit_mb"]=double(memory_mb);
+    if(csv.is_open()){csv.flush();csv.close();}write_json(out/"capacity_axes.json",capacity_axes);write_json(out/"reference_report.json",result);std::cout<<result.dump()<<'\n';return 0;
+}catch(const std::exception&e){std::cerr<<"REFERENCE_ERROR (not an official FAIL): "<<e.what()<<'\n';return 2;}}

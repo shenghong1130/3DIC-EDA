@@ -29,6 +29,7 @@ struct Edge {Id a,b;bool operator<(const Edge&e)const{return a<e.a||(a==e.a&&b<e
 struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;std::vector<Id> steiner_points;
     // V3.4 transaction state: moved/backed up together with the complete route.
     std::vector<Id> demand_exempt;std::vector<std::pair<Id,int>> tsv_demand,resource_demand;
+    std::vector<Id> pin_access_nodes; // V3.5: one real geometry access per terminal.
 };
 struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;
     // All zero preserves V2 routing. Numeric modes are validated by main.cpp.
@@ -40,6 +41,7 @@ struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time
     bool v3_batch=false; // Numeric V3.2 build; not a JSON parameter.
     bool v3_calibrated=false; // V3.3 only; selected by the build, never JSON.
     bool v3_rules_20261029=false; // V3.4 physical announcement model, NOT an official scorer.
+    bool v3_geometry_bounded=false; // V3.5 build only; same public JSON parameters.
 };
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);

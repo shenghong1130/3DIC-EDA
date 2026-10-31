@@ -33,6 +33,7 @@ std::vector<Id> Router::own_pin_cells(const Net&n)const{
 }
 void Router::build_v34_model(){
     if(v34_model_ready_)return;
+    if(cfg.v3_geometry_bounded){build_v35_model();return;}
     batch_cache_ready_=false;v3_fixed_cache_.clear();guide_model_ready_=false;v34_tsv_blocked_.assign(size_t(nx)*ny,0);
     size_t coordinates=0;
     for(int l=1;l<=20;l++){

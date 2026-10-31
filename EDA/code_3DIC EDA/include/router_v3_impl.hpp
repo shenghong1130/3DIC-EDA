@@ -111,6 +111,7 @@ double Router::v3_penalty(Id v,int demand){
     return cfg.congestion*(v3_present_*(b*b-a*a)+0.05*std::pow(std::min(1.0,after/cap),4))+cfg.history*r.history+toll+(cfg.v3_rules_20261029&&capacity==0&&demand>0?1000000:0);
 }
 double Router::v3_marginal(const Route&r,int uncertainty){
+    if(cfg.v3_geometry_bounded){double value=0;for(auto[v,demand]:v34_usage(r)){auto&s=resource(v);auto before=scoring_cell(v,s.usage+uncertainty),after=scoring_cell(v,s.usage+uncertainty+demand);value+=after.phi-before.phi;}return value;}
     if(cfg.v3_rules_20261029){double value=0;for(auto[v,demand]:v34_usage(r)){const auto&s=resource(v);double cap=std::max(1,s.capacity),base=double(s.usage)+s.fixed+uncertainty-s.capacity;double a=std::max(0.0,base)/cap,b=std::max(0.0,base+demand)/cap;value+=b*b-a*a+(s.capacity==0?1000000:0);}return value;}
     double value=0;int tx=0,ty=0,tl=0;if(r.cross)decode(r.tsv,tx,ty,tl);Id upper=r.cross?id(tx,ty,11):0;
     for(Id v:r.nodes){const auto&s=resource(v);int demand=1+int(r.cross&&(v==r.tsv||v==upper));double cap=std::max(1,s.capacity),base=double(s.usage)+v3_fixed(v)+uncertainty-s.capacity;double a=std::max(0.0,base)/cap,b=std::max(0.0,base+demand)/cap;value+=b*b-a*a;}
@@ -184,7 +185,8 @@ void Router::build_v3_thermal(const Json&input){
     auto axis=[&](char name,double lo,double hi){auto lines=d.grid.at(name);std::sort(lines.begin(),lines.end());lines.erase(std::unique(lines.begin(),lines.end()),lines.end());if(lines.front()>lo)lines.insert(lines.begin(),lo);if(lines.back()<hi)lines.push_back(hi);return lines;};
     v3_thermal_xs_=axis('X',d.die.x1,d.die.x2);v3_thermal_ys_=axis('Y',d.die.y1,d.die.y2);
     size_t width=v3_thermal_xs_.size()-1,height=v3_thermal_ys_.size()-1;
-    if(!width||!height||width>1000000/height){++v3_fallbacks_["thermal_grid_memory_budget"];return;}
+    size_t cells_budget=cfg.v3_geometry_bounded?(64*1024*1024)/(sizeof(double)+sizeof(unsigned)):1000000;
+    if(!width||!height||width>cells_budget/height){++v3_fallbacks_["thermal_grid_memory_budget"];return;}
     if(input.at("nodes").arr.size()>2000000){++v3_fallbacks_["thermal_sample_memory_budget"];return;}
     std::map<std::pair<double,double>,std::pair<double,int>> projected;
     for(const auto&n:input.at("nodes").arr){double x=std::round(n.arr[0].number()*1e9)/1e9,y=std::round(n.arr[1].number()*1e9)/1e9;auto&a=projected[{x,y}];a.first+=n.arr[3].number();++a.second;}
@@ -213,11 +215,16 @@ void Router::optimize_tsv_global(){
     ++v3_counts_["global_tsv_passes"];std::vector<int> counts(v3_thermal_rise_.size(),0);
     for(const auto&r:routes)if(r.cross)++counts[v3_thermal_cell(r.tsv)];
     DensityCorrelation density(v3_thermal_rise_,std::move(counts));double initial=density.value();
+    double wire_reference=0,wire_current=0;BatchQuality reference_quality;
+    if(cfg.v3_geometry_bounded){for(const auto&r:routes){double w=guide_grid_cost(r);if(!std::isfinite(w)){++v3_fallbacks_["global_tsv_guide_budget"];return;}wire_reference+=w;}wire_current=wire_reference;reference_quality=batch_quality_full();}
+    double phi_current=reference_quality.phi;long long overflow_current=reference_quality.overflow;
+    auto overflow_marginal=[&](const Route&r){long long value=0;for(auto[v,n]:v34_usage(r)){auto&s=resource(v);value+=std::max(0,s.fixed+s.usage+n-s.capacity)-std::max(0,s.fixed+s.usage-s.capacity);}return value;};
     auto candidates=[&](size_t index){
         const auto&r=routes[index];int x,y,l;decode(r.tsv,x,y,l);std::set<Id> sites;std::vector<int> px,py;
         for(const auto&p:d.nets[index].pins){int xx=locate(xs,p.x),yy=locate(ys,p.y);px.push_back(xx);py.push_back(yy);sites.insert(id(xx,yy,10));}
         std::sort(px.begin(),px.end());std::sort(py.begin(),py.end());if(!px.empty())sites.insert(id(px[px.size()/2],py[py.size()/2],10));
         for(int radius:{1,2,4})for(auto[dx,dy]:std::vector<std::pair<int,int>>{{-radius,0},{radius,0},{0,-radius},{0,radius}})if(x+dx>=0&&x+dx<nx&&y+dy>=0&&y+dy<ny)sites.insert(id(x+dx,y+dy,10));
+        if(cfg.v3_geometry_bounded){sites.insert(v35_warm_sites_.begin(),v35_warm_sites_.end());for(int radius:{8,16,32})for(int dx:{-radius,0,radius})for(int dy:{-radius,0,radius})if((dx||dy)&&x+dx>=0&&x+dx<nx&&y+dy>=0&&y+dy<ny)sites.insert(id(x+dx,y+dy,10));}
         sites.erase(r.tsv);std::vector<std::pair<double,Id>> ranked;size_t old=v3_thermal_cell(r.tsv);
         for(Id site:sites){if(cfg.v3_rules_20261029&&!tsv_legal(site))continue;double gain=density.after_move(old,v3_thermal_cell(site))-density.value();if(gain>1e-12)ranked.emplace_back(-gain,site);}
         std::sort(ranked.begin(),ranked.end());if(ranked.size()>32)ranked.resize(32);return ranked;
@@ -237,26 +244,30 @@ void Router::optimize_tsv_global(){
     int attempts=0,moved=0,rejected=0;size_t backup_nodes=0;std::string stop="candidates_exhausted";
     try{
         for(const auto&[gain,index]:order){
-            (void)gain;if(attempts>=32||moved>=16){stop="candidate_budget";break;}if(elapsed()>=reroute_deadline_seconds_){stop="time_budget";break;}
+            (void)gain;if(attempts>=(cfg.v3_geometry_bounded?128:32)||moved>=(cfg.v3_geometry_bounded?32:16)){stop="candidate_budget";break;}if(elapsed()>=reroute_deadline_seconds_){stop="time_budget";break;}
             auto ranked=candidates(index);size_t trials=0;
             for(const auto&[score,site]:ranked){
-                (void)score;if(trials++>=2||attempts>=32)break;
+                (void)score;if(trials++>=(cfg.v3_geometry_bounded?4u:2u)||attempts>=(cfg.v3_geometry_bounded?128:32))break;
                 if(backup_nodes+routes[index].nodes.size()>100000){stop="backup_node_budget";break;}
                 double old_wire=guide_grid_cost(routes[index]);if(!std::isfinite(old_wire))break;
                 size_t from=v3_thermal_cell(routes[index].tsv),to=v3_thermal_cell(site);double next=density.after_move(from,to);
                 if(next<=density.value()+1e-12)continue;
                 saved.push_back({index,{}});auto&b=saved.back();b.old=std::move(routes[index]);routes[index]=Route{};occupy(b.old,-1);b.detached=true;
-                double old_phi=v3_marginal(b.old),old_upper=v3_marginal(b.old,1);v3_forced_tsv_=site;++attempts;bool exhausted=false,failed=false;
+                double old_phi=v3_marginal(b.old),old_upper=v3_marginal(b.old,1);long long old_over=cfg.v3_geometry_bounded?overflow_marginal(b.old):0;v3_forced_tsv_=site;++attempts;bool exhausted=false,failed=false;
                 try{routes[index]=route(d.nets[index]);}
                 catch(const RouterTimeout&){throw;}
                 catch(const RerouteBudget&){exhausted=true;}
-                catch(const std::runtime_error&e){std::string s=e.what();if(s.find("No legal path")==0||s.find("A* expansion limit")==0||s.find("Nonunique TSV")==0)failed=true;else throw;}
+                catch(const std::runtime_error&e){std::string s=e.what();if(s.find("No legal path")==0||s.find("A* expansion limit")==0||s.find("Nonunique TSV")==0||(cfg.v3_geometry_bounded&&s.find("No legal Pin access")==0))failed=true;else throw;}
                 if(!exhausted&&!failed){
                     double wire=guide_grid_cost(routes[index]);
-                    if(routes[index].tsv==site&&std::isfinite(wire)&&wire<=old_wire+1e-6&&v3_marginal(routes[index])<=old_phi+1e-10&&v3_marginal(routes[index],1)<=old_upper+1e-10){
+                    double new_phi=v3_marginal(routes[index]);long long new_over=cfg.v3_geometry_bounded?overflow_marginal(routes[index]):0;
+                    bool guard=cfg.v3_geometry_bounded?
+                        wire_current+wire-old_wire<=wire_reference*1.0025+1e-6&&phi_current+new_phi-old_phi<=reference_quality.phi*1.0025+1e-10&&overflow_current+new_over-old_over<=reference_quality.overflow+static_cast<long long>(reference_quality.overflow*.0025)&&next>density.value()+1e-7:
+                        wire<=old_wire+1e-6&&new_phi<=old_phi+1e-10&&v3_marginal(routes[index],1)<=old_upper+1e-10;
+                    if(routes[index].tsv==site&&std::isfinite(wire)&&guard){
                         occupy(routes[index],1);b.replacement=true;
                         if(trace.out&&!trace.truncated){Json event=Json::object();event["net"]=d.nets[index].name;event["old_tsv"]=double(b.old.tsv);event["new_tsv"]=double(site);trace.event("net_removed",event);trace.event("net_added",route_json(d.nets[index],routes[index]));trace.event("global_tsv_moved",event);}
-                        density.move(from,to);backup_nodes+=b.old.nodes.size();++moved;break;
+                        density.move(from,to);wire_current+=wire-old_wire;phi_current+=new_phi-old_phi;overflow_current+=new_over-old_over;backup_nodes+=b.old.nodes.size();++moved;break;
                     }
                 }
                 restore(b);saved.pop_back();++rejected;
@@ -269,6 +280,7 @@ void Router::optimize_tsv_global(){
     try{
         v3_global_tsv_stats_=Json::object();auto&s=v3_global_tsv_stats_;s["fixed_by_interface_pins"]=fixed;s["eligible_with_positive_marginal_correlation"]=double(order.size());s["attempted"]=attempts;s["moved"]=moved;s["rejected"]=rejected;s["correlation_before_estimate"]=initial;s["correlation_after_estimate"]=density.value();s["stop_reason"]=stop;s["official_metrics"]=false;
         v3_counts_["global_tsv_attempts"]+=attempts;v3_counts_["global_tsv_moved"]+=moved;trace.event("global_tsv_complete",s);
+        if(cfg.v3_geometry_bounded){s["wire_budget_fraction"]=.0025;s["wire_delta_dbu_estimate"]=wire_current-wire_reference;s["normalized_potential_delta"]=phi_current-reference_quality.phi;s["overflow_delta_estimate"]=double(overflow_current-reference_quality.overflow);}
     }catch(...){for(auto it=saved.rbegin();it!=saved.rend();++it)restore(*it);throw;}
 }
 Json Router::v3_metadata()const{
@@ -289,6 +301,7 @@ Json Router::v3_metadata()const{
     out["fixed_model"]=guide_model_ready_?"projected_track_union_approximation":"legacy_fixed_approximation";out["fixed_model_uncertainty"]="acceptance checks projected demand and projected demand plus one; empirical guard, not a proven universal error bound";
     if(cfg.v3_calibrated){out["fixed_model"]=guide_model_ready_?"hash_pinned_latest_track_interval_union":"legacy_fallback_unavailable";out["calibration_scope"]="current 4104d0b2 ELF; case001 overflow CSV; not physical occupancy or all-grid demand proof";out["quality_update"]="dirty resource delta with independent full-map oracle tests";}
     if(cfg.v3_rules_20261029){out["generation"]="v3_4_rules_20261029_candidate";out["fixed_model"]="physical_per_geometry_track_union_min_one_pin";out["calibration_scope"]="20261020/27/29 announcements; conservative assumptions; NOT verified with new official ELF";out["rules_20261029"]=rules_20261029_summary();}
+    if(cfg.v3_geometry_bounded){out["generation"]="v3_5_geometry_stripes_local_escape_candidate";out["pin_access"]="real geometry multi-cell access; selected nodes retained per route";out["high_pin_reroute"]="degree-two interior path repair; per-search 0.15s plus whole-group rollback";out["thermal_workspace_budget_bytes"]=64*1024*1024;}
     out["pricing_scope"]="stable initial cost; negotiated and global TSV trials use dynamic prices";
     out["price_cache_entries"]=double(v3_fixed_cache_.size());out["price_cache_limit"]=200000;out["steiner_terminal_limit"]=16;out["steiner_candidate_limit"]=96;out["target_node_limit"]=65536;
     double guide_cost=0;int unknown=0,steiner_routes=0;size_t steiner_nodes=0;for(const auto&r:routes){double value=guide_grid_cost(r);if(std::isfinite(value))guide_cost+=value;else ++unknown;steiner_routes+=!r.steiner_points.empty();steiner_nodes+=r.steiner_points.size();}

@@ -27,7 +27,7 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
     std::unordered_map<Id,int> old_demand;
     for(size_t i:group){
         if(i>=routes.size())throw std::runtime_error("Invalid batch Net index");
-        if(cfg.v3_calibrated&&d.nets[i].pins.size()>32){detail["reason"]="high_pin_group_budget";return false;}
+        if(cfg.v3_calibrated&&!cfg.v3_geometry_bounded&&d.nets[i].pins.size()>32){detail["reason"]="high_pin_group_budget";return false;}
         double cost=guide_grid_cost(routes[i]);if(!std::isfinite(cost)){detail["reason"]="guide_budget";return false;}
         old_wire+=cost;nodes+=routes[i].nodes.size();if(nodes>20000){detail["reason"]="backup_node_budget";return false;}
         if(cfg.v3_rules_20261029){for(auto[v,n]:v34_usage(routes[i]))old_demand[v]+=n;}
@@ -64,7 +64,7 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
                 if(b.old.cross){int x,y,l;decode(b.old.tsv,x,y,l);alternative_mandatory_.insert(b.old.tsv);alternative_mandatory_.insert(id(x,y,11));}
                 for(Id v:b.old.nodes)if(!alternative_mandatory_.count(v)&&scoring_cell(v,resource(v).usage+1).overflow)alternative_avoid_.insert(v);
             }
-            Route candidate=route(d.nets[b.index]);validate(d.nets[b.index],candidate);
+            Route candidate=cfg.v3_geometry_bounded&&d.nets[b.index].pins.size()>32?route_v35_local(d.nets[b.index],b.old):route(d.nets[b.index]);validate(d.nets[b.index],candidate);
             if(cfg.v3_calibrated){
                 ++v3_counts_["alternative_routes_generated"];
                 bool different=candidate.nodes!=b.old.nodes||candidate.edges.size()!=b.old.edges.size()||!std::equal(candidate.edges.begin(),candidate.edges.end(),b.old.edges.begin(),[](auto a,auto b){return a.a==b.a&&a.b==b.b;});
@@ -100,7 +100,7 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
     catch(const V3Budget&){restore();detail["reason"]="search_budget";return false;}
     catch(const std::runtime_error&e){
         restore();std::string message=e.what();
-        if(message.find("No legal path")==0||message.find("A* expansion limit")==0||message.find("Nonunique TSV")==0){detail["reason"]="unroutable_group";return false;}
+        if(message.find("No legal path")==0||message.find("A* expansion limit")==0||message.find("Nonunique TSV")==0||(cfg.v3_geometry_bounded&&message.find("No legal Pin access")==0)){detail["reason"]="unroutable_group";return false;}
         throw;
     }catch(...){restore();throw;}
 }
