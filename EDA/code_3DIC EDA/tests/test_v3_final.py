@@ -82,6 +82,19 @@ class NumericHotspotEntry(unittest.TestCase):
         self.assertEqual(data['v3_algorithm']['generation'],'v3_2_hotspot_multi_net')
         self.assertIn('hotspot_batches',data['v3_algorithm'])
 
+class AnnouncementEntry(unittest.TestCase):
+    def test_v3_4_is_a_separate_physical_candidate(self):
+        exe=os.environ.get('V3_4_EXE')
+        if not exe:self.skipTest('Set V3_4_EXE to the temporary physical-rule build')
+        fixture=test_workflow.ParserIntegration(methodName='runTest');fixture.setUp();self.addCleanup(fixture.tearDown);fixture.exe=Path(exe)
+        run=fixture.run_router();self.assertEqual(run.returncode,0,run.stderr.decode(errors='replace'))
+        data=json.loads((fixture.dir/'result.json').read_text(encoding='utf8'))
+        self.assertEqual(data['v3_final']['strategy'],'v3_4_rules_20261029_candidate')
+        self.assertEqual(data['v3_algorithm']['generation'],'v3_4_rules_20261029_candidate')
+        self.assertFalse(data['rules_20261029']['official_new_evaluator_verified'])
+        self.assertIn('hotspot_batches',data['v3_algorithm'])
+        self.assertEqual(data['v3_algorithm']['fixed_model'],'physical_per_geometry_track_union_min_one_pin')
+
 class ReleaseGate(unittest.TestCase):
     def test_no_release_on_tradeoff_or_missing_official_report(self):
         from validate_v3_final import quality_gate

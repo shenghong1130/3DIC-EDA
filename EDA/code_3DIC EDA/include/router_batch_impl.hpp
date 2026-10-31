@@ -30,8 +30,9 @@ bool Router::reroute_group(const std::vector<size_t>&group,int iteration,double&
         if(cfg.v3_calibrated&&d.nets[i].pins.size()>32){detail["reason"]="high_pin_group_budget";return false;}
         double cost=guide_grid_cost(routes[i]);if(!std::isfinite(cost)){detail["reason"]="guide_budget";return false;}
         old_wire+=cost;nodes+=routes[i].nodes.size();if(nodes>20000){detail["reason"]="backup_node_budget";return false;}
-        for(Id v:routes[i].nodes)++old_demand[v];
-        if(routes[i].cross){int x,y,l;decode(routes[i].tsv,x,y,l);++old_demand[routes[i].tsv];++old_demand[id(x,y,11)];}
+        if(cfg.v3_rules_20261029){for(auto[v,n]:v34_usage(routes[i]))old_demand[v]+=n;}
+        else{for(Id v:routes[i].nodes)++old_demand[v];
+        if(routes[i].cross){int x,y,l;decode(routes[i].tsv,x,y,l);++old_demand[routes[i].tsv];++old_demand[id(x,y,11)];}}
     }
     // Preflight aggregate demand: shared cells must be released once per Net,
     // including both additional TSV units, before any mutation occurs.

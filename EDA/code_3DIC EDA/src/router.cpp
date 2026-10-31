@@ -50,6 +50,9 @@ Router::Router(Design&design,Config c,Trace&t,Progress*p):d(design),cfg(c),trace
 #ifdef GR_V3_3
     cfg.v3_batch=true;cfg.v3_calibrated=true;
 #endif
+#ifdef GR_V3_4
+    cfg.v3_batch=true;cfg.v3_calibrated=true;cfg.v3_rules_20261029=true;
+#endif
     if(cfg.v3_final){
         cfg.net_order_mode=0;cfg.tree_route_mode=0;cfg.reroute_priority_mode=0;
         cfg.congestion_cost_mode=0;cfg.congestion_scope_mode=0;cfg.reroute_policy_mode=0;
@@ -110,6 +113,7 @@ void Router::refresh_capacities(){
 int Router::capacity(Id v)const{
     GR_COUNT(capacity_calls,1);
     int x,y,l;decode(v,x,y,l);
+    if(cfg.v3_rules_20261029&&v34_model_ready_)return scoring_capacity(v);
     if(static_frozen_&&l>=1&&l<=20&&!axis_capacity_[l].empty()){GR_COUNT(capacity_cache_hits,1);return axis_capacity_[l].at(layer_horizontal_[l]?y:x);}
     auto r=cell(v);auto&layer=d.layers.at(r.layer);char axis=layer.direction=="HORIZONTAL"?'Y':'X';int c=0;for(auto&t:d.tracks)if(t.layer==r.layer&&t.axis==axis)c+=count_tracks(t,axis=='X'?r.x1:r.y1,axis=='X'?r.x2:r.y2,axis=='X'?r.x2==xs.back():r.y2==ys.back());return c;
 }
@@ -128,6 +132,7 @@ void Router::load_thermal(const std::filesystem::path&p){
     if(cfg.v3_stage>=3)build_v3_thermal(j);
 }
 void Router::build_fixed_demand(){
+    if(cfg.v3_rules_20261029){build_v34_model();trace.event("fixed_demand_built");return;}
     for(auto&[name,i]:d.instances){check_time();auto&m=d.macros.at(i.macro);auto add=[&](const Rect&raw){
         if(!d.layers.count(raw.layer))return;
         auto r=placed_rect(raw,m,i,d.dbu);if(r.x2<xs.front()||r.y2<ys.front()||r.x1>xs.back()||r.y1>ys.back())return;
@@ -210,7 +215,7 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 auto&res=resource(v);
                 int demand=cross&&(ll==10||ll==11)?2:1;
                 if(cfg.v3_batch&&cross&&(ll==10||ll==11))demand=1+int(v3_forced_tsv_&&(ll==10?v:id(xx,yy,10))==v3_forced_tsv_);
-                double penalty=cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
+                double penalty=cfg.v3_rules_20261029?v3_penalty(v,1):cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
                 if(cfg.v3_calibrated&&v3_batch_active_&&alternative_variant_){
@@ -245,8 +250,13 @@ Id Router::select_tsv(const Net&n){
     std::set<std::pair<int,int>> low,up;std::vector<std::pair<int,int>> pins;int xl=nx-1,xh=0,yl=ny-1,yh=0;
     for(auto&p:n.pins){int x=locate(xs,p.x),y=locate(ys,p.y);pins.emplace_back(x,y);xl=std::min(xl,x);xh=std::max(xh,x);yl=std::min(yl,y);yh=std::max(yh,y);if(p.layer==10)low.insert({x,y});if(p.layer==11)up.insert({x,y});}
     std::vector<std::pair<int,int>> shared;std::set_intersection(low.begin(),low.end(),up.begin(),up.end(),std::back_inserter(shared));
-    if(shared.size()>1)throw std::runtime_error("Multiple fixed TSV pin GCells require explicit disambiguation: "+n.name);
-    if(!shared.empty())return id(shared[0].first,shared[0].second,10);
+    if(!cfg.v3_rules_20261029&&shared.size()>1)throw std::runtime_error("Multiple fixed TSV pin GCells require explicit disambiguation: "+n.name);
+    // An overlapping M10/M11 Pin pair already implies a cross-Die Guide
+    // overlap at a forbidden site. There is no explicit fixed-TSV exemption
+    // in the announcement: report infeasibility rather than waive the rule.
+    if(cfg.v3_rules_20261029&&!shared.empty())throw std::runtime_error("No legal TSV: interface Pin overlap forces a forbidden Pin GCell: "+n.name);
+    if(!cfg.v3_rules_20261029&&!shared.empty())return id(shared[0].first,shared[0].second,10);
+    if(cfg.v3_rules_20261029&&!v34_model_ready_)build_v34_model();
     // Heat is immutable inside run(). Outside it, callers may edit the public
     // vector (including retained references), so refresh on every direct call.
     if(!static_frozen_)refresh_heat_stats();
@@ -256,14 +266,31 @@ Id Router::select_tsv(const Net&n){
     candidates.reserve(pins.size()+size_t((xh-xl)/stride+1)*size_t((yh-yl)/stride+1));
     candidates.insert(candidates.end(),pins.begin(),pins.end());for(int y=yl;y<=yh;y+=stride)for(int x=xl;x<=xh;x+=stride)candidates.emplace_back(x,y);
     std::sort(candidates.begin(),candidates.end());candidates.erase(std::unique(candidates.begin(),candidates.end()),candidates.end());
+    if(cfg.v3_rules_20261029){
+        candidates.erase(std::remove_if(candidates.begin(),candidates.end(),[&](auto p){return !tsv_legal(id(p.first,p.second,10));}),candidates.end());
+        if(candidates.empty())for(int y=yl;y<=yh&&candidates.empty();y++){if(y%64==0)check_time();for(int x=xl;x<=xh;x++)if(tsv_legal(id(x,y,10))){candidates.emplace_back(x,y);break;}}
+        // The sampled Net bbox may contain no legal site. Search deterministic
+        // expanding rings, with budget polling; never silently use a blocked site.
+        if(candidates.empty())for(int radius=1;radius<=std::max(nx,ny)&&candidates.empty();radius++){
+            check_time();int a=std::max(0,xl-radius),b=std::min(nx-1,xh+radius),c=std::max(0,yl-radius),e=std::min(ny-1,yh+radius);
+            for(int x=a;x<=b;x++){for(int y:{c,e})if(tsv_legal(id(x,y,10)))candidates.emplace_back(x,y);}
+            for(int y=c+1;y<e;y++){for(int x:{a,b})if(tsv_legal(id(x,y,10)))candidates.emplace_back(x,y);}
+        }
+        if(candidates.empty())throw std::runtime_error("No legal TSV GCell (Pin/OBS exclusion or 5um footprint): "+n.name);
+    }
     size_t candidate_index=0;for(auto[x,y]:candidates){GR_COUNT(tsv_candidates,1);if(progress&&candidate_index++%256==0)progress->poll();double w=0;auto[cx,cy]=center(id(x,y,10));for(auto&p:n.pins)w+=(std::abs(p.x-cx)+std::abs(p.y-cy))/unit;w*=cfg.wire/std::max(size_t(1),n.pins.size());
-        auto&a=resource(id(x,y,10));auto&b=resource(id(x,y,11));w+=cfg.tsv+cfg.congestion*(std::max(0,a.usage+a.fixed+2-a.capacity)+std::max(0,b.usage+b.fixed+2-b.capacity));
+        if(cfg.v3_rules_20261029){Route footprint;footprint.cross=true;footprint.tsv=id(x,y,10);prepare_v34_route(n,footprint);w+=cfg.tsv+cfg.congestion*v3_marginal(footprint);}
+        else{auto&a=resource(id(x,y,10));auto&b=resource(id(x,y,11));w+=cfg.tsv+cfg.congestion*(std::max(0,a.usage+a.fixed+2-a.capacity)+std::max(0,b.usage+b.fixed+2-b.capacity));}
         // Nonnegative penalty for cold sites; positive heat/TSV correlation is desired.
         w+=cfg.thermal*(tmax>tmin?(tmax-heat[y*nx+x])/(tmax-tmin):0);
         if(w<score){score=w;answer=id(x,y,10);}
     }return answer;
 }
 Route Router::route(const Net&n){
+    std::vector<Id> previous_pin_cells;
+    if(cfg.v3_rules_20261029){if(!v34_model_ready_)build_v34_model();auto cells=own_pin_cells(n);previous_pin_cells=std::move(v34_active_pin_cells_);v34_active_pin_cells_=std::move(cells);}
+    struct PinContext {Router&r;std::vector<Id>&old;~PinContext(){if(r.cfg.v3_rules_20261029)r.v34_active_pin_cells_=std::move(old);}} pin_context{*this,previous_pin_cells};
+    if(cfg.v3_rules_20261029&&v3_forced_tsv_&&!tsv_legal(v3_forced_tsv_))throw std::runtime_error("Illegal forced TSV (Pin/OBS GCell): "+n.name);
     if(cfg.v3_stage&&!v3_legacy_route_){
         bool fallback=false;double previous=v3_route_deadline_;v3_route_deadline_=elapsed()+0.5;
         struct Reset {double&v;double old;~Reset(){v=old;}} reset{v3_route_deadline_,previous};
@@ -332,9 +359,15 @@ Route Router::route(const Net&n){
             for(Id v:p)r.nodes.insert(v);
             for(size_t i=1;i<p.size();i++)r.edges.insert({std::min(p[i-1],p[i]),std::max(p[i-1],p[i])});}
     };if(!bottom.empty())connect(bottom,1,10);if(!top.empty())connect(top,11,20);
-    make_guides(r);validate(n,r);return r;
+    make_guides(r);if(cfg.v3_rules_20261029)prepare_v34_route(n,r);validate(n,r);return r;
 }
 void Router::occupy(const Route&r,int sign){
+    if(cfg.v3_rules_20261029){
+        const auto&demand=v34_usage(r);
+        for(auto[v,n]:demand){auto&res=resource(v);(void)scoring_cell(v,res.usage);if(res.usage+sign*n<0)throw std::runtime_error("Negative V3.4 usage preflight");}
+        for(auto[v,n]:demand)change_usage(v,sign*n);
+        return;
+    }
     // Price every touched cell before the first mutation. Cached terms make
     // the commit/undo itself allocation-free, including BOTH TSV endpoints.
     if(cfg.v3_calibrated){for(Id v:r.nodes)(void)scoring_cell(v,resource(v).usage);if(r.cross){int x,y,l;decode(r.tsv,x,y,l);(void)scoring_cell(r.tsv,resource(r.tsv).usage);(void)scoring_cell(id(x,y,11),resource(id(x,y,11)).usage);}}
@@ -371,6 +404,7 @@ double Router::guide_wirelength(const Route&r)const{
     }return total;
 }
 void Router::build_guide_model(){
+    if(cfg.v3_rules_20261029){build_v34_model();return;}
     batch_cache_ready_=false;v3_fixed_cache_.clear();
     for(auto&[v,r]:resources){(void)v;r.scoring_ready=false;}
     fixed_intervals_.clear();guide_model_ready_=false;guide_interval_count_=0;
@@ -429,6 +463,10 @@ int Router::guide_fixed_demand(Id v){
     return demand;
 }
 int Router::scoring_capacity(Id v)const{
+    if(cfg.v3_rules_20261029&&v34_model_ready_){
+        int x,y,l;decode(v,x,y,l);const auto&t=scoring_tracks_[l];const auto&axis=layer_horizontal_[l]?ys:xs;int k=layer_horizontal_[l]?y:x;
+        auto begin=std::lower_bound(t.begin(),t.end(),axis[k]);auto end=k+2==int(axis.size())?std::upper_bound(t.begin(),t.end(),axis[k+1]):std::lower_bound(t.begin(),t.end(),axis[k+1]);return int(end-begin);
+    }
     if(!guide_model_ready_){auto it=resources.find(v);return it==resources.end()?capacity(v):it->second.capacity;}
     int x,y,l;decode(v,x,y,l);const auto&t=scoring_tracks_[l];
     const auto&axis=d.layers.at(l).direction=="HORIZONTAL"?ys:xs;int k=d.layers.at(l).direction=="HORIZONTAL"?y:x;
@@ -437,6 +475,7 @@ int Router::scoring_capacity(Id v)const{
     return int(end-begin);
 }
 int Router::scoring_fixed_demand(Id v){
+    if(cfg.v3_rules_20261029)return resource(v).fixed;
     if(!guide_model_ready_)return resource(v).fixed;
     int x,y,l;decode(v,x,y,l);bool horizontal=d.layers.at(l).direction=="HORIZONTAL";
     auto found=fixed_intervals_.find({l,horizontal?x:y});if(found==fixed_intervals_.end())return 0;
@@ -506,7 +545,7 @@ void Router::prune_routes(){
             if(candidate.nodes.size()==old.nodes.size())continue;
             for(Id v:old.steiner_points)if(candidate.nodes.count(v))candidate.steiner_points.push_back(v);
             for(auto[a,b]:tree)if(active[a]&&active[b])candidate.edges.insert({std::min(nodes[a],nodes[b]),std::max(nodes[a],nodes[b])});
-            make_guides(candidate);validate(d.nets[index],candidate);double estimate=cfg.v3_stage?guide_grid_cost(candidate):guide_wirelength(candidate);
+            make_guides(candidate);if(cfg.v3_rules_20261029)prepare_v34_route(d.nets[index],candidate);validate(d.nets[index],candidate);double estimate=cfg.v3_stage?guide_grid_cost(candidate):guide_wirelength(candidate);
             if(!std::isfinite(estimate)||estimate>old_cost+1e-8||candidate.guides.size()>old.guides.size())continue;
             if(backup_nodes+old.nodes.size()>100000){stop="backup_node_budget";break;}
             backup_nodes+=old.nodes.size();
@@ -532,6 +571,7 @@ void Router::make_guides(Route&r)const{
     }
 }
 void Router::validate(const Net&n,const Route&r)const{
+    if(cfg.v3_rules_20261029)validate_v34(n,r);
     if(r.nodes.empty())throw std::runtime_error("Empty route: "+n.name);
     std::unordered_map<Id,std::vector<Id>> adj;for(auto&e:r.edges){adj[e.a].push_back(e.b);adj[e.b].push_back(e.a);int x,y,l,xx,yy,ll;decode(e.a,x,y,l);decode(e.b,xx,yy,ll);if(l==ll){if(std::abs(x-xx)+std::abs(y-yy)!=1)throw std::runtime_error("Nonadjacent planar edge");if((d.layers.at(l).direction=="HORIZONTAL"&&y!=yy)||(d.layers.at(l).direction=="VERTICAL"&&x!=xx))throw std::runtime_error("Nonpreferred direction");}else{if(x!=xx||y!=yy||std::abs(l-ll)!=1)throw std::runtime_error("Illegal via edge");if(std::min(l,ll)==10){if(!n.cross||e.a!=r.tsv)throw std::runtime_error("Unexpected TSV edge");}else if(!d.vias.count({std::min(l,ll),std::max(l,ll)}))throw std::runtime_error("Via absent in LEF");}}
     std::unordered_set<Id> visited;std::vector<Id> stack{*r.nodes.begin()};while(!stack.empty()){Id a=stack.back();stack.pop_back();if(!visited.insert(a).second)continue;for(Id b:adj[a])stack.push_back(b);}if(visited.size()!=r.nodes.size())throw std::runtime_error("Disconnected route: "+n.name);
@@ -771,12 +811,13 @@ void Router::result_json(std::ostream&o)const{
     check_time();
     if(cfg.v3_stage)field("v3_algorithm",v3_metadata());
     field("schema_version",1);field("source","independent_cpp_router");field("design",d.name);field("dbu_per_micron",d.dbu);
-    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_calibrated?"v3_3_calibrated_alternative_batch":cfg.v3_batch?"v3_2_hotspot_multi_net":cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_batch?"whole_group_negotiated_transaction":cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
+    if(cfg.v3_final){Json final=Json::object();final["strategy"]=cfg.v3_rules_20261029?"v3_4_rules_20261029_candidate":cfg.v3_calibrated?"v3_3_calibrated_alternative_batch":cfg.v3_batch?"v3_2_hotspot_multi_net":cfg.v3_stage?"v3_steiner_negotiated_global":"v3_final_guide_guard";final["optimization"]=cfg.v3_batch?"whole_group_negotiated_transaction":cfg.v3_stage?"bounded_hanan_exact_target_price_tsv":"v2_safe_reroute_then_occupied_graph_prune";final["pruning"]=final_prune_stats_;final["fixed_union_role"]=cfg.v3_stage>=2?"experimental_search_price_approximation":"offline_calibration_only";final["fixed_union_available"]=guide_model_ready_;final["input_intervals"]=double(guide_interval_count_);final["guide_estimator_max_rectangles"]=1024;final["official_score"]=false;field("v3_final",final);}
     if(cfg.v3_final||cfg.net_order_mode||cfg.tree_route_mode||cfg.reroute_priority_mode){Json modes=Json::object();modes["net_order_mode"]=cfg.net_order_mode;modes["tree_route_mode"]=cfg.tree_route_mode;modes["reroute_priority_mode"]=cfg.reroute_priority_mode;modes["routing_strategy"]=cfg.v3_stage?"steiner_and_multi_target_with_fallback":cfg.tree_route_mode?"tree_aware":"mst_astar";field("algorithm",modes);}
     if(cfg.v3_final||cfg.congestion_cost_mode||cfg.reroute_policy_mode){Json modes=Json::object();modes["active_cost_model"]=cfg.v3_stage>=2?"normalized_marginal_negotiated":"legacy_research_cost_mode";modes["cost_mode"]=cfg.congestion_cost_mode;modes["scope_mode"]=cfg.congestion_scope_mode;modes["reroute_policy_mode"]=cfg.reroute_policy_mode;modes["reroute_max_nets"]=cfg.reroute_max_nets;modes["reroute_pass_seconds"]=cfg.reroute_pass_seconds;modes["reroute_wire_growth"]=cfg.reroute_wire_growth;field("congestion_strategy",modes);}
     field("die",numbers(std::vector<double>{d.die.x1,d.die.y1,d.die.x2,d.die.y2}));
     array("x_lines",xs,number,"X lines");array("y_lines",ys,number,"Y lines");
     array("layers",d.layers,[](const auto&entry){const auto&[n,l]=entry;Json v=Json::object();v["number"]=n;v["name"]=l.name;v["tier"]=n<=10?"bottom":"top";v["direction"]=l.direction;return v;},"Layers");
+    if(cfg.v3_rules_20261029)field("rules_20261029",rules_20261029_summary());
     key("nets");o<<'[';double length=0;int tsv=0,vias=0;
     for(size_t i=0;i<routes.size();i++){
         check_time();if(i)o<<',';
@@ -825,3 +866,4 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #include "router_v3_impl.hpp"
 #include "router_batch_impl.hpp"
 #include "router_v3_3_impl.hpp"
+#include "router_v3_4_impl.hpp"

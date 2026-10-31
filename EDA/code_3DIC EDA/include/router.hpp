@@ -58,11 +58,24 @@ public:
     void run();
     void make_guides(Route&)const;
     void validate(const Net&,const Route&)const;
+    void build_v34_model();
+    bool tsv_legal(Id)const;
+    Json rules_20261029_summary()const;
     Json route_json(const Net&,const Route&)const;
     void result_json(std::ostream&)const;
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+    bool v34_model_ready_=false;
+    std::vector<unsigned char> v34_tsv_blocked_;
+    std::vector<Id> v34_active_pin_cells_;
+    size_t v34_pin_min_track_=0,v34_fixed_cells_=0;
+    std::vector<Rect> pin_geometry(const Pin&)const;
+    void geometry_cells(Rect,const std::function<void(Id,const Rect&)>&)const;
+    std::vector<Id> own_pin_cells(const Net&)const;
+    void prepare_v34_route(const Net&,Route&)const;
+    const std::vector<std::pair<Id,int>>& v34_usage(const Route&)const;
+    void validate_v34(const Net&,const Route&)const;
     struct TreeTarget {
         std::unordered_set<Id> nodes;
         int xl=0,xh=0,yl=0,yh=0,ll=0,lh=0;

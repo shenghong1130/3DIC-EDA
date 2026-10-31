@@ -122,6 +122,12 @@ void parse_def(const std::filesystem::path&p,Design&d){
                         double x=(num(a,j+3)+num(a,j+7))/2,y=(num(a,j+4)+num(a,j+8))/2;
                         // IO placement is an origin; its local RECT is rotated without bbox compensation.
                         auto [u,v]=orient_point(x,y,0,0,place.orient);pins.push_back({"PIN."+a[0],place.x+u,place.y+v,l});
+                        Rect q{1e100,1e100,-1e100,-1e100,l};
+                        for(double px:{num(a,j+3),num(a,j+7)})for(double py:{num(a,j+4),num(a,j+8)}){
+                            auto[tx,ty]=orient_point(px,py,0,0,place.orient);
+                            q.x1=std::min(q.x1,place.x+tx);q.x2=std::max(q.x2,place.x+tx);q.y1=std::min(q.y1,place.y+ty);q.y2=std::max(q.y2,place.y+ty);
+                        }
+                        d.io_pin_rects["PIN."+a[0]].push_back(q);
                     }
                     if(pins.empty())throw std::runtime_error("IO pin has no rectangular port: "+a[0]);
                     io[a[0]]=pins;

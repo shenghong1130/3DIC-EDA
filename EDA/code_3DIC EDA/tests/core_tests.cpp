@@ -1,4 +1,5 @@
 #include "router.hpp"
+#include "allocation_guard.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <queue>
@@ -14,12 +15,14 @@ Design tiny(){Design d;d.name="synthetic";d.version="5.8";d.dbu=1000;d.die={100,
 #include "v3_generation_tests.hpp"
 #include "hotspot_tests.hpp"
 #include "v3_3_tests.hpp"
+#include "v3_4_tests.hpp"
 int main(){try{
  algorithm_tests();
  v3_generation_tests();
  v3_global_tests();
  hotspot_tests();
  v3_3_tests();
+ v3_4_tests();
  tree_aware_tests();
  congestion_tests();
  guide_quality_tests();

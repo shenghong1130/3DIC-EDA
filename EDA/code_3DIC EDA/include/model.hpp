@@ -21,9 +21,15 @@ struct Design {
     std::map<std::string,Instance> instances;std::vector<Net> nets;
     std::vector<Track> tracks;std::map<char,std::vector<double>> grid;
     std::set<std::pair<int,int>> vias;bool tsv_cut=false;
+    // Retain full placed DEF IO geometry for physical-rule audits. Access
+    // points and all historical parser/routing semantics remain unchanged.
+    std::map<std::string,std::vector<Rect>> io_pin_rects;
 };
 struct Edge {Id a,b;bool operator<(const Edge&e)const{return a<e.a||(a==e.a&&b<e.b);}};
-struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;std::vector<Id> steiner_points;};
+struct Route {std::set<Id> nodes;std::set<Edge> edges;std::vector<Rect> guides;Id tsv=0;bool cross=false;std::vector<Id> steiner_points;
+    // V3.4 transaction state: moved/backed up together with the complete route.
+    std::vector<Id> demand_exempt;std::vector<std::pair<Id,int>> tsv_demand,resource_demand;
+};
 struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time_limit=600;int iterations=2,stagnation=2,margin=8;std::size_t search_limit=1500000,trace_mb=32;
     // All zero preserves V2 routing. Numeric modes are validated by main.cpp.
     int net_order_mode=0,tree_route_mode=0,reroute_priority_mode=0;
@@ -33,6 +39,7 @@ struct Config {double wire=1,via=0.5,tsv=4,congestion=4,history=1,thermal=1,time
     int v3_stage=0; // Internal ablation: 1 Steiner, 2 negotiated, 3 global TSV.
     bool v3_batch=false; // Numeric V3.2 build; not a JSON parameter.
     bool v3_calibrated=false; // V3.3 only; selected by the build, never JSON.
+    bool v3_rules_20261029=false; // V3.4 physical announcement model, NOT an official scorer.
 };
 std::string read_file(const std::filesystem::path& p);
 void write_json(const std::filesystem::path&p,const Json&j);
