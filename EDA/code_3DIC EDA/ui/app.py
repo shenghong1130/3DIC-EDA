@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label,existing_run_dir,load_record
 from result_store import Store,Cursor,LARGE_BYTES,thermal_sample
+from scoring import summary as scoring_summary, comparison as scoring_comparison, ScoringConflict, REFERENCE
 WEB=Path(__file__).resolve().parent/'static'
 CACHE=Path(os.environ.get('GR_UI_CACHE_DIR',str(OUTPUTS/'ui_cache')))
 
@@ -36,7 +37,7 @@ def runs():
     for p in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
         r=load(p);inv=p.parent/'official_latest/invocation.json'
         if inv.is_file():r['official_status']=load(inv).get('status','NOT_EVALUATED')
-        key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':result.is_file() and result.stat().st_size>LARGE_BYTES}
+        key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'complete':r['status']=='ROUTED' and r.get('returncode',0)==0 and (p.parent/'route.guide').is_file(),'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':result.is_file() and result.stat().st_size>LARGE_BYTES}
     return out
 def selected(run):
     if len(run.split('/'))!=2:raise ValueError('Unknown run')
@@ -69,6 +70,20 @@ class Handler(BaseHTTPRequestHandler):
         try:
             u=urlparse(self.path);q=parse_qs(u.query);get=lambda k:q.get(k,[''])[0]
             if u.path=='/api/catalog':return self.send({'cases':list(catalog().values()),'runs':list(runs().values())})
+            if u.path in ('/api/scoring','/api/scoring/file'):
+                def score(key,source='own'):
+                    d=selected(key);case,label=key.split('/')
+                    return scoring_summary(case,label,get('scorer') or REFERENCE,source,get('attempt') or None,directory=d)
+                a=score(get('id'),get('source') or 'own')
+                if u.path=='/api/scoring/file':
+                    name=get('file')
+                    if name not in ('report','invocation','log') or name not in a['files']:raise ValueError('Scoring file unavailable')
+                    path=Path(a['files'][name]).resolve()
+                    if not path.is_relative_to(OUTPUTS.resolve()):raise ValueError('Scoring file outside outputs')
+                    if name=='log':return self.send(tail_text(path).encode('utf8'),mime='text/plain; charset=utf-8')
+                    return self.send(path.read_bytes())
+                b=score(get('b')) if get('b') else None
+                return self.send({'a':a,'b':b,'comparison':scoring_comparison(a,b)})
             indexed_paths={'/api/summary','/api/nets','/api/net','/api/pins','/api/geometry','/api/tiles','/api/cell','/api/instances'}
             if u.path in indexed_paths or u.path=='/api/run' and (selected(get('id'))/'result.json').stat().st_size>LARGE_BYTES:
                 s=store(get('id'));state=s.status(get('retry')=='1')
@@ -118,11 +133,12 @@ class Handler(BaseHTTPRequestHandler):
                 if not matches:raise ValueError('请先运行该用例，以取得真实引脚、实例和网格信息。')
                 d=run_data(matches[-1]);metadata={n['net']:n for n in d['nets']};d['nets']=[{'net':n,'guides':gs,'pins':metadata.get(n,{}).get('pins',[]),'cross_die':len({g[4]<=10 for g in gs})>1,'edges':[],'nodes':[],'tsv_count':None,'status':'REFERENCE'} for n,gs in guide(c['reference']).items()]
                 d['source']='official_reference_guide';d['resources']=[];d['metrics']={k:None for k in d['metrics']};d['metrics']['nets']=len(d['nets']);d['metrics']['official_status']='NOT_EVALUATED';d['iterations']=[];d['tsv_density']=[];d['router_log']='官方参考 Guide，仅用于展示与对比。没有内部搜索路径与过程记录。';d.pop('official_latest',None);d.pop('official_legacy',None);d['reference_path']=c['reference'];return self.send(d)
-            names={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/layers3d.js':'layers3d.js','/remote.js':'remote.js'}
+            names={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/layers3d.js':'layers3d.js','/remote.js':'remote.js','/scoring.js':'scoring.js'}
             if u.path in names:
                 file=WEB/names[u.path];mime={'.html':'text/html','.js':'text/javascript','.css':'text/css'}[file.suffix];return self.send(file.read_bytes(),mime=mime+'; charset=utf-8')
             self.send({'error':'Not found'},404)
         except (BrokenPipeError,ConnectionResetError):pass # Normal when the user aborts an old selection.
+        except ScoringConflict as e:self.send({'error':str(e),'error_kind':'scoring_identity_conflict'},409)
         except (ValueError,OSError,KeyError) as e:self.send({'error':type(e).__name__+': '+str(e),'error_kind':'server_error'},400)
         except Exception as e:self.send({'error':type(e).__name__+': '+str(e),'error_kind':'server_error'},500)
     def log_message(self,fmt,*args):print(fmt%args)

@@ -5,7 +5,22 @@ def fmt(v):return 'Not Tested' if v is None else f'{v:.6f}' if isinstance(v,floa
 def main():
     import argparse
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--history-only',action='store_true')
+    parser.add_argument('--scorer',choices=['reference_20261029','official_original'],help='Read-only unified scoring summary; does not rewrite legacy reports/docs')
+    parser.add_argument('--case');parser.add_argument('--label')
     args=parser.parse_args()
+    if args.scorer:
+        from scoring import summary,ScoringConflict
+        if args.history_only:parser.error('--scorer and --history-only are separate modes')
+        for manifest in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
+            run=load_run(manifest.parent)
+            if args.case and run['case']!=args.case or args.label and run['label']!=args.label:continue
+            try:
+                record=summary(run['case'],run['label'],args.scorer,directory=manifest.parent)
+                print(json.dumps({k:v for k,v in record.items() if k not in ('report','errors','files')},ensure_ascii=False))
+            except (OSError,ValueError,KeyError) as error:
+                print(json.dumps({'case':run['case'],'label':run['label'],'scorer':args.scorer,'status':'IDENTITY_ERROR','error':str(error)},ensure_ascii=False))
+        return
+    if args.case or args.label:parser.error('--case/--label filters require --scorer')
     if args.history_only:
         from case001_history import print_history
         print_history();return

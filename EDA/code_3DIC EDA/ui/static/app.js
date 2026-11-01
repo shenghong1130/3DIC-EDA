@@ -51,11 +51,12 @@ function setCases(){
     setRuns();
 }
 function setRuns(){
-    const rs=S.catalog.runs.filter(r=>r.case===$('case').value&&r.status==='ROUTED');
-    options($('run'),rs.map(r=>[r.id,r.label+' · '+r.official_status]),rs.some(r=>r.id===$('run').value)?$('run').value:rs.find(r=>r.label==='final')?.id);
-    options($('compare'),[['','选择另一条真实记录'],...rs.map(r=>[r.id,r.label])]);load();
+    const rs=S.catalog.runs.filter(r=>r.case===$('case').value);
+    options($('run'),rs.map(r=>[r.id,r.label+' · '+(r.complete?'ROUTED':r.status+' / 未完成')]),rs.some(r=>r.id===$('run').value)?$('run').value:rs.find(r=>r.complete&&r.label.endsWith('_v3_5'))?.id||rs.find(r=>r.complete)?.id);
+    options($('compare'),[['','选择另一条真实记录'],...rs.map(r=>[r.id,r.label+' · '+r.status])]);load();
 }
 function clearData(){
+    ScoringUI.clear();$('localmetrics').textContent='';
     S.remote=null;S.raw=null;S.resourceMap=new Map();S.data=null;S.allPins=[];S.pinIndex=new Map();S.netMap=new Map();S.active=new Map();S.pending=new Map();
     S.trace=[];S.fullTrace=[];S.traceByNet=new Map();S.largeTrace=false;S.index=-1;S.ghost=null;
     S.inspect=null;S.choices=[];S.selected='all';S.filterKey=null;S.stats=null;S.learningKey=null;
@@ -74,6 +75,12 @@ async function load(){
     try{
         const ref=$('source').value==='reference',run=$('run').value;
         if(!run&&!ref){$('subtitle').textContent='该用例尚无完整运行记录。请先使用 scripts/run_case.py 运行。';$('badge').textContent='NOT RUN';setLoadStatus('没有可加载的完整运行记录。');return;}
+        if(!ref&&S.catalog.runs.find(r=>r.id===run)?.complete===false){
+            $('subtitle').textContent=$('case').value+' / '+run.split('/')[1]+' · Router 未完整交付，保留原始记录。';
+            setLoadStatus('不加载未完成的几何输出，不自动运行或评分。');ScoringUI.load();return;
+        }
+        // Scoring summaries are small and do not wait for a large geometry index.
+        if(run)ScoringUI.load();
         const indexed=S.catalog.runs.find(r=>r.id===run)?.indexed;
         $('subtitle').textContent=indexed?'读取概要 / 检查可重用本地索引…':'读取真实结果并建立 Pin 索引…';
         const url=indexed?'/api/summary?'+new URLSearchParams({id:run,source:ref?'reference':'own',retry:'1'}):ref?'/api/reference?case='+encodeURIComponent($('case').value):'/api/run?id='+encodeURIComponent(run);
@@ -88,9 +95,8 @@ async function load(){
         else{if(!await buildIndex(id))return;S.active=new Map(data.nets.map(n=>[n.net,n]));setNets(false);setLoadStatus('完整结果已加载。');}
         installTrace(S.fullTrace);
         $('subtitle').textContent=$('case').value+' / '+(ref?'官方参考 Guide':data.run.label)+' · '+fmt(data.metrics.nets,0)+' Nets · '+(data.x_lines.length-1)+' × '+(data.y_lines.length-1)+' GCells'+(data.indexed?' · 按需加载':'');
-        $('badge').textContent=ref?'REFERENCE · 仅展示':'官方 '+data.run.official_status;$('badge').classList.toggle('fail',!ref&&data.run.official_status!=='PASS');
         $('paths').disabled=ref;$('overviewPaths').disabled=ref;$('tsvs').disabled=ref;
-        metrics();details();reports();compare();if(S.view==='raw')await raw();
+        metrics();details();reports();if(S.view==='raw')await raw();
     }catch(e){if(id===S.loadId&&e.name!=='AbortError'){clearData();error(e);$('badge').textContent='LOAD FAILED';$('badge').classList.add('fail');$('subtitle').textContent='所选 Case / Run 加载失败；旧数据已清空。';}}
     finally{if(id===S.loadId){S.loading=false;draw();}}
 }
@@ -148,20 +154,9 @@ async function selectNet(name,{autoFit=true,pin=null}={}){
     try{await scopedTrace();}catch(e){if(S.data===data&&S.selectionVersion===version)error(e);return false;}
     return S.data===data&&S.selectionVersion===version;
 }
-function metrics(){const m=S.data.metrics;const rows=[['Net 总数',m.nets,'来自实际输入'],['已布线 Net',m.routed_nets,'自主路由结果'],['图边总线长',m.wirelength_dbu_local===null?null:m.wirelength_dbu_local/S.data.dbu_per_micron,'µm · 本地几何估计'],['Overflow',m.overflow_local,'本地近似 · 含 Pin/OBS'],['TSV 数量',m.tsv_count,'实际跨 Die 边'],['热相关 Pearson',m.thermal_correlation_local,'本地映射 · 非官方得分'],['算法运行时间',m.runtime_seconds,'s · 不含 WSL 启动']];$('metrics').innerHTML=rows.map(([k,v,desc])=>`<div class="metric"><small>${esc(k)}</small><strong>${fmt(v,3)}</strong><em>${esc(desc)}</em></div>`).join('');}
-function reports(){const d=S.data,r=d.official_latest;$('report').textContent=r?JSON.stringify(r,null,2):'Not Tested · 当前结果未执行新版官方评分。';$('logs').textContent=d.router_log;$('warnings').textContent=JSON.stringify({source:d.source,inputs:d.run.inputs,warnings:d.warnings,trace_truncated:d.trace_truncated},null,2);$('fidelity').textContent='官方工具评估 GRT Guide 的合法性、线长、拥塞与热指标；报告中的 mock-DRT / proxy 不代表详细布线 DRC 签核。';}
-function officialTotalScore(official){
-    const r=official?.report,s=r?.score;
-    const total=[r?.total_score,r?.overall_score,r?.final_score,s?.total_score,s?.overall_score,s?.final_score,s].find(Number.isFinite);
-    if(total!==undefined)return total;
-    if(official?.status!=='PASS'||r?.status!=='PASS')return null;
-    const values=[s?.wirelength_score,s?.congestion_score,s?.thermal_score];
-    if(!values.every(Number.isFinite))return null;
-    // 比赛代码逻辑.md 11.2: single-case quality, not the platform's final ranking score.
-    return .45*values[0]+.30*values[1]+.25*values[2];
-}
-function reportMetrics(d){const r=d.official_latest?.report;return [['本地图边线长 (DBU)',d.metrics.wirelength_dbu_local],['本地 Overflow',d.metrics.overflow_local],['TSV 数量',d.metrics.tsv_count],['本地 Pearson',d.metrics.thermal_correlation_local],['Router 时间 (s)',d.metrics.runtime_seconds],['峰值内存 (MiB)',d.run.peak_memory_bytes==null?null:d.run.peak_memory_bytes/1048576],['官方合法性',d.official_latest?.status??'Not Tested'],['官方总分',officialTotalScore(d.official_latest)],['官方 Wirelength 得分',r?.score?.wirelength_score],['官方 Congestion 得分',r?.score?.congestion_score],['官方 Thermal 得分',r?.score?.thermal_score]];}
-async function compare(){if(!S.data)return;const current=S.data,key=$('compare').value;try{const b=key?await readyApi('/api/run?id='+encodeURIComponent(key)):null;if(S.data!==current)return;const a=reportMetrics(current),bb=b?reportMetrics(b):[];$('comparetable').innerHTML=table(['指标',`A · ${current.source==='official_reference_guide'?'参考 Guide':current.run.label}`,b?`B · ${b.run.label}`:'B · 未选择'],a.map(([k,v],i)=>[k,fmt(v,4),fmt(bb[i]?.[1],4)]));}catch(e){if(S.data===current)error(e);}}
+function metrics(){const m=S.data.metrics;const rows=[['Net 总数',m.nets,'实际输入'],['已布线 Net',m.routed_nets,'自主路由结果'],['Router 图边线长',m.wirelength_dbu_local==null?null:m.wirelength_dbu_local/S.data.dbu_per_micron,'µm · 本地几何估计'],['Router Local Overflow',m.overflow_local,'算法诊断，不是所选评分'],['Router TSV 数量',m.tsv_count,'实际跨 Die 边'],['Router Local Pearson',m.thermal_correlation_local,'本地映射 · 非评分结果'],['算法运行时间',m.runtime_seconds,'s · 本地记录']];$('localmetrics').innerHTML=rows.map(([k,v,desc])=>`<div class="metric"><small>${esc(k)}</small><strong>${fmt(v,3)}</strong><em>${esc(desc)}</em></div>`).join('');}
+function reports(){const d=S.data;$('logs').textContent=d.router_log;$('warnings').textContent=JSON.stringify({source:d.source,inputs:d.run.inputs,warnings:d.warnings,trace_truncated:d.trace_truncated},null,2);ScoringUI.load(d);}
+function compare(){ScoringUI.load(S.data);}
 function node(id){
     if(!S.data||!Number.isSafeInteger(id)||id<0)return null;
     const d=S.data,nx=d.x_lines.length-1,ny=d.y_lines.length-1,gx=id%nx,gy=Math.floor(id/nx)%ny,l=Math.floor(id/(nx*ny));
@@ -275,7 +270,7 @@ function render(){
     $('pinStats').textContent='总 Pin '+fmt(stats.total,0)+' · 筛选 '+fmt(stats.filtered,0)+' · 视口 '+fmt(stats.inView,0)+' · 绘制 '+fmt(stats.points,0)+' 个单 Pin 点 + '+fmt(stats.clusters,0)+' 个聚合点（覆盖 '+fmt(stats.represented,0)+' Pin）';
     const notes={
         routing:(S.selected==='all'?'总览：全部符合筛选的 Pin 独立绘制；完整路径默认隐藏。':'聚焦 '+S.selected+'：高亮其端子与真实路径，其他网络 Pin 弱化。')+' Guide 区域和 GCell 网格是独立图层。'+($('overviewPaths').checked&&S.selected==='all'?'路径总览最多 150 Net；Pin 不受此限制。':'')+' Pin 为结果中的端子访问点；聚合点可点击展开。',
-        congestion:'最终资源快照：(Usage + Fixed) / max(1, Capacity)。灰色表示无记录（N/A），不表示容量为零；回放不重算历史资源。',
+        congestion:'Router 原有资源快照（不是参考评分资源）：(Usage + Fixed) / max(1, Capacity)。灰色表示无记录（N/A），不表示容量为零；回放不重算历史资源。',
         thermal:'投影热图：按 XY 合并不同 z 温度、落格均值与缺格填充，属于本地映射。',
         density:reference()?'参考 Guide 无实际 TSV 密度数据，不推断。':'TSV 密度来自最终 Route 的实际跨 Die 边，与普通 Via 不同。',
         raw:'原始 Thermal JSON 的 XY 投影，保留温度，不由 z 正负判断 Die。超过约 10,000 节点时抽样。'
@@ -589,7 +584,7 @@ document.querySelectorAll('[data-camera3d]').forEach(button=>button.onclick=()=>
 $('spacing3d').oninput=()=>{$('spacing3dValue').textContent=(+$('spacing3d').value/100).toFixed(2)+'×';draw();};
 for(const id of ['labels3d','onlyNetPins3d'])$(id).onchange=draw;
 $('fit').onclick=fit;$('fitNet').onclick=fitNet;$('overview').onclick=()=>selectNet('all',{autoFit:false});$('focus').onclick=fitNet;
-$('compare').onchange=compare;$('prev').onclick=()=>{stop();seek(S.index<0?S.trace.length-1:S.index-1);};$('next').onclick=()=>{stop();seek(S.index+1);};$('play').onclick=play;
+$('scorer').onchange=compare;$('compare').onchange=compare;$('prev').onclick=()=>{stop();seek(S.index<0?S.trace.length-1:S.index-1);};$('next').onclick=()=>{stop();seek(S.index+1);};$('play').onclick=play;
 $('speed').onchange=()=>{if(S.playing){stop();play();}};$('timeline').oninput=()=>{stop();seek(+$('timeline').value);};$('final').onclick=finalResult;
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=async()=>{setDimension('2d');S.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));if(S.view==='raw')await raw();draw();});
 new ResizeObserver(draw).observe($('layers3dPanel'));

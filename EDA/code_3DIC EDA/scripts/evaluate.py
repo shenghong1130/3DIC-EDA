@@ -13,7 +13,8 @@ def execute(a,run,directory):
     tool=tool_dir/('score' if a.engine=='latest' else 'score.py')
     run_id=uuid.uuid4().hex
     result={'status':'ERROR','official_status':'NOT_EVALUATED','process_status':'PREPARING',
-            'returncode':None,'engine':a.engine,'run_id':run_id,'started_at':utc(),
+            'returncode':None,'engine':a.engine,'scorer_id':'OFFICIAL_ORIGINAL' if a.engine=='latest' else 'LEGACY_PYTHON','run_id':run_id,'started_at':utc(),
+            'router_sha256':run.get('router_sha256'),'config_sha256':run.get('config_sha256'),
             'case':a.case,'label':a.label,'attempt':a.attempt,'report_directory':str(directory),
             'report':{},'failure_category':'UNKNOWN',
             'returncode_layer':'wsl.exe' if a.backend=='wsl' else 'GNU time/supervisor',
@@ -125,7 +126,7 @@ def evaluation_run(case,label):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description='Run unmodified official evaluators. Latest ELF is recommended.')
+    p=argparse.ArgumentParser(description='Run unmodified historical evaluators; latest names OFFICIAL_ORIGINAL, not the 20261029 official update.')
     p.add_argument('--case',required=True);p.add_argument('--label',default='default')
     p.add_argument('--engine',choices=['latest','legacy'],default='latest')
     p.add_argument('--backend',choices=['native','wsl'],default='wsl' if os.name=='nt' else 'native')

@@ -65,3 +65,9 @@
 @media(max-width:850px){#layers3d{height:500px}.spacing3d{margin:4px 0}.layers3d-controls{padding:10px;gap:6px}}
 
 .load-status{display:flex;align-items:center;gap:12px;margin:10px 0;color:#65768a;font-size:12px;line-height:1.7}.load-status button{white-space:nowrap}
+.scoring-message{font-size:12px;line-height:1.8;color:#61758c;overflow-wrap:anywhere}
+.scoring-alert{padding:10px 12px;border-left:3px solid #d47b3d;background:#fff4e9;color:#98522c}
+.score-files{font-size:12px;line-height:1.9}.score-files a{color:var(--blue)}
+.metric strong{overflow-wrap:anywhere}.metric:has(strong:not(:empty)){min-width:0}
+.text-metric strong{font-size:14px;letter-spacing:0;line-height:1.6}
+#comparetable{overflow-x:auto}#localmetrics{margin-top:15px;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}

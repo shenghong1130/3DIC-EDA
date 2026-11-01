@@ -12,6 +12,7 @@ import time
 from common import PROJECT, catalog, sha256, backend_command, linux_path, load_run, existing_run_dir
 from diagnostics import atomic_json
 from router_versions import identify_router
+from scoring import reference_directory, REFERENCE
 
 SOURCES = ('reference_scorer/main.cpp', 'include/physical_resources.hpp',
            'include/model.hpp', 'include/json.hpp', 'src/parser.cpp')
@@ -96,7 +97,8 @@ def main(argv=None):
     try:
         data,inputs,guide=identity(a.case,a.label,a.model_only)
         scorer,sources=source_identity();data.update(reference_source_sha256=scorer,source_sha256=sources)
-        target=(a.output_dir or PROJECT/'outputs/reports/reference_20261029'/a.case/(a.label or 'physical_model')).resolve()
+        existing = reference_directory(a.case, a.label or 'physical_model') if not a.output_dir else None
+        target=(a.output_dir or existing or PROJECT/'outputs/reports/scoring'/REFERENCE/a.case/(a.label or 'physical_model')).resolve()
         if not target.is_relative_to((PROJECT/'outputs').resolve()):raise ValueError('Reports must stay under outputs/')
         if target.exists():
             prior=json.loads((target/'invocation.json').read_bytes())
@@ -108,7 +110,7 @@ def main(argv=None):
         with tempfile.TemporaryDirectory(prefix='gr_reference_') as temp:
             executable=Path(temp)/'reference';build_command=build(executable,a.backend)
             target.mkdir(parents=True,exist_ok=False)
-            receipt={'identity':data,'status':'RUNNING','official':False,
+            receipt={'identity':data,'status':'RUNNING','official':False,'scorer_id':'REFERENCE_20261029',
                      'compiled_binary_sha256':sha256(executable),'build_command':build_command}
             atomic_json(target/'invocation.json',receipt)
             started=time.monotonic()

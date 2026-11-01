@@ -7,10 +7,12 @@
 在工程目录的 PowerShell 中执行：
 
 ```powershell
-python scripts/evaluate_reference.py --case open_3d_case001 --label case001_v3_4 --backend wsl
+python scripts/score_case.py --case open_3d_case001 --label case001_v3_4 --backend wsl
 ```
 
-默认输出 `outputs/reports/reference_20261029/<case>/<label>/`。已有目录只在输入、Guide 和参考源码身份完全一致时复用，否则拒绝覆盖。编译文件、几何外部归并条带使用独立临时目录，正常结束及 C++/Python 异常退出均清理；进程被不可捕获的 SIGKILL/主机断电终止时，操作系统临时目录可能留下条带，不能宣称此时也保证清理。
+新结果默认输出 `outputs/reports/scoring/reference_20261029/<case>/<label>/`，历史 `outputs/reports/reference_20261029/<case>/<label>/` 原位兼容，不搬移或复制 CSV。双路径同时存在须校验完整身份和报告，冲突停止。已有目录只在输入、Guide 和参考源码身份完全一致时复用，否则拒绝覆盖。旧入口 `evaluate_reference.py` 保留；统一入口的 `--scorer official_original` 则调度原版官方 ELF，绝不冒充本参考器。参考小索引位于 `outputs/reports/scoring/indexes/reference_20261029/`；原版官方小索引位于 `outputs/reports/scoring/official_original/<case>/<label>/index.json`，指向原运行目录中的权威回执。
+
+编译文件、几何外部归并条带使用独立临时目录，正常结束及 C++/Python 异常退出均清理；进程被不可捕获的 SIGKILL/主机断电终止时，操作系统临时目录可能留下条带，不能宣称此时也保证清理。
 
 仅检查真实输入的固定资源规模，不运行 Router：
 
