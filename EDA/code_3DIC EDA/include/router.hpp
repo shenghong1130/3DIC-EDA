@@ -66,6 +66,9 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V3_6
+    struct V36Transaction;
+#endif
     bool v35_access_active_=false;
     Route route_v35_access(const Net&);
     Route route_v35_local(const Net&,const Route&);
@@ -111,6 +114,14 @@ private:
     void negotiated_round(int);
     void hotspot_round(int);
     struct BatchQuality {double phi=0,upper=0;long long overflow=0;size_t hotspots=0;};
+#ifdef GR_V3_6
+    BatchQuality v36_insertion(const Route&);
+    bool v36_try_tsv(size_t,Id,double&,double,DensityCorrelation*,double,Json&);
+    void redistribute_tsv_global();
+#ifdef GR_V36_TEST
+    bool v36_abort_after_install_=false;
+#endif
+#endif
     BatchQuality batch_quality();
     BatchQuality batch_quality_full();
     BatchQuality scoring_cell(Id,int);

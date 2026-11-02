@@ -775,7 +775,13 @@ void Router::run(){
         if(!accepted)stagnant++;else{best=now;stagnant=0;}
         Json j=Json::object();j["iteration"]=it;j["candidate_overflow_local"]=double(now);j["overflow_local"]=double(best);j["accepted"]=accepted;j["rerouted_nets"]=rerouted;if(cfg.reroute_policy_mode)j["reroute_diagnostics"]=last_reroute_diagnostics_;rounds.push_back(j);trace.event("iteration_done",j);
     }
-    if(cfg.v3_stage>=3)optimize_tsv_global();
+    if(cfg.v3_stage>=3){
+#ifdef GR_V3_6
+        redistribute_tsv_global();
+#else
+        optimize_tsv_global();
+#endif
+    }
     if(cfg.v3_final){
         {Progress::Scope pruning_log(progress,"GUIDE_PRUNE");prune_routes();}
     }
@@ -878,3 +884,6 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #include "router_v3_3_impl.hpp"
 #include "router_v3_4_impl.hpp"
 #include "router_v3_5_impl.hpp"
+#ifdef GR_V3_6
+#include "router_v3_6_impl.hpp"
+#endif

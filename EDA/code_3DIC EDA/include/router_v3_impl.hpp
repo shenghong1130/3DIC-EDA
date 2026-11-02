@@ -308,6 +308,10 @@ Json Router::v3_metadata()const{
     out["final_routes_with_steiner_topology_nodes"]=steiner_routes;out["final_mapped_steiner_topology_nodes"]=double(steiner_nodes);
     out["guide_grid_wirelength_estimate"]=unknown?Json():Json(guide_cost);out["guide_grid_unknown_nets"]=unknown;
     out["guide_grid_cost_scope"]="generated nonoverlapping cell guides; via ratio 3, TSV ratio 6, nominal pitch; independently calibrated on public small cases";
-    Json iterations=Json::array();for(const auto&r:v3_rounds_)iterations.push(r);out["rounds"]=iterations;return out;
+    Json iterations=Json::array();for(const auto&r:v3_rounds_)iterations.push(r);out["rounds"]=iterations;
+#ifdef GR_V3_6
+    out["generation"]="v3_6_congestion_aware_tsv_candidate";out["tsv"]="global_congestion_aware_redistribution";
+#endif
+    return out;
 }
 }

@@ -741,6 +741,58 @@
       "official_old_status": "PASS",
       "reference_legality": "REFERENCE_VALID",
       "reference_overflow_improved": false
+    },
+    "v3_6": {
+      "path": "build/router_v3_6",
+      "config_path": "configs/v3_6.json",
+      "label": "case001_v3_6",
+      "sha256": "7e2637c14afe43c2933081e385986d5b1637bbf5d9c584797e8f93584de9ea3a",
+      "config_sha256": "5026a3201b7bce2ece026ea168afe274e44b97bcbaa2d8da26e2bdb6097c5f43",
+      "status": "CANDIDATE",
+      "release_status": "NOT_RELEASED",
+      "verified": false,
+      "source_sha256": {
+        "src/main.cpp": "51889f4baacc65efb14f5965f1af662d510ef13e2f38cc0d7eba564a602b3280",
+        "src/parser.cpp": "453942d2ead2817bcfa178df6d590d0672fdcc1126f39ea080c279b03737c4e4",
+        "src/router.cpp": "bda841ba27a8c47d550d941286420ce743789333c2d8c113005354133d49b8b3",
+        "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+        "include/model.hpp": "dcd3d6e6c8a8d942682e5f0cbb1ed5fd22c15cade8704e5e3246f902d26026ae",
+        "include/physical_resources.hpp": "83de0450b4addcd933bc0393b44cff4841e8b838e5bf6e717ab349f74eb6a298",
+        "include/progress.hpp": "0de5b783832546579fa855c8ff5fd333a720e7136304bbab558e173df71fde47",
+        "include/router.hpp": "a7a6e60e10f7a0c35d027d9234a77f885a37fba82f17eabecae27bf8e0679b58",
+        "include/router_batch_impl.hpp": "2e64864adc22a63296bf105a8e6afbf46c7443bfc123db24418c7a89d4a48317",
+        "include/router_v3_3_impl.hpp": "891332ae8f2142d1f985e1b1c2d2d64835d926442714b614f3c60acc2f6a5bd1",
+        "include/router_v3_4_impl.hpp": "7b1249e433b29c586648da6e6a82cc4c74301d98b012c6b491d490a1dee4225d",
+        "include/router_v3_5_impl.hpp": "eee672197e24e9e706c0d3f3ce29f82025700a9020f085d44b9bdfe278f0a506",
+        "include/router_v3_6_impl.hpp": "c78f302e56d42aa334872a9fd99b203297ff1b8fa67af70387c2ff12020d8261",
+        "include/router_v3_impl.hpp": "ba283f61fbb216798d07b4bd21c69c8470c5fdf57cd3ff06069fc2a6fda4605e",
+        "include/v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+      },
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O2",
+        "-DGR_V3_FINAL",
+        "-DGR_V3_5",
+        "-DGR_V3_6",
+        "-I",
+        "include",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "/mnt/c/Users/SCSM11/AppData/Local/Temp/v36_final_mu95gkjx/router"
+      ],
+      "base_version": "v3_5",
+      "validation": "outputs/reports/v3_6/unit_tests.json",
+      "official_new_evaluator_verified": false,
+      "official_score": null,
+      "evaluation_summary": "outputs/reports/v3_6/decision.json",
+      "reference_legality": {
+        "case001": "REFERENCE_VALID",
+        "case003": "REFERENCE_VALID"
+      },
+      "official_status": "NOT_EVALUATED"
     }
   },
   "formal_configs": {
