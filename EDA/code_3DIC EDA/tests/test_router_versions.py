@@ -51,6 +51,12 @@ class IdentityTests(unittest.TestCase):
     def test_corrupt_candidate_table_preserves_unknown_fallback(self):
         self.data['candidates']=[];self.save();self.assertEqual(self.identify(b'v1')['router_version_status'],'REGISTRY_INVALID')
 
+    def test_v4_major_candidate_is_hash_identified(self):
+        self.data['candidates']={'v4':{'path':'build/router_v4','config_path':'configs/v4.json','label':'case001_v4',
+            'sha256':digest(b'v4'),'verified':False,'status':'CANDIDATE','source_sha256':{'include/router_v4_impl.hpp':digest(b'source')},'build_command':['g++','-DGR_V4']}}
+        self.save();r=self.identify(b'v4');self.assertEqual(r['router_version'],'v4');self.assertEqual(r['router_version_status'],'CANDIDATE')
+        self.assertEqual(self.identify(b'v4 modified')['router_version'],'UNKNOWN')
+
 class RunMetadataTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='router version space ');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
@@ -135,6 +141,14 @@ class RunMetadataTests(unittest.TestCase):
         self.assertFalse(self.target.exists())
         self.target=self.root/'outputs/runs/toy/toy_v3_1'
         _,r,_=self.invoke(exe,config=config,label='toy_v3_1',comparison=False);self.assertEqual(r['version_run_kind'],'VERSION');self.assertEqual(r['config_sha256'],digest(config.read_bytes()))
+
+    def test_v4_formal_label_and_config(self):
+        data=json.loads(self.registry.read_text());data['versions']['v4']=record('v4',b'v4');self.registry.write_text(json.dumps(data))
+        exe=self.root/'build/router_v4';exe.write_bytes(b'v4');config=self.root/'configs/v4.json';config.write_text('{"wire":1}')
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):self.invoke(exe,config=config,label='case001_v3_6',case='open_3d_case001',comparison=False)
+        self.target=self.root/'outputs/runs/open_3d_case001/case001_v4'
+        _,r,_=self.invoke(exe,config=config,label='case001_v4',case='open_3d_case001',comparison=False)
+        self.assertEqual(r['router_version'],'v4');self.assertEqual(r['label'],'case001_v4')
 
     def test_numeric_mismatch_is_only_an_explicit_comparison(self):
         data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))

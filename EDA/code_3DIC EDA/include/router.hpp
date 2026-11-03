@@ -66,6 +66,24 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V4
+    struct V4Transaction;
+    Json v4_stats_=Json::object();
+    bool v4_search_active_=false;
+    int v4_xl_=0,v4_xh_=0,v4_yl_=0,v4_yh_=0;
+    size_t v4_search_limit_=8192;
+    bool v4_inject_install_=false;
+#ifdef GR_V4_TEST
+    std::function<void()> v4_install_hook_;
+#endif
+    void optimize_v4();
+    void v4_layer_escape(double&,double);
+    void v4_tsv_refine(bool,double&,double,DensityCorrelation*);
+    Route v4_local_escape(size_t,const Route&,Id);
+    Route v4_local_tsv(size_t,const Route&,Id);
+    bool v4_try(size_t,Id,bool,double&,double,DensityCorrelation*,double,long long,double,Json&);
+    Json v4_attribution()const;
+#endif
 #ifdef GR_V3_6
     struct V36Transaction;
 #endif

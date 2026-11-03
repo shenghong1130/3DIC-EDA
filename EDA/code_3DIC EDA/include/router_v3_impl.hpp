@@ -312,6 +312,9 @@ Json Router::v3_metadata()const{
 #ifdef GR_V3_6
     out["generation"]="v3_6_congestion_aware_tsv_candidate";out["tsv"]="global_congestion_aware_redistribution";
 #endif
+#ifdef GR_V4
+    out["generation"]="v4_joint_candidate";out["v4"]=v4_stats_;
+#endif
     return out;
 }
 }

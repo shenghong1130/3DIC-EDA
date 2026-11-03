@@ -188,6 +188,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
         GR_COUNT(margin_attempts,1);
         check_time();int xl=std::max(0,std::min(ax,bx)-margin),xh=std::min(nx-1,std::max(ax,bx)+margin),yl=std::max(0,std::min(ay,by)-margin),yh=std::min(ny-1,std::max(ay,by)+margin);
         if(tree){xh=std::min(nx-1,std::max(ax,tree->xh)+margin);yh=std::min(ny-1,std::max(ay,tree->yh)+margin);}
+#ifdef GR_V4
+        if(v4_search_active_){xl=v4_xl_;xh=v4_xh_;yl=v4_yl_;yh=v4_yh_;}
+#endif
         size_t width=size_t(xh-xl+1),height=size_t(yh-yl+1);auto layers=std::int64_t(hi)-lo+1;
         bool dense=layers>0&&layers<=20&&al>=lo&&al<=hi&&bl>=lo&&bl<=hi&&width*height<=dense_limit_/size_t(layers);
         auto slot=[&](int x,int y,int l){return (size_t(l-lo)*height+size_t(y-yl))*width+size_t(x-xl);};
@@ -206,6 +209,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
             if(tree?tree->nodes.count(cur.v):cur.v==goal){std::vector<Id> result;for(Id v=cur.v;;v=known(v).parent){result.push_back(v);if(v==start)break;}std::reverse(result.begin(),result.end());return result;}
             if(tree&&tree->exact){++v3_counts_["multi_target_expansions"];if(expanded>=50000)throw V3Budget();}
             ++expanded;GR_COUNT(expansions,1);GR_MAX(max_expansions,expanded);if(expanded>cfg.search_limit)throw std::runtime_error("A* expansion limit; increase search_limit");
+#ifdef GR_V4
+            if(v4_search_active_){if(expanded>v4_search_limit_)throw V3Budget();if(expanded%256==0)check_time();}
+#endif
             if(expanded%4096==0)check_time();
             int x,y,l;decode(cur.v,x,y,l);
             double cx=x_centers_[x],cy=y_centers_[y];
@@ -221,6 +227,11 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 double penalty=cfg.v3_rules_20261029?v3_penalty(v,1):cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
+#ifdef GR_V4
+                // Only V4 local trials: nonnegative marginal M1 price. The
+                // geometric heuristic remains a lower bound; terminals stay.
+                if(v4_search_active_&&ll==1){auto a=scoring_cell(v,res.usage),b=scoring_cell(v,res.usage+1);penalty+=cfg.congestion*(b.phi-a.phi+double(b.overflow-a.overflow));}
+#endif
                 if(cfg.v3_calibrated&&v3_batch_active_&&alternative_variant_){
                     // Nonnegative soft exclusions: no illegal Via/layer edge
                     // is introduced, and the geometric heuristic stays a bound.
@@ -235,6 +246,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
             bool horizontal=l>=1&&l<=20&&layer_present_[l]?layer_horizontal_[l]:d.layers.at(l).direction=="HORIZONTAL";
             if(horizontal){visit(x-1,y,l);visit(x+1,y,l);}else{visit(x,y-1,l);visit(x,y+1,l);}visit(x,y,l-1);visit(x,y,l+1);
         }
+#ifdef GR_V4
+        if(v4_search_active_)break;
+#endif
         if(xl==0&&yl==0&&xh==nx-1&&yh==ny-1)break;
     }
     throw std::runtime_error("No legal path between GCells "+std::to_string(start)+" and "+std::to_string(goal));
@@ -782,6 +796,9 @@ void Router::run(){
         optimize_tsv_global();
 #endif
     }
+#ifdef GR_V4
+    optimize_v4();
+#endif
     if(cfg.v3_final){
         {Progress::Scope pruning_log(progress,"GUIDE_PRUNE");prune_routes();}
     }
@@ -886,4 +903,7 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #include "router_v3_5_impl.hpp"
 #ifdef GR_V3_6
 #include "router_v3_6_impl.hpp"
+#endif
+#ifdef GR_V4
+#include "router_v4_impl.hpp"
 #endif
