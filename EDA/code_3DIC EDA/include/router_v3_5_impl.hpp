@@ -1,9 +1,17 @@
 #pragma once
 #include "physical_resources.hpp"
+#ifdef GR_V4_2
+#include "physical_resources_20261103.hpp"
+#endif
 namespace gr {
 void Router::build_v35_model(){
     batch_cache_ready_=false;v3_fixed_cache_.clear();guide_model_ready_=false;
-    PhysicalModel model(d);scoring_tracks_=model.tracks;
+#ifdef GR_V4_2
+    PhysicalModel20261103 model(d);
+#else
+    PhysicalModel model(d);
+#endif
+    scoring_tracks_=model.tracks;
     for(auto&[v,r]:resources){(void)v;r.fixed=0;r.scoring_ready=false;}
     model.build([&](Id v,int cap,int fixed){auto&r=resource(v);r.capacity=cap;r.fixed=fixed;r.scoring_ready=false;},[&](){check_time();});
     v34_tsv_blocked_=std::move(model.blocked);v34_pin_min_track_=model.min_pin_shapes;v34_fixed_cells_=model.fixed_cells;guide_interval_count_=model.intervals;
@@ -23,6 +31,9 @@ Route Router::route_v35_access(const Net&n){
     for(size_t k=0;k<n.pins.size();k++){
         check_time();const auto&p=n.pins[k];double best=std::numeric_limits<double>::infinity();Id chosen=0;Pin point=p;size_t count=0;
         for(auto rect:pin_geometry(p))geometry_cells(rect,[&](Id v,const Rect&q){int x,y,l;decode(v,x,y,l);if((l<=10)!=(p.layer<=10))return;
+#ifdef GR_V4_2
+            if(scoring_capacity(v)==0)return;
+#endif
             if(n.cross&&((l==10&&high.count(v%(Id(nx)*ny)))||(l==11&&low.count(v%(Id(nx)*ny)))))return;
             double px=(q.x1+q.x2)/2,py=(q.y1+q.y2)/2;
             double cost=(std::abs(px-target_x)+std::abs(py-target_y))+.01*(std::abs(px-p.x)+std::abs(py-p.y));++count;

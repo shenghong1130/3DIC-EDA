@@ -6,11 +6,14 @@ import json
 import math
 
 from common import PROJECT, OUTPUTS, existing_run_dir, load_run, safe_label
+from router_versions import identify_router
 
 REFERENCE = 'reference_20261029'
+REFERENCE_LATEST = 'reference_20261103'
 OFFICIAL = 'official_original'
 ORIGINAL_SHA256 = '4104d0b2869ef7376d716ce9c33b56668e659575ab84615f5c0a5f282e108a8a'
-SCORERS = {REFERENCE: 'REFERENCE_20261029', OFFICIAL: 'OFFICIAL_ORIGINAL'}
+SCORERS = {REFERENCE: 'REFERENCE_20261029', REFERENCE_LATEST: 'REFERENCE_20261103', OFFICIAL: 'OFFICIAL_ORIGINAL'}
+REFERENCES = {REFERENCE, REFERENCE_LATEST}
 REPORT_LIMIT = 2 * 1024 * 1024
 
 
@@ -50,12 +53,14 @@ def roots(project=None):
     return project, project / 'outputs/reports/scoring', project / 'outputs/reports/reference_20261029'
 
 
-def reference_directory(case, label, project=None):
+def reference_directory(case, label, project=None, scorer=REFERENCE):
     """Both layouts may coexist only when identity AND report content agree."""
     _, canonical, historical = roots(project)
     case, label = safe_label(case), safe_label(label)
-    candidates = [p for p in (canonical / REFERENCE / case / label,
-                              historical / case / label) if p.exists()]
+    if scorer not in REFERENCES:raise ValueError('Unknown reference scorer')
+    paths=[canonical / scorer / case / label]
+    if scorer==REFERENCE:paths.append(historical / case / label)
+    candidates=[p for p in paths if p.exists()]
     if len(candidates) == 2:
         records = []
         for path in candidates:
@@ -120,6 +125,9 @@ def summary(case, label, scorer=REFERENCE, source='own', attempt=None, project=N
     guide = directory / 'route.guide'
     complete = run.get('status') == 'ROUTED' and run.get('returncode', 0) == 0 and guide.is_file()
     result = _metadata(case, label, scorer, run)
+    router_identity=identify_router(run.get('router_sha256'))
+    result.update(router_version=router_identity['router_version'] if source=='own' else None,
+                  router_version_status=router_identity['router_version_status'] if source=='own' else 'NOT_APPLICABLE')
     result.update(router_status='ROUTED' if complete else 'INCOMPLETE' if run.get('status') in ('RUNNING', 'ROUTED') else run.get('status', 'UNKNOWN'),
                   router_recorded_status=run.get('status', 'UNKNOWN'), router_complete=complete,
                   router_runtime_seconds=run.get('runtime_seconds'),
@@ -129,14 +137,14 @@ def summary(case, label, scorer=REFERENCE, source='own', attempt=None, project=N
     if source == 'reference':
         result['note'] = '比赛参考 Guide 没有独立对应评分记录；不沿用自主 Router 的评分。'
         return result
-    path = reference_directory(case, label, project) if scorer == REFERENCE else official_directory(directory, attempt)
+    path = reference_directory(case, label, project, scorer) if scorer in REFERENCES else official_directory(directory, attempt)
     if not path or not path.exists():
         result['note'] = '没有评分记录。' if complete else 'Router 未完成或正式 Guide 缺失；没有可评分的完整输出。'
         return result
-    filename = 'reference_report.json' if scorer == REFERENCE else 'evaluation_report.json'
+    filename = 'reference_report.json' if scorer in REFERENCES else 'evaluation_report.json'
     inv = read_json(path / 'invocation.json')
     report = read_json(path / filename)
-    ident = inv.get('identity', {}) if scorer == REFERENCE else inv
+    ident = inv.get('identity', {}) if scorer in REFERENCES else inv
     _same('Case', case, ident.get('case'))
     aliases = {label, run.get('label'), run.get('migration', {}).get('original_label'), *run.get('migration', {}).get('previous_labels', [])}
     if ident.get('label') and ident['label'] not in aliases:
@@ -155,27 +163,28 @@ def summary(case, label, scorer=REFERENCE, source='own', attempt=None, project=N
             _same('Input ' + key, expected, file_hash(original))
     _same('Router SHA256', ident.get('router_sha256'), run.get('router_sha256'))
     _same('Config SHA256', ident.get('config_sha256'), run.get('config_sha256'))
-    binary = _same('Scorer binary SHA256', inv.get('compiled_binary_sha256') if scorer == REFERENCE else inv.get('evaluator_sha256'), report.get('reference_scorer_sha256'))
+    binary = _same('Scorer binary SHA256', inv.get('compiled_binary_sha256') if scorer in REFERENCES else inv.get('evaluator_sha256'), report.get('reference_scorer_sha256'))
     source_hash = _same('Scorer source SHA256', ident.get('reference_source_sha256'), report.get('reference_source_sha256'))
-    if scorer == REFERENCE:
-        _same('Reference ruleset', 'REFERENCE_20261029', ident.get('ruleset'), report.get('ruleset'))
+    if scorer in REFERENCES:
+        _same('Reference ruleset', SCORERS[scorer], ident.get('ruleset'), report.get('ruleset'))
         if report.get('official') or ident.get('official'):
             raise ScoringConflict('Reference result must not claim official status')
     elif binary and binary != ORIGINAL_SHA256:
         raise ScoringConflict('OFFICIAL_ORIGINAL binary SHA256 differs from the original official ELF')
+    result['model_parameters']={'pin_assignment_policy':ident.get('pin_assignment_policy')} if scorer==REFERENCE_LATEST else {}
     result.update(scorer_binary_sha256=binary or 'UNKNOWN', scorer_source_sha256=source_hash or 'UNKNOWN',
                   guide_sha256=recorded_guide or 'UNKNOWN', input_sha256=recorded_inputs or 'UNKNOWN',
                   report_path=str(path / filename) if report else None,
-                  runtime_seconds=_first(report.get('runtime_seconds') if scorer == REFERENCE else inv.get('evaluator_runtime_seconds'), inv.get('runtime_seconds'), inv.get('total_runtime_seconds')),
+                  runtime_seconds=_first(report.get('runtime_seconds') if scorer in REFERENCES else inv.get('evaluator_runtime_seconds'), inv.get('runtime_seconds'), inv.get('total_runtime_seconds')),
                   peak_rss_bytes=_first(report.get('peak_rss_bytes'), inv.get('peak_memory_bytes')),
                   report=report, report_directory=str(path))
     for name, file in [('report', filename), ('invocation', 'invocation.json'), ('log', 'evaluator.log')]:
         if (path / file).is_file():
             result['files'][name] = str(path / file)
-    for name, value in [('Guide', recorded_guide), ('Input', recorded_inputs), ('Scorer binary', binary), ('Scorer source', source_hash if scorer == REFERENCE else binary)]:
+    for name, value in [('Guide', recorded_guide), ('Input', recorded_inputs), ('Scorer binary', binary), ('Scorer source', source_hash if scorer in REFERENCES else binary)]:
         if not value:
             result['identity_warnings'].append(name + ' identity UNKNOWN')
-    if scorer == REFERENCE:
+    if scorer in REFERENCES:
         status = report.get('static_legality') if inv.get('status') == 'COMPLETED' else 'ANALYSIS_ERROR' if inv.get('status') == 'ERROR' else 'INCOMPLETE'
         if status not in ('REFERENCE_VALID', 'REFERENCE_INVALID', 'ANALYSIS_ERROR', 'INCOMPLETE'):
             status = 'ANALYSIS_ERROR'
@@ -223,13 +232,14 @@ def comparison(a, b):
     if b is None:
         return dict(compatible=False, reasons=['未选择 B'], diagnostic_only=False)
     reasons = []
-    for key in ('scorer_id', 'ruleset', 'scorer_source_sha256' if a['scorer_id'] == 'REFERENCE_20261029' else 'scorer_binary_sha256', 'input_sha256'):
+    for key in ('scorer_id', 'ruleset', 'scorer_source_sha256' if a['scorer_id'].startswith('REFERENCE_') else 'scorer_binary_sha256', 'input_sha256'):
         av, bv = a.get(key), b.get(key)
         if av in (None, 'UNKNOWN') or bv in (None, 'UNKNOWN') or av != bv:
             reasons.append(key + ' 不一致或 UNKNOWN，不可直接比较')
     for record in (a, b):
         if record['status'] not in ('REFERENCE_VALID', 'REFERENCE_INVALID', 'PASS', 'FAIL'):
             reasons.append(record['label'] + ' 未完成对应评分')
+    if a.get('model_parameters',{})!=b.get('model_parameters',{}):reasons.append('Reference model parameters differ')
     invalid = any(x['status'] in ('REFERENCE_INVALID', 'FAIL') for x in (a, b))
     return dict(compatible=not reasons, reasons=reasons, diagnostic_only=invalid)
 

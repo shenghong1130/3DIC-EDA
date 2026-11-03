@@ -57,6 +57,19 @@ class IdentityTests(unittest.TestCase):
         self.save();r=self.identify(b'v4');self.assertEqual(r['router_version'],'v4');self.assertEqual(r['router_version_status'],'CANDIDATE')
         self.assertEqual(self.identify(b'v4 modified')['router_version'],'UNKNOWN')
 
+    def test_source_archive_rebuild_needs_matching_provenance(self):
+        r={'path':'build/router_v4_2','config_path':'configs/v4_2.json','label':'case001_v4_2','sha256':digest(b'canonical'),'verified':False,'status':'CANDIDATE','source_sha256':{'src/main.cpp':digest(b'source')},'config_sha256':digest(b'cfg'),'flags':['GR_V4_2'],'build_command':['cmake']}
+        proof={'method':'clean_source_archive_rebuild_and_small_guide_equivalence','source_sha256':r['source_sha256'],'config_sha256':r['config_sha256'],'archive_sha256':digest(b'archive'),'guide_sha256':{'toy':digest(b'toy'),'sample001':digest(b'sample')}}
+        r['validated_rebuilds']=[{'sha256':digest(b'rebuild'),'flags':r['flags'],'verification':proof}]
+        self.data['candidates']={'v4_2':r};self.save()
+        self.assertEqual(self.identify(b'rebuild')['router_version'],'v4_2')
+        self.assertEqual(self.identify(b'rebuild')['router_version_status'],'CANDIDATE')
+        proof['source_sha256']={'src/main.cpp':digest(b'changed')};self.save()
+        self.assertEqual(self.identify(b'rebuild')['router_version'],'UNKNOWN')
+        r['validated_rebuilds']=None;self.save()
+        self.assertEqual(self.identify(b'canonical')['router_version'],'v4_2')
+        self.assertEqual(self.identify(b'rebuild')['router_version'],'UNKNOWN')
+
 class RunMetadataTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='router version space ');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
@@ -149,6 +162,18 @@ class RunMetadataTests(unittest.TestCase):
         self.target=self.root/'outputs/runs/open_3d_case001/case001_v4'
         _,r,_=self.invoke(exe,config=config,label='case001_v4',case='open_3d_case001',comparison=False)
         self.assertEqual(r['router_version'],'v4');self.assertEqual(r['label'],'case001_v4')
+
+    def test_default_source_rebuild_candidate_keeps_real_version_on_failure(self):
+        config=self.root/'configs/v4_2.json';config.write_text('{"wire":1}')
+        r={'path':'build/router_v4_2','config_path':'configs/v4_2.json','label':'case001_v4_2','sha256':digest(b'canonical'),'verified':False,'status':'CANDIDATE','source_sha256':{'src/main.cpp':digest(b'source')},'config_sha256':digest(config.read_bytes()),'flags':['GR_V4_2'],'build_command':['cmake']}
+        proof={'method':'clean_source_archive_rebuild_and_small_guide_equivalence','source_sha256':r['source_sha256'],'config_sha256':r['config_sha256'],'archive_sha256':digest(b'archive'),'guide_sha256':{'toy':digest(b'toy'),'sample001':digest(b'sample')}}
+        r['validated_rebuilds']=[{'sha256':digest(b'source-build'),'flags':r['flags'],'verification':proof}]
+        data=json.loads(self.registry.read_text());data['candidates']={'v4_2':r};self.registry.write_text(json.dumps(data))
+        (self.root/'router').write_bytes(b'source-build');self.target=self.root/'outputs/runs/toy/toy_v4_2'
+        code,manifest,_=self.invoke(config=config,label='toy_v4_2',comparison=False)
+        self.assertEqual(code,1);self.assertEqual(manifest['router_version'],'v4_2')
+        self.assertEqual(manifest['router_version_status'],'CANDIDATE');self.assertEqual(manifest['router_binary'],'router')
+        self.assertEqual(manifest['router_sha256'],digest(b'source-build'))
 
     def test_numeric_mismatch_is_only_an_explicit_comparison(self):
         data=json.loads(self.registry.read_text());data['versions']['v3_1']=record('v3_1',b'numeric');self.registry.write_text(json.dumps(data))

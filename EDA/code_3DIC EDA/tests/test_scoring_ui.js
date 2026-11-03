@@ -10,7 +10,7 @@ const context={window:{},document:{getElementById:element},URLSearchParams,
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../ui/static/scoring.js'),'utf8'),context);
 const ui=context.window.ScoringUI;
 const record={label:'v3_5',router_status:'ROUTED',router_recorded_status:'ROUTED',router_complete:true,
- scorer_id:'REFERENCE_20261029',status:'REFERENCE_VALID',source:'own',identity_warnings:[],metrics:{overflow:19},
+ scorer_id:'REFERENCE_20261029',router_version:'v4_2',status:'REFERENCE_VALID',source:'own',identity_warnings:[],metrics:{overflow:19},
  by_layer:{1:{overflow:7}},files:{},report:{},errors:[],error_counts:{}};
 const payload=()=>({a:structuredClone(record),b:null,comparison:{compatible:false,reasons:['未选择 B']}});
 (async()=>{
@@ -18,6 +18,9 @@ const payload=()=>({a:structuredClone(record),b:null,comparison:{compatible:fals
  assert.match(element('metrics').innerHTML,/Reference 20261029 Overflow/);
  assert.match(element('comparetable').innerHTML,/N\/A — 最新官方公式或参数尚未公开/);
  assert.match(requests.at(-1),/scorer=reference_20261029/);
+ assert.match(element('comparetable').innerHTML,/v4_2/);
+ element('scorer').value='reference_20261103';response=payload();response.a.scorer_id='REFERENCE_20261103';await ui.load();
+ assert.match(element('metrics').innerHTML,/Reference 20261103 Overflow/);assert.match(requests.at(-1),/scorer=reference_20261103/);
  element('scorer').value='official_original';response=payload();response.a.scorer_id='OFFICIAL_ORIGINAL';response.a.status='PASS';response.a.metrics={auxiliary_quality:72,final_total_score:null};
  await ui.load();assert.match(element('comparetable').innerHTML,/单 Case 辅助加权质量/);
  const row=JSON.parse(element('comparetable').innerHTML).rows.find(r=>r[0]==='比赛最终总分');assert.equal(row[1],'N/A');

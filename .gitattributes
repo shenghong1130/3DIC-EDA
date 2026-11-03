@@ -1,2 +1,5 @@
 # Shell scripts are executed in Linux containers.
 *.sh text eol=lf
+"EDA/code_3DIC EDA/configs/v4.json" text eol=lf
+# The registered candidate config is checksum-pinned; preserve its exact bytes.
+"EDA/code_3DIC EDA/configs/v4_2.json" -text

@@ -1,0 +1,14 @@
+{
+  "wire": 1,
+  "via": 1.0,
+  "tsv": 4,
+  "congestion": 4,
+  "history": 1,
+  "thermal": 3,
+  "iterations": 2,
+  "stagnation": 2,
+  "margin": 8,
+  "search_limit": 5000000,
+  "time_limit": 600,
+  "trace_mb": 32
+}

@@ -92,6 +92,9 @@ bool Router::tsv_legal(Id v)const{
     int x,y,l;decode(v,x,y,l);
     if(l!=10||x<0||x>=nx||y<0||y>=ny||!d.tsv_cut||!d.layers.count(10)||!d.layers.count(11))return false;
     if(v34_tsv_blocked_[size_t(y)*nx+x])return false;
+#ifdef GR_V4_2
+    if(scoring_capacity(v)==0||scoring_capacity(v+Id(nx)*ny)==0)return false;
+#endif
     auto[cx,cy]=center(v);double half=2.5*d.dbu;
     return cx-half>=xs.front()&&cx+half<=xs.back()&&cy-half>=ys.front()&&cy+half<=ys.back();
 }
@@ -112,6 +115,10 @@ void Router::prepare_v34_route(const Net&n,Route&r)const{
     }
     std::map<Id,int> demand;
     auto exempt=[&](Id v){return std::binary_search(r.demand_exempt.begin(),r.demand_exempt.end(),v);};
+#ifdef GR_V4_2
+    for(Id v:r.nodes)if(scoring_capacity(v)==0)throw std::runtime_error("V4.2 Net "+n.name+": zero-capacity route GCell "+std::to_string(v));
+    for(auto[v,count]:r.tsv_demand){(void)count;if(scoring_capacity(v)==0)throw std::runtime_error("V4.2 Net "+n.name+": zero-capacity TSV footprint GCell "+std::to_string(v));}
+#endif
     for(Id v:r.nodes)if(!exempt(v))demand[v]=1;
     for(auto[v,n]:r.tsv_demand)if(!exempt(v))demand[v]=std::max(demand[v],n);
     r.resource_demand.assign(demand.begin(),demand.end());
@@ -147,6 +154,12 @@ void Router::validate_v34(const Net&n,const Route&r)const{
 }
 Json Router::rules_20261029_summary()const{
     Json j=Json::object();j["model"]="announcement_20261029_physical_candidate";j["official_new_evaluator_verified"]=false;
+#ifdef GR_V4_2
+    j["model"]="announcement_20261103_candidate";
+    j["router_version"]="v4_2";
+    j["official_track_assignment_confirmed"]=false;
+    j["zero_capacity_route_policy"]="reject actual routing; fixed virtual demand remains visible";
+#endif
     j["tsv_exclusion_scope"]="any Pin/OBS positive-area overlap on ANY metal layer; conservative pending official clarification";
     j["tsv_width_um"]=5;j["blocked_xy_cells"]=double(std::count(v34_tsv_blocked_.begin(),v34_tsv_blocked_.end(),1));j["xy_cells"]=nx*ny;
     j["fixed_cells"]=double(v34_fixed_cells_);j["pin_zero_track_cell_shapes"]=double(v34_pin_min_track_);

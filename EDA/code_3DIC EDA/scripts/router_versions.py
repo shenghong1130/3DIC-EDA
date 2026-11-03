@@ -37,6 +37,25 @@ def load_registry(path=None):
     if not isinstance(data.get('candidates',{}),dict) or any(not isinstance(r,dict) for r in data.get('candidates',{}).values()):raise ValueError('Candidate entries must be objects')
     return data
 
+def candidate_hashes(record):
+    """Additional compiler recipes require a source/config/equivalence receipt."""
+    hashes={record.get('sha256')}
+    rebuilds=record.get('validated_rebuilds',[])
+    if not isinstance(rebuilds,list):return hashes
+    for rebuild in rebuilds:
+        if not isinstance(rebuild,dict):continue
+        proof=rebuild.get('verification',{})
+        if not isinstance(proof,dict):continue
+        if (SHA256.fullmatch(str(rebuild.get('sha256','')))
+            and proof.get('method')=='clean_source_archive_rebuild_and_small_guide_equivalence'
+            and record.get('source_sha256') and proof.get('source_sha256')==record['source_sha256']
+            and record.get('config_sha256') and proof.get('config_sha256')==record['config_sha256']
+            and record.get('flags') and rebuild.get('flags')==record['flags']
+            and SHA256.fullmatch(str(proof.get('archive_sha256','')))
+            and all(SHA256.fullmatch(str(proof.get('guide_sha256',{}).get(k,''))) for k in ['toy','sample001'])):
+            hashes.add(rebuild['sha256'])
+    return hashes
+
 def identify_router(digest,path=None):
     result={'router_version':'UNKNOWN','router_version_matches':[],'router_version_status':'UNREGISTERED'}
     if digest is None:
@@ -50,7 +69,7 @@ def identify_router(digest,path=None):
     candidates=[]
     for v,r in data.get('candidates',{}).items():
         if (VERSION.fullmatch(v) and isinstance(r,dict) and r.get('status')=='CANDIDATE'
-            and r.get('verified') is False and r.get('sha256')==digest
+            and r.get('verified') is False and digest in candidate_hashes(r)
             and r.get('path')=='build/router_'+v and r.get('config_path')=='configs/'+v+'.json'
             and r.get('label') in {v,formal_run_label('open_3d_case001',v)} and r.get('source_sha256') and r.get('build_command')):candidates.append(v)
     if candidates:

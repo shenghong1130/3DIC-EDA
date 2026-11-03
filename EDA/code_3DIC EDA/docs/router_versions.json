@@ -846,6 +846,110 @@
       "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
       "base_commit": "f9db70d5f63543fa60a0e4d348fc0a44adbc5101",
       "evaluation_summary": "outputs/reports/v4/decision.json"
+    },
+    "v4_2": {
+      "path": "build/router_v4_2",
+      "config_path": "configs/v4_2.json",
+      "sha256": "bb6721e279938f3e158d4181f21acc1519de2cf17f791c278c4100e54495b921",
+      "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "source_sha256": {
+        "src/main.cpp": "750dc603fc6ca52219577c28a37463623218205b566410875e5fbdca8f968041",
+        "src/parser.cpp": "453942d2ead2817bcfa178df6d590d0672fdcc1126f39ea080c279b03737c4e4",
+        "src/router.cpp": "49bed4e5768b62b87d023b1e855cb60a52cb44eeb345e70a97afe169196ee70d",
+        "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+        "include/model.hpp": "dcd3d6e6c8a8d942682e5f0cbb1ed5fd22c15cade8704e5e3246f902d26026ae",
+        "include/physical_resources.hpp": "83de0450b4addcd933bc0393b44cff4841e8b838e5bf6e717ab349f74eb6a298",
+        "include/physical_resources_20261103.hpp": "9c755b62b617b22f165902e08f6a5b722b065881b573a284359edbfcef2e2fee",
+        "include/progress.hpp": "0de5b783832546579fa855c8ff5fd333a720e7136304bbab558e173df71fde47",
+        "include/router.hpp": "f4cce4f86be67d74851613919885b6a92982bc5ae1f65b9f556d1bd045dae1a1",
+        "include/router_batch_impl.hpp": "2e64864adc22a63296bf105a8e6afbf46c7443bfc123db24418c7a89d4a48317",
+        "include/router_v3_3_impl.hpp": "891332ae8f2142d1f985e1b1c2d2d64835d926442714b614f3c60acc2f6a5bd1",
+        "include/router_v3_4_impl.hpp": "54a575a338c887fe7ba6a6327e783222e22fed7a4d0404953ac7e74228bac539",
+        "include/router_v3_5_impl.hpp": "2944c4447387132cdb55b1269755f281abb643e1ac811f279cb16fe78a34254f",
+        "include/router_v3_6_impl.hpp": "c78f302e56d42aa334872a9fd99b203297ff1b8fa67af70387c2ff12020d8261",
+        "include/router_v3_impl.hpp": "dc1b014403ab44fd6c803889844ba8226dcd9e6b2825dafb6521fa3d9bec3a9e",
+        "include/router_v4_impl.hpp": "1fad48e40424e6bdc047b16addcebfb3a361fe258926bb2c5fb9a9ebedbe8095",
+        "include/v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+      },
+      "build_command": [
+        "cmake",
+        "--build",
+        "<isolated build>",
+        "--target",
+        "router_v4_2",
+        "--parallel",
+        "1"
+      ],
+      "flags": [
+        "GR_V3_FINAL",
+        "GR_V3_5",
+        "GR_V3_6",
+        "GR_V4",
+        "GR_V4_2"
+      ],
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+      "base_version": "v4",
+      "base_commit": "3f6cedd2318e0fded47fa2b9efd84e7d23554b6f",
+      "status": "CANDIDATE",
+      "release_status": "NOT_RELEASED",
+      "verified": false,
+      "label": "case001_v4_2",
+      "formal_labels": [
+        "case001_v4_2",
+        "case003_v4_2",
+        "case005_v4_2"
+      ],
+      "validation_path": "outputs/reports/v4_2/decision.json",
+      "ruleset": "REFERENCE_20261103",
+      "official_track_assignment_confirmed": false,
+      "validated_rebuilds": [
+        {
+          "name": "clean_source_archive",
+          "sha256": "b2a89faa80307048a15e504976294323ac7a57f42a3afbde6bd1b6d3001cbc8a",
+          "flags": [
+            "GR_V3_FINAL",
+            "GR_V3_5",
+            "GR_V3_6",
+            "GR_V4",
+            "GR_V4_2"
+          ],
+          "build_command": [
+            "bash",
+            "build.sh"
+          ],
+          "standard": "c++17; canonical CMake uses gnu++17",
+          "verification": {
+            "method": "clean_source_archive_rebuild_and_small_guide_equivalence",
+            "source_sha256": {
+              "src/main.cpp": "750dc603fc6ca52219577c28a37463623218205b566410875e5fbdca8f968041",
+              "src/parser.cpp": "453942d2ead2817bcfa178df6d590d0672fdcc1126f39ea080c279b03737c4e4",
+              "src/router.cpp": "49bed4e5768b62b87d023b1e855cb60a52cb44eeb345e70a97afe169196ee70d",
+              "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+              "include/model.hpp": "dcd3d6e6c8a8d942682e5f0cbb1ed5fd22c15cade8704e5e3246f902d26026ae",
+              "include/physical_resources.hpp": "83de0450b4addcd933bc0393b44cff4841e8b838e5bf6e717ab349f74eb6a298",
+              "include/physical_resources_20261103.hpp": "9c755b62b617b22f165902e08f6a5b722b065881b573a284359edbfcef2e2fee",
+              "include/progress.hpp": "0de5b783832546579fa855c8ff5fd333a720e7136304bbab558e173df71fde47",
+              "include/router.hpp": "f4cce4f86be67d74851613919885b6a92982bc5ae1f65b9f556d1bd045dae1a1",
+              "include/router_batch_impl.hpp": "2e64864adc22a63296bf105a8e6afbf46c7443bfc123db24418c7a89d4a48317",
+              "include/router_v3_3_impl.hpp": "891332ae8f2142d1f985e1b1c2d2d64835d926442714b614f3c60acc2f6a5bd1",
+              "include/router_v3_4_impl.hpp": "54a575a338c887fe7ba6a6327e783222e22fed7a4d0404953ac7e74228bac539",
+              "include/router_v3_5_impl.hpp": "2944c4447387132cdb55b1269755f281abb643e1ac811f279cb16fe78a34254f",
+              "include/router_v3_6_impl.hpp": "c78f302e56d42aa334872a9fd99b203297ff1b8fa67af70387c2ff12020d8261",
+              "include/router_v3_impl.hpp": "dc1b014403ab44fd6c803889844ba8226dcd9e6b2825dafb6521fa3d9bec3a9e",
+              "include/router_v4_impl.hpp": "1fad48e40424e6bdc047b16addcebfb3a361fe258926bb2c5fb9a9ebedbe8095",
+              "include/v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+            },
+            "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+            "archive_sha256": "bd71d3e9432c708faa0e83357e3c76d16125d11da77da3917f75d85200f82ce5",
+            "guide_sha256": {
+              "toy": "49e5fd259217958659df0c4a0b61c772596e0836aceb2d77c7d671cf8f530086",
+              "sample001": "f31e49e2acb431127477f4ac92a7c3696037c3f451edd299c2540d864805e88f"
+            }
+          },
+          "status": "CANDIDATE",
+          "qualification": "Same source/config/macros and exact small Guides; no full-case binary equivalence claimed"
+        }
+      ]
     }
   },
   "formal_configs": {

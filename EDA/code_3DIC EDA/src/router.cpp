@@ -172,6 +172,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
         if(tree->nodes.empty()||lo>hi||lo<1||hi>20||tree->ll<lo||tree->lh>hi||l<lo||l>hi||x>=nx||y>=ny||!d.layers.count(l))throw std::runtime_error("Tree search requires nonempty targets in one legal layer range");
         if(lo<=10&&hi>=11)throw std::runtime_error("Tree search cannot cross the Die interface");
     }
+#ifdef GR_V4_2
+    if(scoring_capacity(start)==0||(!tree&&scoring_capacity(goal)==0))throw std::runtime_error("V4.2 zero-capacity search endpoint");
+#endif
     if(tree?tree->nodes.count(start):start==goal)return {start};
     if(!static_frozen_)refresh_layers(); // Direct test/API calls may edit Design.
     int ax,ay,al,bx,by,bl;decode(start,ax,ay,al);decode(goal,bx,by,bl);
@@ -219,6 +222,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 if(xx<xl||xx>xh||yy<yl||yy>yh||ll<lo||ll>hi)return;
                 if(ll>=1&&ll<=20?!layer_present_[ll]:!d.layers.count(ll))return;
                 Id v=id(xx,yy,ll);bool planar=l==ll;
+#ifdef GR_V4_2
+                if(scoring_capacity(v)==0)return;
+#endif
                 if(!planar){bool via=l>=1&&l<=20&&ll>=1&&ll<=20?(ll>l?via_up_[l]:via_down_[l]):d.vias.count({std::min(l,ll),std::max(l,ll)});if(!via)return;}
                 if(planar&&cross&&(l==10||l==11))return; // Only access cells on interface layers.
                 auto&res=resource(v);

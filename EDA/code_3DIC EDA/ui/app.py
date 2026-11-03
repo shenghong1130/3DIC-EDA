@@ -8,7 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label,existing_run_dir,load_record
 from result_store import Store,Cursor,LARGE_BYTES,thermal_sample
-from scoring import summary as scoring_summary, comparison as scoring_comparison, ScoringConflict, REFERENCE
+from scoring import summary as scoring_summary, comparison as scoring_comparison, ScoringConflict, REFERENCE_LATEST
 WEB=Path(__file__).resolve().parent/'static'
 CACHE=Path(os.environ.get('GR_UI_CACHE_DIR',str(OUTPUTS/'ui_cache')))
 
@@ -73,7 +73,7 @@ class Handler(BaseHTTPRequestHandler):
             if u.path in ('/api/scoring','/api/scoring/file'):
                 def score(key,source='own'):
                     d=selected(key);case,label=key.split('/')
-                    return scoring_summary(case,label,get('scorer') or REFERENCE,source,get('attempt') or None,directory=d)
+                    return scoring_summary(case,label,get('scorer') or REFERENCE_LATEST,source,get('attempt') or None,directory=d)
                 a=score(get('id'),get('source') or 'own')
                 if u.path=='/api/scoring/file':
                     name=get('file')

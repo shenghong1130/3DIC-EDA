@@ -188,10 +188,10 @@ class ScoringTests(unittest.TestCase):
     def test_dispatch_reuses_pass_and_routes_new_parameters_without_shell(self):
         self.reference(); record = self.summary()
         with patch.object(score_case, 'summary', return_value=record), patch.object(score_case, 'reference_directory', return_value=self.reference()), patch.object(score_case, 'write_index', return_value=self.project / 'index.json'), patch('evaluate_reference.source_identity', return_value=('3'*64, {})), patch('evaluate_reference.main', side_effect=AssertionError('Successful report must not re-evaluate')), contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label]), 0)
+            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label,'--scorer',scoring.REFERENCE]), 0)
         missing = copy.deepcopy(record); missing['status'] = 'NOT_EVALUATED'
         with patch.object(score_case, 'summary', side_effect=[missing, record]), patch.object(score_case, 'reference_directory', return_value=None), patch.object(score_case, 'PROJECT', self.project), patch.object(score_case, 'write_index', return_value=self.project / 'index.json'), patch('evaluate_reference.source_identity', return_value=('3'*64, {})), patch('evaluate_reference.main', return_value=0) as invoke, contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label,'--memory-mb','3072','--backend','wsl','--timeout','90']),0)
+            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label,'--scorer',scoring.REFERENCE,'--memory-mb','3072','--backend','wsl','--timeout','90']),0)
             self.assertIn('3072',invoke.call_args.args[0]); self.assertIn('90.0',invoke.call_args.args[0])
 
     def test_api_identity_errors_and_no_execution(self):
@@ -205,7 +205,7 @@ class ScoringTests(unittest.TestCase):
         with patch.object(app, 'selected', return_value=self.run), patch.object(app, 'OUTPUTS', self.project / 'outputs'), patch.object(app, 'scoring_summary', side_effect=get_summary), patch.object(app.Handler, 'log_message'), patch('subprocess.Popen', side_effect=AssertionError('UI must not execute tools')):
             thread.start()
             try:
-                url = 'http://127.0.0.1:' + str(server.server_port) + '/api/scoring?id=' + self.case + '/' + self.label
+                url = 'http://127.0.0.1:' + str(server.server_port) + '/api/scoring?scorer=reference_20261029&id=' + self.case + '/' + self.label
                 with urlopen(url, timeout=5) as response:
                     data = json.load(response)
                 self.assertEqual(data['a']['scorer_id'], 'REFERENCE_20261029')
@@ -234,7 +234,7 @@ class ScoringTests(unittest.TestCase):
         self.reference(); record=self.summary();missing=copy.deepcopy(record);missing['status']='NOT_EVALUATED'
         failed=copy.deepcopy(record);failed.update(status='ANALYSIS_ERROR',report_path=None,metrics={})
         with patch.object(score_case,'summary',side_effect=[missing,failed]), patch.object(score_case,'reference_directory',return_value=None), patch.object(score_case,'PROJECT',self.project), patch.object(score_case,'write_index',return_value=self.project/'index.json') as index, patch('evaluate_reference.source_identity',return_value=('3'*64,{})), patch('evaluate_reference.main',side_effect=SystemExit(2)), contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label]),2)
+            self.assertEqual(score_case.main(['--case',self.case,'--label',self.label,'--scorer',scoring.REFERENCE]),2)
             self.assertEqual(index.call_args.args[0]['status'],'ANALYSIS_ERROR')
 
     def test_reference_entry_allocates_only_new_canonical_directory(self):
