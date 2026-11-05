@@ -925,3 +925,6 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #ifdef GR_V4_3
 #include "router_v4_3_impl.hpp"
 #endif
+#ifdef GR_V4_4
+#include "router_v4_4_impl.hpp"
+#endif
