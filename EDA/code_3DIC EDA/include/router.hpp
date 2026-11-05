@@ -66,6 +66,23 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V4_3
+    struct V43BatchTransaction;
+    Json v43_stats_=Json::object();
+    bool v43_active_=false;
+    double v43_wire_=0,v43_wire_limit_=0;
+    double scoring_aware_congestion_cost(Id,int);
+    double v43_reference_wire(const Route&)const;
+    Route v43_local_patch(size_t,const Route&,Id);
+    bool v43_try_group(const std::vector<size_t>&,const std::vector<Id>&,double&,double,Json&);
+    void v43_multinet(double&,double);
+    void v43_tsv_refine(bool,double&,double,DensityCorrelation*);
+    void optimize_v43();
+#ifdef GR_V43_TEST
+    std::function<Route(size_t,const Route&,Id)> v43_candidate_hook_;
+    std::function<void()> v43_install_hook_;
+#endif
+#endif
 #ifdef GR_V4
     struct V4Transaction;
     Json v4_stats_=Json::object();

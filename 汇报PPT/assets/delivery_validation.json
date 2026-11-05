@@ -1,0 +1,12 @@
+{
+  "slides": 14,
+  "native_tables": 6,
+  "native_charts": 2,
+  "pptx_sha256": "a0d94ad992f942a7842ba41a5ca3ad213c80ad1550680af9549bf8df8235aaad",
+  "bytes": 467640,
+  "integrity": "pass",
+  "layout_findings": 0,
+  "layout_warnings": 0,
+  "artifact_import": true,
+  "native_office_test": false
+}

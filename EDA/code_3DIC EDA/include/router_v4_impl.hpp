@@ -88,6 +88,9 @@ bool Router::v4_try(size_t i,Id target,bool thermal_stage,double&wire,double lim
     int x,y,l;decode(target,x,y,l);tsv=tsv&&l==10;
     if(tsv&&(!tsv_legal(target)||target==routes[i].tsv)){detail["reason"]="illegal_or_unchanged_site";return false;}
     double old_wire=guide_grid_cost(routes[i]);if(!std::isfinite(old_wire)){detail["reason"]="wire_workspace";return false;}
+#ifdef GR_V4_3
+    double reference_before=v43_active_?v43_reference_wire(routes[i]):0;
+#endif
     double next_rho=density?density->value():0;size_t from=0,to=0;
     if(tsv&&density){from=v3_thermal_cell(routes[i].tsv);to=v3_thermal_cell(target);next_rho=density->after_move(from,to);
         if(next_rho+1e-12<rho_floor||(thermal_stage&&next_rho<=density->value()+1e-12)){detail["reason"]="thermal_guard";return false;}
@@ -116,6 +119,11 @@ bool Router::v4_try(size_t i,Id target,bool thermal_stage,double&wire,double lim
     int dv=vias(candidate)-vias(tx.old());
     detail["overflow_delta"]=double(delta);detail["potential_delta"]=phi;detail["wire_delta_dbu"]=dw;detail["via_delta"]=dv;
     detail["rho_delta"]=density?next_rho-density->value():0;
+#ifdef GR_V4_3
+    double reference_delta=v43_active_?v43_reference_wire(candidate)-reference_before:0;
+    if(v43_active_&&(!std::isfinite(reference_delta)||v43_wire_+reference_delta>v43_wire_limit_+1e-6)){detail["reason"]="reference_wire_guard";return false;}
+    detail["reference_wire_delta_dbu"]=reference_delta;
+#endif
     if(!std::isfinite(cost)||wire+dw>limit+1e-6||cost>old_wire*1.02+16*unit||dv>8){detail["reason"]="wire_or_via_guard";return false;}
     if(!tsv){long long a=0,b=0;
         for(auto[v,n]:v34_usage(tx.old())){int x,y,l;decode(v,x,y,l);if(l==1){auto&s=resource(v);a+=scoring_cell(v,s.usage+n).overflow-scoring_cell(v,s.usage).overflow;}}
@@ -123,7 +131,14 @@ bool Router::v4_try(size_t i,Id target,bool thermal_stage,double&wire,double lim
         detail["m1_overflow_delta"]=double(b-a);if(b>=a){detail["reason"]="no_m1_incremental_improvement";return false;}
     }
     if(thermal_stage){if(delta>over_allow||phi>phi_allow+1e-9){detail["reason"]="thermal_pareto_budget";return false;}}
-    else if(delta>0||phi>1e-9||!(delta<0||phi< -1e-8)){detail["reason"]="no_joint_congestion_improvement";return false;}
+    else if(
+#if defined(GR_V4_3) && !defined(GR_V43_DISABLE_SCORING)
+        v43_active_?(delta>over_allow||phi>=-1e-9):
+#endif
+        (delta>0||phi>1e-9||!(delta<0||phi< -1e-8))){detail["reason"]="no_joint_congestion_improvement";return false;}
+#if defined(GR_V4_3) && !defined(GR_V43_DISABLE_THERMAL)
+    if(v43_active_&&thermal_stage&&next_rho-density->value()<=std::max(0.0,reference_delta)/std::max(1.0,v43_wire_)*.1+1e-12){detail["reason"]="thermal_wire_pareto";return false;}
+#endif
     detail["accepted"]=true;detail["reason"]=thermal_stage?"thermal_pareto_move":"congestion_pareto_move";
     tx.install(std::move(candidate));
 #ifdef GR_V4_TEST
@@ -132,7 +147,11 @@ bool Router::v4_try(size_t i,Id target,bool thermal_stage,double&wire,double lim
     if(v4_inject_install_)throw std::runtime_error("Injected V4 interruption after install");
     // No allocation follows density mutation; all potentially throwing report
     // writes and install preflights precede the atomic commit boundary.
-    if(tsv&&density)density->move(from,to);wire+=dw;tx.commit();return true;
+    if(tsv&&density)density->move(from,to);wire+=dw;
+#ifdef GR_V4_3
+    if(v43_active_)v43_wire_+=reference_delta;
+#endif
+    tx.commit();return true;
 }
 
 void Router::v4_layer_escape(double&wire,double limit){

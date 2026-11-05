@@ -950,6 +950,71 @@
           "qualification": "Same source/config/macros and exact small Guides; no full-case binary equivalence claimed"
         }
       ]
+    },
+    "v4_3": {
+      "path": "build/router_v4_3",
+      "config_path": "configs/v4_3.json",
+      "sha256": "b015fe2bdd780cf3f9fbd7ed21d70c571ba17b038a60f325b8345c0f674f2d12",
+      "config_sha256": "9b5988776c80c8dd3f4e1eaea608ad614d571d621e19379d7e177a2372cb58b4",
+      "source_sha256": {
+        "src/main.cpp": "bc6e23ec68f517826abfdf424b76e4708c865a12efcc8345d6ea11ca4237edec",
+        "src/parser.cpp": "453942d2ead2817bcfa178df6d590d0672fdcc1126f39ea080c279b03737c4e4",
+        "src/router.cpp": "92c319164ed706856513b5a98a770b03db156b560c9b6f3b07dda84156f6a3e5",
+        "include/json.hpp": "71a5ee6af07f51e9107ded95c81e37562c549c0a30efa5796b6808b80b76065f",
+        "include/model.hpp": "dcd3d6e6c8a8d942682e5f0cbb1ed5fd22c15cade8704e5e3246f902d26026ae",
+        "include/physical_resources.hpp": "83de0450b4addcd933bc0393b44cff4841e8b838e5bf6e717ab349f74eb6a298",
+        "include/physical_resources_20261103.hpp": "9c755b62b617b22f165902e08f6a5b722b065881b573a284359edbfcef2e2fee",
+        "include/progress.hpp": "0de5b783832546579fa855c8ff5fd333a720e7136304bbab558e173df71fde47",
+        "include/router.hpp": "be7907660ff6bc1d821d50ca6d54a195f0a0238c9154e52c0e3f9074193fd377",
+        "include/router_batch_impl.hpp": "2e64864adc22a63296bf105a8e6afbf46c7443bfc123db24418c7a89d4a48317",
+        "include/router_v3_3_impl.hpp": "891332ae8f2142d1f985e1b1c2d2d64835d926442714b614f3c60acc2f6a5bd1",
+        "include/router_v3_4_impl.hpp": "54a575a338c887fe7ba6a6327e783222e22fed7a4d0404953ac7e74228bac539",
+        "include/router_v3_5_impl.hpp": "2944c4447387132cdb55b1269755f281abb643e1ac811f279cb16fe78a34254f",
+        "include/router_v3_6_impl.hpp": "c78f302e56d42aa334872a9fd99b203297ff1b8fa67af70387c2ff12020d8261",
+        "include/router_v3_impl.hpp": "cbef24f06f102c1d939602e89284ae7045e73d283ef3154ade59656f08e40b40",
+        "include/router_v4_3_impl.hpp": "e835e3e8b8d63b52c54cca6fa1572b0a2bec2b5644f5fdf2815a0c4339081296",
+        "include/router_v4_impl.hpp": "6f6e8495f2f60b2dcfde1ac30614dbde8a6a2c2cb201e0005386cb534e7737db",
+        "include/v3_algorithms.hpp": "89fb113e5aafe32e063f377b766b715047c96522b4a03f36ce93ff80e2930bfe"
+      },
+      "flags": [
+        "GR_V3_FINAL",
+        "GR_V3_5",
+        "GR_V3_6",
+        "GR_V4",
+        "GR_V4_2",
+        "GR_V4_3"
+      ],
+      "build_command": [
+        "g++",
+        "-std=c++17",
+        "-O2",
+        "-I",
+        "include",
+        "-DGR_V3_FINAL",
+        "-DGR_V3_5",
+        "-DGR_V3_6",
+        "-DGR_V4",
+        "-DGR_V4_2",
+        "-DGR_V4_3",
+        "src/main.cpp",
+        "src/parser.cpp",
+        "src/router.cpp",
+        "-o",
+        "build/router_v4_3"
+      ],
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+      "base_commit": "3cc5b453f453aedd28b3ffe10164e7f4c2412ec8",
+      "status": "CANDIDATE",
+      "release_status": "NOT_RELEASED",
+      "verified": false,
+      "label": "case001_v4_3",
+      "formal_labels": [
+        "case001_v4_3",
+        "case003_v4_3",
+        "case005_v4_3"
+      ],
+      "validation_path": "outputs/reports/v4_3/decision.json",
+      "ruleset": "REFERENCE_20261103"
     }
   },
   "formal_configs": {

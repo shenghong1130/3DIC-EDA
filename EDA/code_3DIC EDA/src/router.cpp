@@ -233,10 +233,17 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
                 double penalty=cfg.v3_rules_20261029?v3_penalty(v,1):cfg.v3_stage>=2&&rerouting_&&!v3_legacy_route_?v3_penalty(v,demand):congestion_penalty(res,cross&&(ll==10||ll==11)?2:1);
                 if(tree&&tree->exact&&tree->nodes.count(v))penalty=0;
                 double base=planar?cfg.wire*(std::abs(cx-x_centers_[xx])+std::abs(cy-y_centers_[yy]))/unit:cfg.via;
+#if defined(GR_V4_3) && !defined(GR_V43_DISABLE_SCORING)
+                if(v43_active_&&v4_search_active_)penalty=cfg.congestion*scoring_aware_congestion_cost(v,1);
+#endif
 #ifdef GR_V4
                 // Only V4 local trials: nonnegative marginal M1 price. The
                 // geometric heuristic remains a lower bound; terminals stay.
-                if(v4_search_active_&&ll==1){auto a=scoring_cell(v,res.usage),b=scoring_cell(v,res.usage+1);penalty+=cfg.congestion*(b.phi-a.phi+double(b.overflow-a.overflow));}
+                if(v4_search_active_&&ll==1
+#if defined(GR_V4_3) && !defined(GR_V43_DISABLE_SCORING)
+                   &&!v43_active_
+#endif
+                ){auto a=scoring_cell(v,res.usage),b=scoring_cell(v,res.usage+1);penalty+=cfg.congestion*(b.phi-a.phi+double(b.overflow-a.overflow));}
 #endif
                 if(cfg.v3_calibrated&&v3_batch_active_&&alternative_variant_){
                     // Nonnegative soft exclusions: no illegal Via/layer edge
@@ -802,7 +809,9 @@ void Router::run(){
         optimize_tsv_global();
 #endif
     }
-#ifdef GR_V4
+#ifdef GR_V4_3
+    optimize_v43();
+#elif defined(GR_V4)
     optimize_v4();
 #endif
     if(cfg.v3_final){
@@ -912,4 +921,7 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #endif
 #ifdef GR_V4
 #include "router_v4_impl.hpp"
+#endif
+#ifdef GR_V4_3
+#include "router_v4_3_impl.hpp"
 #endif

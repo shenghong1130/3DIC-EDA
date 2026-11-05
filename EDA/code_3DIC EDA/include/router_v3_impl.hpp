@@ -315,6 +315,9 @@ Json Router::v3_metadata()const{
 #ifdef GR_V4
     out["generation"]="v4_joint_candidate";out["v4"]=v4_stats_;
 #endif
+#ifdef GR_V4_3
+    out["generation"]="v4_3_scoring_aware_candidate";out["v4_3"]=v43_stats_;
+#endif
     return out;
 }
 }

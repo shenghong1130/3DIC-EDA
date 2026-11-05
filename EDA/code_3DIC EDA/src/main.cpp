@@ -19,7 +19,9 @@ int main(int argc,char**argv){
 #else
         for(int i=0;i<argc;i++)args.emplace_back(argv[i]);
 #endif
-#ifdef GR_V4_2
+#ifdef GR_V4_3
+        if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_3 CANDIDATE REFERENCE_20261103 SEARCH_PROXY_NOT_OFFICIAL_SCORE\n";return 0;}
+#elif defined(GR_V4_2)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_2 CANDIDATE REFERENCE_20261103 MODEL_ASSUMPTION\n";return 0;}
 #endif
         for(size_t i=1;i+1<args.size();i++)if(args[i]=="--progress-dir")progress.open(std::filesystem::u8path(args[i+1]));
