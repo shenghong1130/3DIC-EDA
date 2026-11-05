@@ -208,6 +208,9 @@ void Router::optimize_v43(){
 #else
     v4_tsv_refine(false,wire,limit,density.get());
 #endif
+#ifdef GR_V4_4
+    v44_global_tsv_pairs(wire,limit,density.get());
+#endif
     if(density){
 #ifndef GR_V43_DISABLE_THERMAL
         v43_tsv_refine(true,wire,limit,density.get());
