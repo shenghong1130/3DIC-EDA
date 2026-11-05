@@ -795,7 +795,19 @@ void Router::run(){
     Progress::Scope routing_log(progress,"ROUTING");
     if(cfg.v3_stage>=2){Progress::Scope model(progress,"V3_FIXED_PROJECTION");build_guide_model();}
     auto order=initial_order();
-    for(size_t position=0;position<order.size();position++){size_t i=order[position];if(progress)progress->net(position+1,d.nets.size(),d.nets[i].name,0);check_time();try{routes[i]=route(d.nets[i]);occupy(routes[i],1);if(trace.out&&!trace.truncated)trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}catch(const RouterTimeout&){throw;}catch(const std::bad_alloc&){throw;}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
+#ifdef GR_V44_CONGESTION_EXP01
+    if(initial_tsv_assignment)plan_initial_tsv();
+#endif
+    for(size_t position=0;position<order.size();position++){size_t i=order[position];if(progress)progress->net(position+1,d.nets.size(),d.nets[i].name,0);check_time();try{
+#ifdef GR_V44_CONGESTION_EXP01
+        routes[i]=route_initial_exp(i);
+#else
+        routes[i]=route(d.nets[i]);
+#endif
+        occupy(routes[i],1);if(trace.out&&!trace.truncated)trace.event("net_added",route_json(d.nets[i],routes[i]));if(progress)progress->completed();}catch(const RouterTimeout&){throw;}catch(const std::bad_alloc&){throw;}catch(const std::exception&e){throw std::runtime_error("Net "+d.nets[i].name+": "+e.what());}}
+#ifdef GR_V44_CONGESTION_EXP01
+    initial_tsv_plan_.clear();
+#endif
     int stagnant=0;long long best;{Progress::Scope overflow_log(progress,"OVERFLOW");best=overflow();}Json initial=Json::object();initial["iteration"]=0;initial["overflow_local"]=double(best);rounds.push_back(initial);trace.event("iteration_done",initial);
     if(cfg.v3_stage>=2){for(int it=1;it<=cfg.iterations;it++){if(progress)progress->pass(d.nets.size(),it);if(cfg.v3_batch){hotspot_round(it);if(v3_batch_rounds_.back().at("accepted_groups").number()==0)break;}else{negotiated_round(it);if(v3_rounds_.back().at("accepted_nets").number()==0)break;}}}
     else for(int it=1;it<=cfg.iterations&&best>0&&stagnant<cfg.stagnation;it++){
@@ -935,4 +947,7 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #endif
 #ifdef GR_V4_4
 #include "router_v4_4_impl.hpp"
+#endif
+#ifdef GR_V44_CONGESTION_EXP01
+#include "router_v44_congestion_exp01_impl.hpp"
 #endif

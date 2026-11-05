@@ -1,0 +1,21 @@
+{
+  "wire": 1,
+  "via": 1.0,
+  "tsv": 4,
+  "congestion": 4,
+  "history": 1,
+  "thermal": 3,
+  "iterations": 2,
+  "stagnation": 2,
+  "margin": 8,
+  "search_limit": 5000000,
+  "time_limit": 600,
+  "trace_mb": 32,
+  "v44_wire_growth": 0.01,
+  "v44_rounds": 3,
+  "v44_cost": 1,
+  "v44_negotiation": 1,
+  "v44_layer": 1,
+  "v44_tsv": 1,
+  "exp01_initial_tsv": 1
+}

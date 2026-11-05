@@ -321,6 +321,10 @@ Json Router::v3_metadata()const{
 #ifdef GR_V4_4
     out["generation"]="v4_4_negotiated_congestion_candidate";out["v4_4"]=v44_stats_;
 #endif
+#ifdef GR_V44_CONGESTION_EXP01
+    out["generation"]="v4_4_congestion_exp01_NOT_VALIDATED";
+    out["initial_tsv_assignment"]=initial_tsv_stats_;
+#endif
     return out;
 }
 }

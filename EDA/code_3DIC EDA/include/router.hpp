@@ -11,6 +11,9 @@ struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("R
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;int scoring_fixed=0,scoring_capacity=0;bool scoring_ready=false;};
 class Router {
 public:
+#ifdef GR_V44_CONGESTION_EXP01
+    bool initial_tsv_assignment=true;
+#endif
 #ifdef GR_V4_4
     struct V44Options {double wire_growth=.01;int rounds=3;bool cost=true,negotiation=true,layer=true,tsv=true;} v44;
 #endif
@@ -69,6 +72,12 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V44_CONGESTION_EXP01
+    std::map<size_t,Id> initial_tsv_plan_;
+    Json initial_tsv_stats_=Json::object();
+    void plan_initial_tsv();
+    Route route_initial_exp(size_t);
+#endif
 #ifdef GR_V4_4
     bool v44_active_=false;
     double v44_present_=1;

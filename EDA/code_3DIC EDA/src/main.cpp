@@ -19,7 +19,9 @@ int main(int argc,char**argv){
 #else
         for(int i=0;i<argc;i++)args.emplace_back(argv[i]);
 #endif
-#ifdef GR_V4_4
+#ifdef GR_V44_CONGESTION_EXP01
+        if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_4_congestion_exp01 EXPERIMENTAL NOT_VALIDATED NOT_OFFICIAL_SCORE\n";return 0;}
+#elif defined(GR_V4_4)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_4 CANDIDATE REFERENCE_20261103 NOT_OFFICIAL_SCORE\n";return 0;}
 #elif defined(GR_V4_3)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_3 CANDIDATE REFERENCE_20261103 SEARCH_PROXY_NOT_OFFICIAL_SCORE\n";return 0;}
@@ -29,6 +31,9 @@ int main(int argc,char**argv){
         for(size_t i=1;i+1<args.size();i++)if(args[i]=="--progress-dir")progress.open(std::filesystem::u8path(args[i+1]));
         Progress::Scope run_log(&progress,"RUN");
         std::map<std::string,std::string> opt;Config c;std::filesystem::path output;
+#ifdef GR_V44_CONGESTION_EXP01
+        bool initial_tsv_assignment=true;
+#endif
 #ifdef GR_V4_4
         Router::V44Options v44;
 #endif
@@ -40,6 +45,9 @@ int main(int argc,char**argv){
         for(auto k:{"--def","--lef","--thermal-report"})if(std::filesystem::weakly_canonical(output)==std::filesystem::weakly_canonical(std::filesystem::u8path(opt.at(k))))throw std::runtime_error("Output aliases an input");
         if(output.extension()!=".guide")throw std::runtime_error("Output must have .guide extension");
         if(opt.count("--config")){auto j=Json::parse(read_file(std::filesystem::u8path(opt["--config"])));for(auto&[k,v]:j.obj){
+#ifdef GR_V44_CONGESTION_EXP01
+            if(k=="exp01_initial_tsv"){double n=v.number();if(n!=0&&n!=1)throw std::runtime_error("exp01_initial_tsv must be 0/1");initial_tsv_assignment=n;continue;}
+#endif
 #ifdef GR_V4_4
             if(k.rfind("v44_",0)==0){
                 double n=v.number();if(!std::isfinite(n))throw std::runtime_error("Nonfinite V44 option");
@@ -80,6 +88,9 @@ int main(int argc,char**argv){
         std::unique_ptr<Router> instance;
         {Progress::Scope stage(&progress,"GRAPH_BUILD");instance=std::make_unique<Router>(d,c,trace,&progress);}
         Router& router=*instance;router.started=program_started;router.check_time();
+#ifdef GR_V44_CONGESTION_EXP01
+        router.initial_tsv_assignment=initial_tsv_assignment;
+#endif
 #ifdef GR_V4_4
         router.v44=v44;
 #endif

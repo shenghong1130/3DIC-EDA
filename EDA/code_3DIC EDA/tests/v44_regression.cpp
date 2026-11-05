@@ -3,6 +3,11 @@
 #include <iostream>
 using namespace gr;
 namespace gr {struct RouterTestAccess{
+#ifdef GR_V44_CONGESTION_EXP01
+ static void plan(Router&r){r.plan_initial_tsv();}
+ static Route initial(Router&r,size_t i){return r.route_initial_exp(i);}
+ static size_t plans(Router&r){return r.initial_tsv_plan_.size();}
+#endif
  static double price44(Router&r,Id v,int n){return r.v44_price(v,n);}
  static bool trial44(Router&r,Id seed,double&w,Json&j){r.v44_active_=true;return r.v44_trial(0,seed,0,w,1e100,j);}
  static void fault44(Router&r,bool heap){r.v44_install_hook_=[heap](){if(heap){fail_test_heap_allocations=true;throw std::bad_alloc();}throw std::runtime_error("Injected V44 failure");};}
@@ -33,6 +38,18 @@ Route corridor(Router&r,int kind){Route o;Id prior=0;
  }return o;}
 std::map<Id,int> usage(Router&r){std::map<Id,int>m;for(auto[v,s]:r.resources)if(s.usage)m[v]=s.usage;return m;}
 int main(){try{Trace tr("",0);Config cfg;cfg.time_limit=120;cfg.iterations=0;auto d=design();Router r(d,cfg,tr);r.build_fixed_demand();
+#ifdef GR_V44_CONGESTION_EXP01
+ {
+  auto cross=design();cross.tsv_cut=true;
+  for(auto&n:cross.nets){n.cross=true;n.pins[1].layer=11;cross.io_pin_rects[n.pins[1].name][0].layer=11;}
+  Router t(cross,cfg,tr);t.build_fixed_demand();RouterTestAccess::plan(t);
+  need(RouterTestAccess::plans(t)==2&&usage(t).empty(),"Planning must not occupy resources");
+  for(size_t i=0;i<t.routes.size();i++){t.routes[i]=RouterTestAccess::initial(t,i);t.validate(cross.nets[i],t.routes[i]);t.occupy(t.routes[i],1);}
+  for(auto&v:t.routes)t.occupy(v,-1);need(usage(t).empty(),"Initial planned route double charged footprint");
+  t.cfg.time_limit=0;bool interrupted=false;try{RouterTestAccess::plan(t);}catch(const RouterTimeout&){interrupted=true;}
+  need(interrupted&&usage(t).empty()&&RouterTestAccess::plans(t)==0,"Interrupted planner leaked occupancy or a partial plan");
+ }
+#endif
  Route a=corridor(r,0),b=corridor(r,2);for(size_t i=0;i<2;i++){auto&t=i?b:a;for(auto&p:d.nets[i].pins)t.pin_access_nodes.push_back(r.pin_node(p));RouterTestAccess::prepare(r,i,t);r.routes[i]=t;r.occupy(t,1);}
  Id c=r.id(12,14,1);auto&fixed=r.resource(c);fixed.fixed=fixed.scoring_fixed=1;fixed.capacity=fixed.scoring_capacity=1;fixed.scoring_ready=true;
  std::vector<Route>next{corridor(r,1),corridor(r,0)};for(size_t i=0;i<2;i++){next[i].pin_access_nodes=r.routes[i].pin_access_nodes;RouterTestAccess::prepare(r,i,next[i]);}
