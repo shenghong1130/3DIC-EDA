@@ -19,7 +19,9 @@ int main(int argc,char**argv){
 #else
         for(int i=0;i<argc;i++)args.emplace_back(argv[i]);
 #endif
-#ifdef GR_V4_3
+#ifdef GR_V4_4
+        if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_4 CANDIDATE REFERENCE_20261103 NOT_OFFICIAL_SCORE\n";return 0;}
+#elif defined(GR_V4_3)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_3 CANDIDATE REFERENCE_20261103 SEARCH_PROXY_NOT_OFFICIAL_SCORE\n";return 0;}
 #elif defined(GR_V4_2)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_2 CANDIDATE REFERENCE_20261103 MODEL_ASSUMPTION\n";return 0;}
@@ -27,6 +29,9 @@ int main(int argc,char**argv){
         for(size_t i=1;i+1<args.size();i++)if(args[i]=="--progress-dir")progress.open(std::filesystem::u8path(args[i+1]));
         Progress::Scope run_log(&progress,"RUN");
         std::map<std::string,std::string> opt;Config c;std::filesystem::path output;
+#ifdef GR_V4_4
+        Router::V44Options v44;
+#endif
         {Progress::Scope arguments_log(&progress,"ARGUMENTS");
         std::set<std::string> allowed{"--def","--lef","--thermal-report","--output","--metrics","--trace","--config","--time-limit","--iterations","--trace-limit-mb","--progress-dir","--progress-every","--monitor-interval","--heartbeat-interval"};
         for(size_t i=1;i<args.size();i++){if(args[i]=="--help"){std::cout<<"router --def input.def --lef input.lef --thermal-report thermal.json --output output.guide [--metrics result.json] [--trace trace.jsonl] [--config config.json] [--time-limit seconds] [--iterations N] [--progress-dir directory] [--progress-every 1000] [--monitor-interval 5] [--heartbeat-interval 10]\n";return 0;}if(!allowed.count(args[i])||i+1>=args.size())throw std::runtime_error("Unknown/missing CLI option: "+args[i]);auto key=args[i];if(opt.count(key))throw std::runtime_error("Duplicate CLI option: "+key);opt[key]=args[++i];}
@@ -35,6 +40,14 @@ int main(int argc,char**argv){
         for(auto k:{"--def","--lef","--thermal-report"})if(std::filesystem::weakly_canonical(output)==std::filesystem::weakly_canonical(std::filesystem::u8path(opt.at(k))))throw std::runtime_error("Output aliases an input");
         if(output.extension()!=".guide")throw std::runtime_error("Output must have .guide extension");
         if(opt.count("--config")){auto j=Json::parse(read_file(std::filesystem::u8path(opt["--config"])));for(auto&[k,v]:j.obj){
+#ifdef GR_V4_4
+            if(k.rfind("v44_",0)==0){
+                double n=v.number();if(!std::isfinite(n))throw std::runtime_error("Nonfinite V44 option");
+                if(k=="v44_wire_growth"){if(n<0||n>.05)throw std::runtime_error("V44 wire growth must be 0..0.05");v44.wire_growth=n;}
+                else if(k=="v44_rounds"){if(n<1||n>6||n!=std::floor(n))throw std::runtime_error("V44 rounds must be 1..6");v44.rounds=int(n);}
+                else{if(n!=0&&n!=1)throw std::runtime_error("V44 switch must be 0/1");if(k=="v44_cost")v44.cost=n;else if(k=="v44_negotiation")v44.negotiation=n;else if(k=="v44_layer")v44.layer=n;else if(k=="v44_tsv")v44.tsv=n;else throw std::runtime_error("Unknown V44 option: "+k);}continue;
+            }
+#endif
 #ifdef GR_V3_FINAL
             if(!std::set<std::string>{"wire","via","tsv","congestion","history","thermal","iterations","stagnation","margin","search_limit","time_limit","trace_mb"}.count(k))throw std::runtime_error("V3 Final accepts shared physical/budget parameters only: "+k);
 #endif
@@ -67,6 +80,9 @@ int main(int argc,char**argv){
         std::unique_ptr<Router> instance;
         {Progress::Scope stage(&progress,"GRAPH_BUILD");instance=std::make_unique<Router>(d,c,trace,&progress);}
         Router& router=*instance;router.started=program_started;router.check_time();
+#ifdef GR_V4_4
+        router.v44=v44;
+#endif
         {Progress::Scope stage(&progress,"THERMAL");router.load_thermal(std::filesystem::u8path(opt["--thermal-report"]));}
         {Progress::Scope stage(&progress,"FIXED_DEMAND");router.build_fixed_demand();}
         router.run();

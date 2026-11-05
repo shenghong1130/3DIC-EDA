@@ -11,6 +11,9 @@ struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("R
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;int scoring_fixed=0,scoring_capacity=0;bool scoring_ready=false;};
 class Router {
 public:
+#ifdef GR_V4_4
+    struct V44Options {double wire_growth=.01;int rounds=3;bool cost=true,negotiation=true,layer=true,tsv=true;} v44;
+#endif
     Design& d;Config cfg;Trace& trace;std::vector<double> xs,ys,heat,thermal_count;
     int nx=0,ny=0;double ambient=25,unit=1;std::unordered_map<Id,Resource> resources;
     std::vector<Route> routes;std::vector<Json> rounds;std::chrono::steady_clock::time_point started;
@@ -66,6 +69,19 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V4_4
+    bool v44_active_=false;
+    double v44_present_=1;
+    std::unordered_map<Id,double> v44_history_;
+    Json v44_stats_=Json::object();
+    double v44_price(Id,int);
+    Route v44_patch(size_t,const Route&,Id);
+    bool v44_trial(size_t,Id,Id,double&,double,Json&);
+    void optimize_v44();
+#ifdef GR_V44_TEST
+    std::function<void()> v44_install_hook_;
+#endif
+#endif
 #ifdef GR_V4_3
     struct V43BatchTransaction;
     Json v43_stats_=Json::object();

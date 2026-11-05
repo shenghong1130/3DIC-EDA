@@ -236,6 +236,9 @@ std::vector<Id> Router::search_impl(Id start,Id goal,int lo,int hi,bool cross,co
 #if defined(GR_V4_3) && !defined(GR_V43_DISABLE_SCORING)
                 if(v43_active_&&v4_search_active_)penalty=cfg.congestion*scoring_aware_congestion_cost(v,1);
 #endif
+#ifdef GR_V4_4
+                if(v44_active_)penalty=cfg.congestion*v44_price(v,1);
+#endif
 #ifdef GR_V4
                 // Only V4 local trials: nonnegative marginal M1 price. The
                 // geometric heuristic remains a lower bound; terminals stay.
@@ -817,6 +820,11 @@ void Router::run(){
     if(cfg.v3_final){
         {Progress::Scope pruning_log(progress,"GUIDE_PRUNE");prune_routes();}
     }
+#ifdef GR_V4_4
+    // Start from the completed V4.3 pipeline, including its Guide pruning:
+    // wire-growth experiments must reference the actual baseline output.
+    optimize_v44();
+#endif
     Json end=Json::object();end["overflow_local"]=double(overflow());end["runtime_seconds"]=elapsed();trace.event("routing_complete",end);
 }
 Json Router::route_json(const Net&n,const Route&r)const{
@@ -924,4 +932,7 @@ void Router::write_guide(const std::filesystem::path&p)const{
 #endif
 #ifdef GR_V4_3
 #include "router_v4_3_impl.hpp"
+#endif
+#ifdef GR_V4_4
+#include "router_v4_4_impl.hpp"
 #endif
