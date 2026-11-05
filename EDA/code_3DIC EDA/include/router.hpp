@@ -66,6 +66,16 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V4_4
+    Json v44_stats_=Json::object();
+    bool v44_try_tsv_pair(const std::array<size_t,2>&,const std::array<Id,2>&,
+                          double&,double,DensityCorrelation*,Json&);
+    void v44_global_tsv_pairs(double&,double,DensityCorrelation*);
+#ifdef GR_V44_TEST
+    std::function<Route(size_t,const Route&,Id)> v44_candidate_hook_;
+    std::function<void()> v44_install_hook_;
+#endif
+#endif
 #ifdef GR_V4_3
     struct V43BatchTransaction;
     Json v43_stats_=Json::object();
