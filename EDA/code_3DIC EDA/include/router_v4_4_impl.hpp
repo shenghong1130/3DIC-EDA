@@ -153,10 +153,8 @@ void Router::v44_global_tsv_pairs(double&wire,double limit,DensityCorrelation*de
     // Leave headroom for the V4.3 thermal phase, Guide writing and scoring.
     double allowance=std::min(phase_seconds,cfg.time_limit-elapsed()-20.0);
     if(allowance<=1){stats["stop_reason"]="time_headroom";v44_stats_=stats;return;}
-    const double prior_deadline=reroute_deadline_seconds_;
-    reroute_deadline_seconds_=began+allowance;
-    struct Restore {double&x;double old;~Restore(){x=old;}}
-        restore{reroute_deadline_seconds_,prior_deadline};
+    // Phase cutoff is checked explicitly below. Do not install it as a
+    // global RerouteBudget deadline or an ordinary loop exit would throw.
     std::map<Id,int>multiplicity;
     std::map<std::pair<int,int>,std::vector<size_t>>regions;
     for(size_t i=0;i<routes.size();i++){
@@ -208,7 +206,7 @@ void Router::v44_global_tsv_pairs(double&wire,double limit,DensityCorrelation*de
     };
     for(const auto&reg:order){
         if(attempts>=max_trials){stop="trial_budget";break;}
-        if(elapsed()>=reroute_deadline_seconds_){stop="phase_time_budget";break;}
+        if(elapsed()>=began+allowance){stop="phase_time_budget";break;}
         auto&group=regions.at(reg.position);
         std::sort(group.begin(),group.end(),[&](size_t a,size_t b){
             const int ma=multiplicity.at(routes[a].tsv),mb=multiplicity.at(routes[b].tsv);
@@ -220,6 +218,7 @@ void Router::v44_global_tsv_pairs(double&wire,double limit,DensityCorrelation*de
         // Two small, congested members of each area. Other regions still get
         // a chance; do not enumerate quadratic pairs on a 150k-Net case.
         std::array<size_t,2>ids{group[0],group[1]};
+        std::array<Id,2>original_sites{routes[ids[0]].tsv,routes[ids[1]].tsv};
         auto left=options(ids[0]),right=options(ids[1]);++visited;
         struct Pair {double estimate;std::array<Id,2>sites;};
         std::vector<Pair>candidates;
@@ -232,15 +231,13 @@ void Router::v44_global_tsv_pairs(double&wire,double limit,DensityCorrelation*de
         size_t tries=0;
         for(auto&candidate:candidates){
             if(tries++>=2||attempts>=max_trials||
-               elapsed()>=reroute_deadline_seconds_)break;
+               elapsed()>=began+allowance)break;
             ++attempts;Json detail;
             bool ok=v44_try_tsv_pair(ids,candidate.sites,wire,limit,density,detail);
             if(ok){
                 ++accepted;
                 for(int k=0;k<2;k++){
-                    // Preserve old site counts from the successful transaction
-                    // using the target and the other route's prior position.
-                    // These priorities are only used for later regions.
+                    --multiplicity.at(original_sites[k]);
                     ++multiplicity[candidate.sites[k]];
                 }
                 break;
