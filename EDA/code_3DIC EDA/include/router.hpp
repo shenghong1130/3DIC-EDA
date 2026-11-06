@@ -6,11 +6,17 @@
 #include <unordered_set>
 #include <memory>
 #include "v3_algorithms.hpp"
+#ifdef GR_V4_5
+#include "v45_quality_guard.hpp"
+#endif
 namespace gr {
 struct RouterTimeout : std::runtime_error {RouterTimeout():std::runtime_error("Router time budget exceeded") {}};
 struct Resource {int capacity=0,usage=0,fixed=0;double history=0;int scoring_fixed=0,scoring_capacity=0;bool scoring_ready=false;};
 class Router {
 public:
+#ifdef GR_V4_5
+    struct V45Options {bool path=true,thermal=true,repair=true;int mode=2,rounds=2,topk=3;double wire_growth=.005,seconds=60; } v45;
+#endif
 #ifdef GR_V44_CONGESTION_EXP01
     bool initial_tsv_assignment=true;
 #endif
@@ -72,6 +78,23 @@ public:
     void write_result(const std::filesystem::path&)const;
     void write_guide(const std::filesystem::path&)const;
 private:
+#ifdef GR_V4_5
+    std::map<size_t,std::vector<Id>> v45_sites_;
+    std::map<size_t,Id> v45_anchor_;
+    std::unique_ptr<v45::Thermal> v45_density_;
+    double v45_preview_end_=0;
+    size_t v45_previews_=0;
+    Json v45_stats_=Json::object();
+    void plan_v45();
+    Route initial_v45(size_t);
+    Route preview_v45(size_t,const Route&,Id,Id);
+    void optimize_v45();
+    int vias_v45(const Route&)const;
+#ifdef GR_V45_TEST
+    std::function<void()> v45_install_hook_;
+    std::function<Route(size_t,const Route&,Id,Id)> v45_candidate_hook_;
+#endif
+#endif
 #ifdef GR_V44_CONGESTION_EXP01
     std::map<size_t,Id> initial_tsv_plan_;
     Json initial_tsv_stats_=Json::object();

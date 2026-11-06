@@ -19,7 +19,9 @@ int main(int argc,char**argv){
 #else
         for(int i=0;i<argc;i++)args.emplace_back(argv[i]);
 #endif
-#ifdef GR_V44_CONGESTION_EXP01
+#if defined(GR_V4_5)
+        if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_5 EXPERIMENTAL GLOBAL_TSV_CONGESTION NOT_OFFICIAL_SCORE\n";return 0;}
+#elif defined(GR_V44_CONGESTION_EXP01)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_4_congestion_exp01 EXPERIMENTAL NOT_VALIDATED NOT_OFFICIAL_SCORE\n";return 0;}
 #elif defined(GR_V4_4)
         if(args.size()==2&&args[1]=="--version"){std::cout<<"router v4_4 CANDIDATE REFERENCE_20261103 NOT_OFFICIAL_SCORE\n";return 0;}
@@ -36,6 +38,9 @@ int main(int argc,char**argv){
 #endif
 #ifdef GR_V4_4
         Router::V44Options v44;
+#ifdef GR_V4_5
+        Router::V45Options v45;
+#endif
 #endif
         {Progress::Scope arguments_log(&progress,"ARGUMENTS");
         std::set<std::string> allowed{"--def","--lef","--thermal-report","--output","--metrics","--trace","--config","--time-limit","--iterations","--trace-limit-mb","--progress-dir","--progress-every","--monitor-interval","--heartbeat-interval"};
@@ -45,6 +50,16 @@ int main(int argc,char**argv){
         for(auto k:{"--def","--lef","--thermal-report"})if(std::filesystem::weakly_canonical(output)==std::filesystem::weakly_canonical(std::filesystem::u8path(opt.at(k))))throw std::runtime_error("Output aliases an input");
         if(output.extension()!=".guide")throw std::runtime_error("Output must have .guide extension");
         if(opt.count("--config")){auto j=Json::parse(read_file(std::filesystem::u8path(opt["--config"])));for(auto&[k,v]:j.obj){
+#ifdef GR_V4_5
+            if(k.rfind("v45_",0)==0){
+                double n=v.number();if(!std::isfinite(n))throw std::runtime_error("Nonfinite V45 option");
+                if(k=="v45_wire_growth"){if(n<0||n>.05)throw std::runtime_error("V45 wire growth 0..0.05");v45.wire_growth=n;}
+                else if(k=="v45_seconds"){if(n<1||n>180)throw std::runtime_error("V45 seconds 1..180");v45.seconds=n;}
+                else if(k=="v45_mode"){if(n<0||n>2||n!=std::floor(n))throw std::runtime_error("V45 mode 0..2");v45.mode=int(n);}
+                else if(k=="v45_rounds"||k=="v45_topk"){if(n<1||n>4||n!=std::floor(n))throw std::runtime_error("V45 count 1..4");if(k=="v45_rounds")v45.rounds=int(n);else v45.topk=int(n);}
+                else{if(n!=0&&n!=1)throw std::runtime_error("V45 switch 0/1");if(k=="v45_path")v45.path=n;else if(k=="v45_thermal")v45.thermal=n;else if(k=="v45_repair")v45.repair=n;else throw std::runtime_error("Unknown V45 option: "+k);}continue;
+            }
+#endif
 #ifdef GR_V44_CONGESTION_EXP01
             if(k=="exp01_initial_tsv"){double n=v.number();if(n!=0&&n!=1)throw std::runtime_error("exp01_initial_tsv must be 0/1");initial_tsv_assignment=n;continue;}
 #endif
@@ -93,6 +108,9 @@ int main(int argc,char**argv){
 #endif
 #ifdef GR_V4_4
         router.v44=v44;
+#ifdef GR_V4_5
+        router.v45=v45;
+#endif
 #endif
         {Progress::Scope stage(&progress,"THERMAL");router.load_thermal(std::filesystem::u8path(opt["--thermal-report"]));}
         {Progress::Scope stage(&progress,"FIXED_DEMAND");router.build_fixed_demand();}
