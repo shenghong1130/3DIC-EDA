@@ -1,0 +1,16 @@
+{
+  "project_version": "v5",
+  "original_engine_version": "0.16-final-input-only",
+  "engine_type": "PYTHON_SCRIPT_ENGINE",
+  "entry": "v5/engine/run.sh",
+  "launcher": "v5/run_v5.sh",
+  "source_manifest": "v5/original/source_manifest.json",
+  "engine_zip_sha256": "b29871dd42cc3fa8269f2e9bd5e2bf9597786ce7e7cdb3555e647c2e4e6c651f",
+  "source_integrity": "79/79 BYTE_IDENTICAL",
+  "equivalence": "PASS",
+  "official_status": "NOT_EVALUATED",
+  "cpp_build": null,
+  "config_overrides": {},
+  "release_status": "INTEGRATED_CASE001_REFERENCE_INVALID_LARGE_CASES_BLOCKED",
+  "validation_report": "outputs/reports/v5/v5_final_status.md"
+}

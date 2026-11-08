@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "zip_sha256": "b29871dd42cc3fa8269f2e9bd5e2bf9597786ce7e7cdb3555e647c2e4e6c651f",
+  "environment": "Ubuntu 22.04 / Python 3.10, freshly extracted ZIP, empty PYTHONPATH",
+  "default_parameters": true,
+  "tests": [
+    {
+      "name": "toy",
+      "status": "PASS",
+      "seconds": 11.127519980999999,
+      "nets": 203,
+      "guide_sha256": "7faa81d5b62aa00c633a01b1219484ae375cca1fef42e71cf8e4a74f7396344c"
+    },
+    {
+      "name": "renamed",
+      "status": "PASS",
+      "seconds": 10.85745052,
+      "nets": 203,
+      "guide_sha256": "7faa81d5b62aa00c633a01b1219484ae375cca1fef42e71cf8e4a74f7396344c"
+    }
+  ],
+  "renaming_exact_guide_match": true
+}
