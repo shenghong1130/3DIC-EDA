@@ -25,7 +25,7 @@ window.RemoteResult=class RemoteResult{
         if(name==='all'){this.geometryKey='';this.wanted='';return true;}
         setLoadStatus('正在读取 Net '+name+' 的完整 Pin / Route / Guide…');
         const n=await this.get('net',{net:name});if(!this.live()||version!==S.selectionVersion)return false;
-        S.data.nets=[n];S.netMap.set(n.net,n);S.active=new Map([[n.net,n]]);this.installPins();this.wanted='';setLoadStatus('已读取 '+name+' · '+fmt(n.pins.length,0)+' Pin · '+fmt(n.edges.length,0)+' 真实边');return true;
+        S.data.nets=[n];S.netMap.set(n.net,n);S.active=new Map([[n.net,n]]);this.installPins();this.wanted='';setLoadStatus('已读取 '+name+' · '+fmt(n.pins.length,0)+' Pin · '+(n.route_edges_available===false?'N/A':fmt(n.edges.length,0))+' 真实边');return true;
     }
     installPins(){
         const n=S.netMap.get(S.selected),tier=$('tier').value,layer=$('layer').value;

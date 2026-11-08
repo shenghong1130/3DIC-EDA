@@ -10,13 +10,19 @@ from diagnostics import atomic_json, windows_memory
 from evaluate_reference_20261103 import source_identity
 from scoring import summary, write_index
 from run_v5_case import verify, resource_check, REPORTS
+from v5_resource_guard import HostGuard
 
 SCORER=PROJECT/'outputs/development/v4_3/reference_20261103'
 SCORER_SHA='8ab0ed59a85ac7003cdacfe31bac93412591ee1717d46b2ab0ba8b44a4fdd271'
 SOURCE_SHA='9a33e788a847f356bdea51fc596ea6fe66e1d22f606c049bf7eb62021caf8b51'
 
 
-def execute(case,label,memory_mb=1536,timeout=600):
+def scoring_resources_available(check,host,memory_mb):
+    return (check['allowed'] and host.get('commit_available_bytes',0)>=(memory_mb+1024)*2**20
+            and check.get('linux',{}).get('mem_available_bytes',0)>=(memory_mb+512)*2**20)
+
+
+def execute(case,label,memory_mb=1536,timeout=600,force_resource_gate=False):
     manifest=verify();safe_label(case);safe_label(label)
     run_path=PROJECT/'outputs/runs'/case/label
     run=json.loads((run_path/'run.json').read_text(encoding='utf8'))
@@ -33,8 +39,9 @@ def execute(case,label,memory_mb=1536,timeout=600):
         result=summary(case,label,'reference_20261103')
         if result['status'] in ('REFERENCE_VALID','REFERENCE_INVALID'):return result
         raise ValueError('Existing incomplete report protected: '+str(target))
-    check=resource_check(case,'wsl');host=windows_memory()
-    if not check['allowed'] or host.get('commit_available_bytes',0)<(memory_mb+1024)*2**20:
+    check=resource_check(case,'wsl',force_resource_gate);host=windows_memory()
+    check.update(scoring_windows_snapshot=host,scoring_commit_required_bytes=(memory_mb+1024)*2**20,scoring_linux_required_bytes=(memory_mb+512)*2**20)
+    if not scoring_resources_available(check,host,memory_mb):
         result={'case':case,'label':label,'status':'BLOCKED_RESOURCE','resource_check':check,'memory_mb':memory_mb}
         dest=REPORTS/'scoring_gates'/(case+'_'+str(time.time_ns())+'.json');dest.parent.mkdir(parents=True,exist_ok=True);atomic_json(dest,result)
         return result
@@ -50,7 +57,13 @@ def execute(case,label,memory_mb=1536,timeout=600):
     args=['python3',linux_path(PROJECT/'scripts/linux_supervisor.py'),'--directory',linux_path(target),'--run-id',uuid.uuid4().hex,
           '--process-kind','evaluator','--timeout',str(timeout),'--',*command]
     call=backend_command(args,'wsl',cwd=PROJECT,time_file=target/'resource_usage.txt')
-    execution=timed_process(call,target/'evaluator.log',timeout+60,monitor_dir=target,process_role='evaluator')
+    guard=HostGuard(target).start()
+    try:
+        execution=timed_process(call,target/'evaluator.log',timeout+60,monitor_dir=target,process_role='evaluator')
+    except Exception as error:
+        execution={'returncode':None,'process_status':'LAUNCH_ERROR','error':repr(error)}
+    finally:
+        guard.close()
     invocation.update(execution)
     report_path=target/'reference_report.json'
     if execution['returncode']==0 and report_path.exists():
@@ -68,8 +81,10 @@ def execute(case,label,memory_mb=1536,timeout=600):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--case',required=True);p.add_argument('--label',required=True)
-    p.add_argument('--memory-mb',type=int,default=1536);p.add_argument('--timeout',type=int,default=600);a=p.parse_args()
+    p.add_argument('--memory-mb',type=int,default=1536);p.add_argument('--timeout',type=int,default=600)
+    p.add_argument('--force-resource-gate',action='store_true',help='Bypass generic reserve only; keep scoring budget plus headroom and memory safety')
+    a=p.parse_args()
     if not 256<=a.memory_mb<=8192 or not 0<a.timeout<=7200:p.error('Invalid reference resource budget')
-    r=execute(a.case,a.label,a.memory_mb,a.timeout)
+    r=execute(a.case,a.label,a.memory_mb,a.timeout,a.force_resource_gate)
     print(json.dumps({k:r.get(k) for k in ['case','label','status','metrics','runtime_seconds','peak_rss_bytes','report_path']},ensure_ascii=False),flush=True)
     raise SystemExit(0 if r['status'] in ['REFERENCE_VALID','REFERENCE_INVALID'] else 2)

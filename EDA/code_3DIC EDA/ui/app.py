@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label,existing_run_dir,load_record
 from result_store import Store,Cursor,LARGE_BYTES,thermal_sample
+from v5_store import V5Store
 from scoring import summary as scoring_summary, comparison as scoring_comparison, ScoringConflict, REFERENCE_LATEST
 WEB=Path(__file__).resolve().parent/'static'
 CACHE=Path(os.environ.get('GR_UI_CACHE_DIR',str(OUTPUTS/'ui_cache')))
@@ -29,15 +30,19 @@ def attach_reports(r,d):
     if 'official_latest' in r:r['run']['official_status']=r['official_latest'].get('status','NOT_EVALUATED')
     r['router_log']=tail_text(d/'router.log');return r
 
+def is_v5(d):
+    r=load(d/'run.json');return r.get('engine_type')=='PYTHON_SCRIPT_ENGINE' and r.get('router_version')=='v5'
+
 def store(key):
-    d=selected(key);case=key.split('/')[0];return Store(d/'result.json',CACHE,catalog().get(case,{}).get('reference'))
+    d=selected(key);case=key.split('/')[0];reference=catalog().get(case,{}).get('reference')
+    return V5Store(d,CACHE,reference) if is_v5(d) else Store(d/'result.json',CACHE,reference)
 def load(path):return load_record(path)
 def runs():
     out={}
     for p in sorted((OUTPUTS/'runs').glob('*/*/run.json')):
         r=load(p);inv=p.parent/'official_latest/invocation.json'
         if inv.is_file():r['official_status']=load(inv).get('status','NOT_EVALUATED')
-        key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'complete':r['status']=='ROUTED' and r.get('returncode',0)==0 and (p.parent/'route.guide').is_file(),'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':result.is_file() and result.stat().st_size>LARGE_BYTES}
+        key=r['case']+'/'+r['label'];result=p.parent/'result.json';out[key]={'id':key,'case':r['case'],'label':r['label'],'status':r['status'],'complete':r['status']=='ROUTED' and r.get('returncode',0)==0 and (p.parent/'route.guide').is_file(),'official_status':r.get('official_status','NOT_EVALUATED'),'runtime_seconds':r.get('runtime_seconds'),'peak_memory_bytes':r.get('peak_memory_bytes'),'result_bytes':result.stat().st_size if result.is_file() else None,'indexed':is_v5(p.parent) or result.is_file() and result.stat().st_size>LARGE_BYTES}
     return out
 def selected(run):
     if len(run.split('/'))!=2:raise ValueError('Unknown run')
@@ -85,7 +90,7 @@ class Handler(BaseHTTPRequestHandler):
                 b=score(get('b')) if get('b') else None
                 return self.send({'a':a,'b':b,'comparison':scoring_comparison(a,b)})
             indexed_paths={'/api/summary','/api/nets','/api/net','/api/pins','/api/geometry','/api/tiles','/api/cell','/api/instances'}
-            if u.path in indexed_paths or u.path=='/api/run' and (selected(get('id'))/'result.json').stat().st_size>LARGE_BYTES:
+            if u.path in indexed_paths or u.path=='/api/run' and (is_v5(selected(get('id'))) or (selected(get('id'))/'result.json').stat().st_size>LARGE_BYTES):
                 s=store(get('id'));state=s.status(get('retry')=='1')
                 if state['state']=='error':return self.send({'error':state['error'],'error_kind':'index_error','index':state},500)
                 if state['state']!='ready':return self.send(state,202)
@@ -129,7 +134,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=='/api/reference':
                 case=get('case');c=catalog().get(case)
                 if not c or not c['reference']:raise ValueError('No official reference Guide')
-                matches=[r['id'] for r in runs().values() if r['case']==case and r['status']=='ROUTED']
+                # Small C++ clients use this legacy full-result endpoint. V5
+                # clients use /api/summary?source=reference and paged geometry.
+                matches=[r['id'] for r in runs().values() if r['case']==case and r['complete'] and not is_v5(selected(r['id']))]
                 if not matches:raise ValueError('请先运行该用例，以取得真实引脚、实例和网格信息。')
                 d=run_data(matches[-1]);metadata={n['net']:n for n in d['nets']};d['nets']=[{'net':n,'guides':gs,'pins':metadata.get(n,{}).get('pins',[]),'cross_die':len({g[4]<=10 for g in gs})>1,'edges':[],'nodes':[],'tsv_count':None,'status':'REFERENCE'} for n,gs in guide(c['reference']).items()]
                 d['source']='official_reference_guide';d['resources']=[];d['metrics']={k:None for k in d['metrics']};d['metrics']['nets']=len(d['nets']);d['metrics']['official_status']='NOT_EVALUATED';d['iterations']=[];d['tsv_density']=[];d['router_log']='官方参考 Guide，仅用于展示与对比。没有内部搜索路径与过程记录。';d.pop('official_latest',None);d.pop('official_legacy',None);d['reference_path']=c['reference'];return self.send(d)

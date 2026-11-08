@@ -119,6 +119,14 @@ window.LayerView3D = class LayerView3D {
         // TSVs use actual accepted edges, independently of the path toggle.
         if(s.tsvs&&!s.reference)for(const n of s.active.values())if(s.allowed.has(n.net)&&(s.selected==='all'||n.net===s.selected)&&n.cross_die){
             for(const edge of n.edges||[]){const a=node(edge[0]),b=node(edge[1]);if(a&&b&&Math.min(a.layer,b.layer)===10&&Math.max(a.layer,b.layer)===11)addEdge(edge,n.net);}
+            // Explicit Guide-selection metadata, never inserted into actual edges.
+            if(d.capabilities?.guide_tsv)for(const marker of n.tsv_markers||[]){
+                const [la,lb]=marker.layers,av=visible(la),bv=visible(lb);if(!av&&!bv)continue;
+                const a=point(marker.x,marker.y,la),b=point(marker.x,marker.y,lb);
+                const item={a,b,layers:[la,lb],net:n.net,kind:'guide_tsv',box:marker.box};
+                if(av&&bv)scene.tsvs.push(item);else scene.caps.push({...item,p:av?a:b,layer:av?la:lb});
+                if(n.net===s.selected){if(av)scene.focus.push(a);if(bv)scene.focus.push(b);}
+            }
         }
         if(showPaths&&s.ghost&&(s.selected==='all'||s.ghost.net===s.selected)&&s.allowed.has(s.ghost.net))for(const edge of s.ghost.edges||[])addEdge(edge,s.ghost.net,true);
         return scene;
@@ -171,11 +179,11 @@ window.LayerView3D = class LayerView3D {
             for(const item of ordered){
                 if(Math.max(item.pa[0],item.pb[0])<0||Math.min(item.pa[0],item.pb[0])>w||Math.max(item.pa[1],item.pb[1])<0||Math.min(item.pa[1],item.pb[1])>h)continue;
                 line(item.pa,item.pb,color||item.color,width,.94);this.projectedLinks.push(item);
-                if(item.kind==='tsv')for(const p of [item.pa,item.pb]){ctx.fillStyle=color||'#d58218';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
+                if(item.kind==='tsv'||item.kind==='guide_tsv')for(const p of [item.pa,item.pb]){ctx.fillStyle=color||'#d58218';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
             }
         };
         drawLinks(scene.paths,null,2);drawLinks(scene.vias,'#65788e',2.7);drawLinks(scene.tsvs,'#e18b17',4.5);drawLinks(scene.ghost,null,3);
-        for(const cap of scene.caps){const p=project(cap.p);ctx.fillStyle=cap.ghost?cap.color:cap.kind==='tsv'?'#e18b17':'#65788e';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
+        for(const cap of scene.caps){const p=project(cap.p);ctx.fillStyle=cap.ghost?cap.color:cap.kind.includes('tsv')?'#e18b17':'#65788e';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
         const groups=new Map(),focused=[];this.projectedPins=[];
         for(const item of scene.pins){
             const p=project(item.p);if(p[0]<0||p[0]>w||p[1]<0||p[1]>h)continue;
@@ -217,6 +225,6 @@ window.LayerView3D = class LayerView3D {
     inspect(event) {
         const hit=this.hit(event);this.hover.hidden=!hit;if(!hit)return;
         if(hit.pin?.cluster){this.hover.textContent='聚合 '+hit.pin.count+' 个 Pin · M'+hit.layer+' · 点击后分页读取真实端子';return;}
-        this.hover.textContent=hit.pin?'Pin '+hit.pin.p.name+' · '+hit.pin.net+' · M'+hit.layer+' · XY ('+hit.pin.p.x+', '+hit.pin.p.y+')':(hit.kind==='tsv'?'TSV 跨 Die':hit.kind==='via'?'普通 Via':'真实路径')+' · '+hit.net+' · '+hit.layers.map(l=>'M'+l).join(' ↔ ');
+        this.hover.textContent=hit.pin?'Pin '+hit.pin.p.name+' · '+hit.pin.net+' · M'+hit.layer+' · XY ('+hit.pin.p.x+', '+hit.pin.p.y+')':(hit.kind==='guide_tsv'?'Guide 解析 TSV（中心示意，非合法性结论）':hit.kind==='tsv'?'TSV 跨 Die':hit.kind==='via'?'普通 Via':'真实路径')+' · '+hit.net+' · '+hit.layers.map(l=>'M'+l).join(' ↔ ');
     }
 };
