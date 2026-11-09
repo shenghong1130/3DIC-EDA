@@ -28,6 +28,7 @@ window.RemoteResult=class RemoteResult{
         S.data.nets=[n];S.netMap.set(n.net,n);S.active=new Map([[n.net,n]]);this.installPins();this.wanted='';setLoadStatus('已读取 '+name+' · '+fmt(n.pins.length,0)+' Pin · '+(n.route_edges_available===false?'N/A':fmt(n.edges.length,0))+' 真实边');return true;
     }
     installPins(){
+        S.explicitNodes=new Map();for(const n of S.data.nets)for(const p of n.nodes||[])if(p&&typeof p==='object')S.explicitNodes.set(p.id,p);
         const n=S.netMap.get(S.selected),tier=$('tier').value,layer=$('layer').value;
         const pins=(n?.pins||[]).filter(p=>(tier==='both'||(tier==='bottom'?p.layer<=10:p.layer>=11))&&(layer==='all'||p.layer===+layer)).map((p,i)=>({p,net:n.net,cross:!!n.cross_die,key:'selected:'+i}));
         S.allPins=[...this.background,...pins];S.pinIndex=new Map();const[x1,y1,x2,y2]=S.data.die;

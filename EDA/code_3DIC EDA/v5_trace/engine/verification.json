@@ -1,0 +1,2186 @@
+{
+  "status": "PASS",
+  "environment": "Ubuntu22.04 Python3.10, standard library, empty PYTHONPATH",
+  "integration": {
+    "status": "PASS",
+    "environment": "Ubuntu 22.04 Python 3.10, isolated source, empty PYTHONPATH",
+    "budget": "Uniform reduced integration budgets; not full-default performance validation",
+    "results": [
+      {
+        "name": "basic",
+        "returncode": 0,
+        "seconds": 10.982311829999958,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 939,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "rotations_origin",
+        "returncode": 0,
+        "seconds": 9.453445120000083,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 943,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "multi_ports",
+        "returncode": 0,
+        "seconds": 10.195283467999957,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 923,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "partial_boundary",
+        "returncode": 0,
+        "seconds": 10.273659662,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 956,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "nonuniform_grid",
+        "returncode": 0,
+        "seconds": 9.199252158000036,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 935,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "sparse_tracks",
+        "returncode": 0,
+        "seconds": 9.847820840000054,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 1009,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "interface_obs",
+        "returncode": 0,
+        "seconds": 9.970333811000046,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 909,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "remote_landing",
+        "returncode": 0,
+        "seconds": 9.713348361000044,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 40,
+          "rectangles": 467,
+          "cross_die_nets": 24,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "high_fanout",
+        "returncode": 0,
+        "seconds": 14.568745730000046,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 96,
+          "rectangles": 1721,
+          "cross_die_nets": 60,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "dense_cross",
+        "returncode": 0,
+        "seconds": 18.00275258299996,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 256,
+          "rectangles": 4170,
+          "cross_die_nets": 240,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "thermal_mismatch",
+        "returncode": 0,
+        "seconds": 9.348976647999962,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 937,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "scale_rename",
+        "returncode": 0,
+        "seconds": 9.941941293000014,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 80,
+          "rectangles": 939,
+          "cross_die_nets": 50,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "openroad_gcd_topology",
+        "returncode": 0,
+        "seconds": 24.94198178099998,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 364,
+          "rectangles": 4642,
+          "cross_die_nets": 244,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "mixed_ports",
+        "returncode": 0,
+        "seconds": 11.756722037000031,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 120,
+          "rectangles": 1384,
+          "cross_die_nets": 75,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "mixed_obstacles",
+        "returncode": 0,
+        "seconds": 10.848617844999922,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 120,
+          "rectangles": 1493,
+          "cross_die_nets": 75,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "sparse_ports",
+        "returncode": 0,
+        "seconds": 11.495783039999992,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 120,
+          "rectangles": 1574,
+          "cross_die_nets": 75,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "shifted_boundary",
+        "returncode": 0,
+        "seconds": 11.602168162999988,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 120,
+          "rectangles": 1394,
+          "cross_die_nets": 75,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "dense_thermal",
+        "returncode": 0,
+        "seconds": 15.969178726999985,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 192,
+          "rectangles": 3016,
+          "cross_die_nets": 180,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "fanout_ports",
+        "returncode": 0,
+        "seconds": 16.221246627000028,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 96,
+          "rectangles": 1739,
+          "cross_die_nets": 60,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "remote_rotated",
+        "returncode": 0,
+        "seconds": 9.240806950000092,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 40,
+          "rectangles": 452,
+          "cross_die_nets": 24,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "nonuniform_thermal",
+        "returncode": 0,
+        "seconds": 10.501067804999934,
+        "input_files_unchanged": true,
+        "validation": {
+          "status": "LOCAL_PASS",
+          "nets": 120,
+          "rectangles": 1503,
+          "cross_die_nets": 75,
+          "official_evaluation": "NOT_RUN",
+          "rules": "official-Q62-Q100-Q110",
+          "scope": [
+            "net_set",
+            "pin_coverage",
+            "positive_area",
+            "die_bounds",
+            "routing_layers",
+            "adjacent_layer_connectivity",
+            "same_die_restriction",
+            "tsv_candidates",
+            "gcell_alignment",
+            "preferred_direction_span",
+            "directional_same_layer_connectivity",
+            "selected_tsv_connectivity",
+            "any_actual_pin_RECT_PORT",
+            "tsv_landing_PIN_OBS_exclusion"
+          ],
+          "not_checked": [
+            "track_assignment",
+            "obstacle_DRC",
+            "via_enclosure_DRC",
+            "official_quality_score"
+          ]
+        },
+        "stages": [
+          {
+            "stage": "landing",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "buffered",
+            "accepted": false,
+            "returncode": 0,
+            "reason": "Input-derived quality gate rejected candidate"
+          },
+          {
+            "stage": "wire",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "tree",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "pin",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "maze",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          },
+          {
+            "stage": "compact",
+            "accepted": true,
+            "returncode": 0,
+            "reason": null
+          }
+        ],
+        "status": "PASS"
+      }
+    ],
+    "official_source_score": null,
+    "actual_hidden_cases": false,
+    "metamorphic_exact_guide_match": true
+  },
+  "optional_stage_failure": {
+    "status": "PASS",
+    "injected_failure": "Shared-maze optimizer exits 19 in disposable isolated copy",
+    "fallback_retained_validated_route": true,
+    "validation": {
+      "status": "LOCAL_PASS",
+      "nets": 80,
+      "rectangles": 946,
+      "cross_die_nets": 50,
+      "official_evaluation": "NOT_RUN",
+      "rules": "official-Q62-Q100-Q110",
+      "scope": [
+        "net_set",
+        "pin_coverage",
+        "positive_area",
+        "die_bounds",
+        "routing_layers",
+        "adjacent_layer_connectivity",
+        "same_die_restriction",
+        "tsv_candidates",
+        "gcell_alignment",
+        "preferred_direction_span",
+        "directional_same_layer_connectivity",
+        "selected_tsv_connectivity",
+        "any_actual_pin_RECT_PORT",
+        "tsv_landing_PIN_OBS_exclusion"
+      ],
+      "not_checked": [
+        "track_assignment",
+        "obstacle_DRC",
+        "via_enclosure_DRC",
+        "official_quality_score"
+      ]
+    }
+  },
+  "baseline_checkpoint_recovery": {
+    "status": "PASS",
+    "baseline_failure_status": 19,
+    "recovered_complete_self_generated_checkpoint": true,
+    "validation": {
+      "status": "LOCAL_PASS",
+      "nets": 80,
+      "rectangles": 997,
+      "cross_die_nets": 50,
+      "official_evaluation": "NOT_RUN",
+      "rules": "official-Q62-Q100-Q110",
+      "scope": [
+        "net_set",
+        "pin_coverage",
+        "positive_area",
+        "die_bounds",
+        "routing_layers",
+        "adjacent_layer_connectivity",
+        "same_die_restriction",
+        "tsv_candidates",
+        "gcell_alignment",
+        "preferred_direction_span",
+        "directional_same_layer_connectivity",
+        "selected_tsv_connectivity",
+        "any_actual_pin_RECT_PORT",
+        "tsv_landing_PIN_OBS_exclusion"
+      ],
+      "not_checked": [
+        "track_assignment",
+        "obstacle_DRC",
+        "via_enclosure_DRC",
+        "official_quality_score"
+      ]
+    }
+  },
+  "isolated_code_archive": {
+    "status": "PASS",
+    "zip_sha256": "c8cbb2a3ad4a4e603178cb3ddd804826dfd74268ecd389b676b7272b166d6420",
+    "environment": "Ubuntu 22.04 / Python 3.10, freshly extracted ZIP, empty PYTHONPATH",
+    "default_parameters": true,
+    "tests": [
+      {
+        "name": "toy",
+        "status": "PASS",
+        "seconds": 11.056211114999996,
+        "nets": 203,
+        "guide_sha256": "7faa81d5b62aa00c633a01b1219484ae375cca1fef42e71cf8e4a74f7396344c"
+      },
+      {
+        "name": "renamed",
+        "status": "PASS",
+        "seconds": 10.32907188799993,
+        "nets": 203,
+        "guide_sha256": "7faa81d5b62aa00c633a01b1219484ae375cca1fef42e71cf8e4a74f7396344c"
+      }
+    ],
+    "renaming_exact_guide_match": true
+  },
+  "linux_unit_tests": {
+    "count": 133,
+    "status": "PASS",
+    "nested_process_timeout_test": "PASS"
+  },
+  "public_output_proofs": {
+    "open_3d_case001": {
+      "input_sha256": {
+        "def": "4185c4df2a179ec3f115ccc12967d25af98773b7086d531173a5c4a702c26795",
+        "lef": "d44105a71d9aa2bedcc62754784f24d0ca922d555ff734d65cbb60e9dde2ad12",
+        "thermal": "07db896c3043a408a43b2855a1610aeb4d984487531d84fead85b75d7ffa47b5"
+      },
+      "prefix_seed_sha256": "b7fe0f2a06db538a15eeb4bdd1713b57617bccfa8de2db2dfa0cfe84728cda36",
+      "prefix_decision_changed": false,
+      "budget": 2048,
+      "validation": {
+        "status": "LOCAL_PASS",
+        "nets": 3152,
+        "rectangles": 31223,
+        "cross_die_nets": 657,
+        "official_evaluation": "NOT_RUN",
+        "rules": "official-Q62-Q100-Q110",
+        "scope": [
+          "net_set",
+          "pin_coverage",
+          "positive_area",
+          "die_bounds",
+          "routing_layers",
+          "adjacent_layer_connectivity",
+          "same_die_restriction",
+          "tsv_candidates",
+          "gcell_alignment",
+          "preferred_direction_span",
+          "directional_same_layer_connectivity",
+          "selected_tsv_connectivity",
+          "any_actual_pin_RECT_PORT",
+          "tsv_landing_PIN_OBS_exclusion"
+        ],
+        "not_checked": [
+          "track_assignment",
+          "obstacle_DRC",
+          "via_enclosure_DRC",
+          "official_quality_score"
+        ]
+      },
+      "guide_sha256": "af095bcb19b1e141560240f88170e930cbd58f249564c85055615ea403482d51",
+      "full_default_raw_input_byte_match": true,
+      "full_default_seconds": 581.2113426540001
+    },
+    "open_3d_case003": {
+      "input_sha256": {
+        "def": "37d72e1b67d5a560b42190f2f3bf1030bfa3af6aba1c58531836962acf2ae6d8",
+        "lef": "b28dac70474e6f996c1f256cafeea1c258096742f411412a99d6abcc93379d3c",
+        "thermal": "3c4afcd86ebacda51c8b85298871269c47cd4f1490c156c54bd93a4df40ac659"
+      },
+      "prefix_seed_sha256": "c70c771b3689d2358ae09ec8a1ef06505987e0c5de70ed2583f66afaba6d032d",
+      "prefix_decision_changed": false,
+      "budget": 6065,
+      "validation": {
+        "status": "LOCAL_PASS",
+        "nets": 151611,
+        "rectangles": 750562,
+        "cross_die_nets": 22574,
+        "official_evaluation": "NOT_RUN",
+        "rules": "official-Q62-Q100-Q110",
+        "scope": [
+          "net_set",
+          "pin_coverage",
+          "positive_area",
+          "die_bounds",
+          "routing_layers",
+          "adjacent_layer_connectivity",
+          "same_die_restriction",
+          "tsv_candidates",
+          "gcell_alignment",
+          "preferred_direction_span",
+          "directional_same_layer_connectivity",
+          "selected_tsv_connectivity",
+          "any_actual_pin_RECT_PORT",
+          "tsv_landing_PIN_OBS_exclusion"
+        ],
+        "not_checked": [
+          "track_assignment",
+          "obstacle_DRC",
+          "via_enclosure_DRC",
+          "official_quality_score"
+        ]
+      },
+      "guide_sha256": "cdd80032b13f1dc398ca41cd8e7cf4e6ca2343aa4b6339fab2ae2f414c9b4688",
+      "full_default_raw_input_byte_match": true,
+      "full_default_seconds": 3266.664020777
+    },
+    "open_3d_case005": {
+      "input_sha256": {
+        "def": "936696138e61ac9c65bccb2d73aa4c57d11bcfc63b8afdd1d4b3e1ee519fec85",
+        "lef": "eeaaffb611be640fb2bb69f28cee97278998d3e27b84ccc59e66f0039ded6b88",
+        "thermal": "91b441f2edf65cee7f5fa2c6142a656a9d60a95b1357ee13371754c8e40eb943"
+      },
+      "prefix_seed_sha256": "daef7ea92c608526f5440bb43bed724132231d37025fedbc4d71f8474264e12e",
+      "prefix_decision_changed": true,
+      "budget": 7188,
+      "validation": {
+        "status": "LOCAL_PASS",
+        "nets": 179700,
+        "rectangles": 1897136,
+        "cross_die_nets": 39542,
+        "official_evaluation": "NOT_RUN",
+        "rules": "official-Q62-Q100-Q110",
+        "scope": [
+          "net_set",
+          "pin_coverage",
+          "positive_area",
+          "die_bounds",
+          "routing_layers",
+          "adjacent_layer_connectivity",
+          "same_die_restriction",
+          "tsv_candidates",
+          "gcell_alignment",
+          "preferred_direction_span",
+          "directional_same_layer_connectivity",
+          "selected_tsv_connectivity",
+          "any_actual_pin_RECT_PORT",
+          "tsv_landing_PIN_OBS_exclusion"
+        ],
+        "not_checked": [
+          "track_assignment",
+          "obstacle_DRC",
+          "via_enclosure_DRC",
+          "official_quality_score"
+        ]
+      },
+      "guide_sha256": "5ab53878e4518627f4c030f29aa67bba350adaebfbe0ecc49951c3e77d2ececc",
+      "full_default_raw_input_byte_match": "Not rerun; verified unchanged prefix and actually executed new suffix"
+    }
+  },
+  "official_final_six_case_score": null,
+  "validation_scope": "Local checks and official public-output quality; no proof of unseen-case quality",
+  "official_public_quality": {
+    "scope": "Official public-output quality; not final six-case or server source-execution timing",
+    "selected_scores": {
+      "total_score": 73.5,
+      "legality_score": 1,
+      "wirelength_score": 72.09,
+      "congestion_score": 95.36,
+      "thermal_score": 49.8,
+      "cases": {
+        "open_3d_case001": {
+          "case_name": "open_3d_case001",
+          "status": "success",
+          "wirelength_score": 71.1,
+          "congestion_score": 99.78,
+          "thermal_score": 66.37,
+          "quality_score": 78.52,
+          "runtime_seconds": 0,
+          "legality": "pass",
+          "raw_report": {
+            "status": "PASS",
+            "fidelity": {
+              "wirelength": "guide-rectangle Manhattan MST proxy",
+              "congestion": "GRT guide demand / merged DEF track capacity",
+              "drc": "not available; overflow entries are only a mock-DRT risk proxy",
+              "thermal": "external"
+            },
+            "inputs": {
+              "guide": "/app/input/res/open_3d_case001.output.guide",
+              "lefs": [
+                "/app/input/ref/open_3d_case001/open_3d_case001.input.lef"
+              ],
+              "defs": [
+                "/app/input/ref/open_3d_case001/open_3d_case001.input.def"
+              ],
+              "thermal_json": "/app/input/ref/open_3d_case001/open_3d_case001.thermal.input.json"
+            },
+            "grid": {
+              "dbu_per_micron": 2000.0,
+              "rows": 251,
+              "cols": 255,
+              "mapped_thermal_xy_nodes": 64005
+            },
+            "wirelength": {
+              "total_dbu": 767466000.0,
+              "total_um": 383733.0,
+              "guide_mst_proxy_dbu": 767466000.0,
+              "hpwl_reference_dbu": 545681923.0,
+              "normalized": 1.4064347152654348,
+              "tsv_count": 657,
+              "tsv_cost_dbu_each": 6.0
+            },
+            "congestion": {
+              "max_overflow": 1,
+              "max_cap": 15,
+              "average_overflow": 8.360714673890324e-06,
+              "total_overflow": 1,
+              "used_layer_gcells": 119607,
+              "overflow_entries": 1,
+              "mock_drt_risk_hotspots": 1
+            },
+            "thermal_tsv": {
+              "synthetic": false,
+              "ambient_temperature": 25.0,
+              "tsv_points": 657,
+              "correlation_above_ambient": 0.029085307641084687,
+              "saturation_gain": 11.684,
+              "saturation_gain_source": "def_alias:open_3d_case001.input.def->case001"
+            },
+            "score": {
+              "wirelength_score": 71.10177167457582,
+              "congestion_score": 99.77851578566089,
+              "thermal_score": 66.36640294523195,
+              "wirelength_quality": 0.7110177167457582,
+              "congestion_quality": 0.9977851578566088,
+              "thermal_quality": 0.6636640294523195,
+              "thermal_saturation_gain": 11.684,
+              "weights": {
+                "wirelength": 0.45,
+                "congestion": 0.3,
+                "thermal_tsv": 0.25
+              }
+            },
+            "warnings": []
+          }
+        },
+        "open_3d_case003": {
+          "case_name": "open_3d_case003",
+          "status": "success",
+          "wirelength_score": 79.4,
+          "congestion_score": 86.75,
+          "thermal_score": 62.76,
+          "quality_score": 77.45,
+          "runtime_seconds": 0,
+          "legality": "pass",
+          "raw_report": {
+            "status": "PASS",
+            "fidelity": {
+              "wirelength": "guide-rectangle Manhattan MST proxy",
+              "congestion": "GRT guide demand / merged DEF track capacity",
+              "drc": "not available; overflow entries are only a mock-DRT risk proxy",
+              "thermal": "external"
+            },
+            "inputs": {
+              "guide": "/app/input/res/open_3d_case003.output.guide",
+              "lefs": [
+                "/app/input/ref/open_3d_case003/open_3d_case003.input.lef"
+              ],
+              "defs": [
+                "/app/input/ref/open_3d_case003/open_3d_case003.input.def"
+              ],
+              "thermal_json": "/app/input/ref/open_3d_case003/open_3d_case003.thermal.input.json"
+            },
+            "grid": {
+              "dbu_per_micron": 1000.0,
+              "rows": 563,
+              "cols": 581,
+              "mapped_thermal_xy_nodes": 327103
+            },
+            "wirelength": {
+              "total_dbu": 12873585000.0,
+              "total_um": 12873585.0,
+              "guide_mst_proxy_dbu": 12873585000.0,
+              "hpwl_reference_dbu": 10222037313.0,
+              "normalized": 1.2593952267839859,
+              "tsv_count": 22574,
+              "tsv_cost_dbu_each": 6.0
+            },
+            "congestion": {
+              "max_overflow": 2,
+              "max_cap": 15,
+              "average_overflow": 4.022919466180937e-05,
+              "total_overflow": 72,
+              "used_layer_gcells": 1789745,
+              "overflow_entries": 71,
+              "mock_drt_risk_hotspots": 71
+            },
+            "thermal_tsv": {
+              "synthetic": false,
+              "ambient_temperature": 25.0,
+              "tsv_points": 22574,
+              "correlation_above_ambient": 0.0618068847873295,
+              "saturation_gain": 4.224,
+              "saturation_gain_source": "def_alias:open_3d_case003.input.def->case003"
+            },
+            "score": {
+              "wirelength_score": 79.40319120897558,
+              "congestion_score": 86.74723979493605,
+              "thermal_score": 62.7649099900625,
+              "wirelength_quality": 0.7940319120897559,
+              "congestion_quality": 0.8674723979493605,
+              "thermal_quality": 0.627649099900625,
+              "thermal_saturation_gain": 4.224,
+              "weights": {
+                "wirelength": 0.45,
+                "congestion": 0.3,
+                "thermal_tsv": 0.25
+              }
+            },
+            "warnings": []
+          }
+        },
+        "open_3d_case005": {
+          "case_name": "open_3d_case005",
+          "status": "success",
+          "wirelength_score": 65.76,
+          "congestion_score": 99.56,
+          "thermal_score": 20.28,
+          "quality_score": 64.53,
+          "runtime_seconds": 0,
+          "legality": "pass",
+          "raw_report": {
+            "status": "PASS",
+            "fidelity": {
+              "wirelength": "guide-rectangle Manhattan MST proxy",
+              "congestion": "GRT guide demand / merged DEF track capacity",
+              "drc": "not available; overflow entries are only a mock-DRT risk proxy",
+              "thermal": "external"
+            },
+            "inputs": {
+              "guide": "/app/input/res/open_3d_case005.output.guide",
+              "lefs": [
+                "/app/input/ref/open_3d_case005/open_3d_case005.input.lef"
+              ],
+              "defs": [
+                "/app/input/ref/open_3d_case005/open_3d_case005.input.def"
+              ],
+              "thermal_json": "/app/input/ref/open_3d_case005/open_3d_case005.thermal.input.json"
+            },
+            "grid": {
+              "dbu_per_micron": 2000.0,
+              "rows": 1346,
+              "cols": 1379,
+              "mapped_thermal_xy_nodes": 1856134
+            },
+            "wirelength": {
+              "total_dbu": 45614247000.0,
+              "total_um": 22807123.5,
+              "guide_mst_proxy_dbu": 45614247000.0,
+              "hpwl_reference_dbu": 29997664389.0,
+              "normalized": 1.52059328381334,
+              "tsv_count": 39542,
+              "tsv_cost_dbu_each": 6.0
+            },
+            "congestion": {
+              "max_overflow": 1,
+              "max_cap": 15,
+              "average_overflow": 2.963344466124602e-07,
+              "total_overflow": 2,
+              "used_layer_gcells": 6749131,
+              "overflow_entries": 2,
+              "mock_drt_risk_hotspots": 2
+            },
+            "thermal_tsv": {
+              "synthetic": false,
+              "ambient_temperature": 25.0,
+              "tsv_points": 39542,
+              "correlation_above_ambient": -0.08222212375579238,
+              "saturation_gain": 8.323,
+              "saturation_gain_source": "def_alias:open_3d_case005.input.def->case005"
+            },
+            "score": {
+              "wirelength_score": 65.76380486780808,
+              "congestion_score": 99.55849673999579,
+              "thermal_score": 20.283489829846385,
+              "wirelength_quality": 0.6576380486780807,
+              "congestion_quality": 0.9955849673999578,
+              "thermal_quality": 0.20283489829846385,
+              "thermal_saturation_gain": 8.323,
+              "weights": {
+                "wirelength": 0.45,
+                "congestion": 0.3,
+                "thermal_tsv": 0.25
+              }
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    "baseline_quality": 70.1
+  }
+}

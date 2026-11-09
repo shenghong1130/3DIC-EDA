@@ -88,7 +88,7 @@ class V5Store:
     def __init__(self,directory,cache,reference=None):
         self.directory=Path(directory);self.cache=Path(cache);self.reference=reference
         self.run=json.loads((self.directory/'run.json').read_text(encoding='utf8'))
-        if self.run.get('engine_type')!='PYTHON_SCRIPT_ENGINE' or self.run.get('router_version')!='v5':raise ValueError('Not a V5 Python run')
+        if self.run.get('engine_type')!='PYTHON_SCRIPT_ENGINE' or self.run.get('router_version') not in ('v5','v5_trace'):raise ValueError('Not a V5 Python run')
         if self.run.get('status')!='ROUTED' or self.run.get('returncode')!=0:raise ValueError('V5 run is incomplete; no final Guide to display')
         self.inputs={k:Path(self.run['inputs'][k]).resolve() for k in ('def','lef','thermal')}
         if any(not p.is_relative_to(PROJECT.parent.resolve()) for p in self.inputs.values()):raise ValueError('V5 input outside EDA')

@@ -9,6 +9,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from common import PROJECT,OUTPUTS,catalog,run_dir,safe_label,existing_run_dir,load_record
 from result_store import Store,Cursor,LARGE_BYTES,thermal_sample
 from v5_store import V5Store
+from v5_trace_store import V5TraceStore
 from scoring import summary as scoring_summary, comparison as scoring_comparison, ScoringConflict, REFERENCE_LATEST
 WEB=Path(__file__).resolve().parent/'static'
 CACHE=Path(os.environ.get('GR_UI_CACHE_DIR',str(OUTPUTS/'ui_cache')))
@@ -31,10 +32,11 @@ def attach_reports(r,d):
     r['router_log']=tail_text(d/'router.log');return r
 
 def is_v5(d):
-    r=load(d/'run.json');return r.get('engine_type')=='PYTHON_SCRIPT_ENGINE' and r.get('router_version')=='v5'
+    r=load(d/'run.json');return r.get('engine_type')=='PYTHON_SCRIPT_ENGINE' and r.get('router_version') in ('v5','v5_trace')
 
 def store(key):
     d=selected(key);case=key.split('/')[0];reference=catalog().get(case,{}).get('reference')
+    if load(d/'run.json').get('router_version')=='v5_trace':return V5TraceStore(d,CACHE,reference)
     return V5Store(d,CACHE,reference) if is_v5(d) else Store(d/'result.json',CACHE,reference)
 def load(path):return load_record(path)
 def runs():
@@ -110,6 +112,7 @@ class Handler(BaseHTTPRequestHandler):
                 if u.path=='/api/instances':return self.send(s.instances(query))
             if u.path=='/api/run':return self.send(run_data(get('id')))
             if u.path=='/api/trace':
+                if load(selected(get('id'))/'run.json').get('router_version')=='v5_trace':return self.send(store(get('id')).trace(get('net'),get('after') or 0,get('limit') or 1000))
                 if is_v5(selected(get('id'))):return self.send({'events':[],'requires_net':False,'available':False,'reason':'V5 existing files contain Guide and summary logs, no per-net Route / MST / A* Trace.'})
                 p=selected(get('id'))/'trace.jsonl';scope=get('net')
                 large=p.exists() and p.stat().st_size>4*1024*1024

@@ -113,5 +113,5 @@ def estimate_paths(net, layers, limit=4000):
             end=[access[0],cy] if horizontal else [cx,access[1]]
             accesses.append({'terminal':p['terminal'],'rect':p['name'],'layer':layer,'point':access,'provenance':'PIN_GUIDE_INTERSECTION_ESTIMATE'})
             if len(segments)<limit: segments.append({'a':access,'b':end,'layer':layer,'guide_index':index})
-    return {'segments':segments,'access_candidates':accesses, 'truncated':processed<len(net.get('guides',[])) or checks>200000 or len(accesses)>=limit,
+    return {'segments':segments,'access_candidates':accesses,'provenance':'GUIDE_ESTIMATED', 'truncated':processed<len(net.get('guides',[])) or checks>200000 or len(accesses)>=limit,
             'label':'推导路径 / 非 Router 真实 A*', 'scope':'仅同层 Guide 内示意；未推断 Via、TSV、跨层连接或完整连通性'}

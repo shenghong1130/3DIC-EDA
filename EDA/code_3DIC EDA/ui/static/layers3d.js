@@ -127,18 +127,22 @@ window.LayerView3D = class LayerView3D {
         if(s.tsvs&&!s.reference)for(const n of s.active.values())if(s.allowed.has(n.net)&&(s.selected==='all'||n.net===s.selected)&&n.cross_die){
             for(const edge of n.edges||[]){const a=node(edge[0]),b=node(edge[1]);if(a&&b&&Math.min(a.layer,b.layer)===10&&Math.max(a.layer,b.layer)===11)addEdge(edge,n.net);}
             // Explicit Guide-selection metadata, never inserted into actual edges.
-            if(d.capabilities?.guide_tsv)for(const marker of n.tsv_markers||[]){
+            if(d.capabilities?.guide_tsv&&!n.trace_tsv_edges?.length)for(const marker of n.tsv_markers||[]){
                 const [la,lb]=marker.layers,av=visible(la),bv=visible(lb);if(!av&&!bv)continue;
                 const a=point(marker.x,marker.y,la),b=point(marker.x,marker.y,lb);
                 const item={a,b,layers:[la,lb],net:n.net,kind:'guide_tsv',box:marker.box};
                 if(av&&bv)scene.tsvs.push(item);else scene.caps.push({...item,p:av?a:b,layer:av?la:lb});
                 if(n.net===s.selected){if(av)scene.focus.push(a);if(bv)scene.focus.push(b);}
             }
-            if(d.capabilities?.guide_tsv&&!n.tsv_markers?.length)for(const box of n.tsv_candidates||[])for(const l of [10,11])if(visible(l)){
+            if(d.capabilities?.guide_tsv&&!n.trace_tsv_edges?.length&&!n.tsv_markers?.length)for(const box of n.tsv_candidates||[])for(const l of [10,11])if(visible(l)){
                 scene.guides.push({corners:[point(box[0],box[1],l),point(box[2],box[1],l),point(box[2],box[3],l),point(box[0],box[3],l)],net:n.net,g:[...box,l],kind:'tsv_candidate',layers:[l],color:'#e18b17'});
             }
         }
         if(showPaths&&s.ghost&&(s.selected==='all'||s.ghost.net===s.selected)&&s.allowed.has(s.ghost.net))for(const edge of s.ghost.edges||[])addEdge(edge,s.ghost.net,true);
+        if(s.replay){
+            const e=s.replay,a=e.a||e.parent,b=e.b||e.node;
+            if(b&&visible(b[2]))scene.estimates.push({a:point(...(a||b)),b:point(...b),layers:[b[2]],net:e.net,kind:'INTERMEDIATE_ONLY',color:'#b348bb'});
+        }
         return scene;
     }
     view(p) {
@@ -162,7 +166,7 @@ window.LayerView3D = class LayerView3D {
     render(s,fit=false) {
         this.state=s;
         this.selection=s.selected;
-        const signature=[s.data,s.pins,s.active,s.allowed,s.index,s.selected,s.tier,s.layer,s.paths,s.overviewPaths,s.tsvs,s.guides,s.grid,s.reference,s.ghost,s.showPins,s.estimatedPaths,s.pinRects,this.spacing,this.onlyNetPins];
+        const signature=[s.data,s.pins,s.active,s.allowed,s.index,s.selected,s.tier,s.layer,s.paths,s.overviewPaths,s.tsvs,s.guides,s.grid,s.reference,s.ghost,s.replay,s.showPins,s.estimatedPaths,s.pinRects,this.spacing,this.onlyNetPins];
         if(!this.signature||signature.some((v,i)=>v!==this.signature[i])){this.scene=this.makeScene(s);this.signature=signature;}
         if(fit)this.fitSelection();
         const canvas=this.canvas,r=canvas.getBoundingClientRect(),w=r.width,h=r.height;
@@ -196,7 +200,7 @@ window.LayerView3D = class LayerView3D {
                 if(item.kind==='tsv'||item.kind==='guide_tsv')for(const p of [item.pa,item.pb]){ctx.fillStyle=color||'#d58218';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
             }
         };
-        ctx.setLineDash([5,3]);drawLinks(scene.estimates,'#078a88',2);ctx.setLineDash([]);
+        ctx.setLineDash([5,3]);drawLinks(scene.estimates,null,2);ctx.setLineDash([]);
         drawLinks(scene.paths,null,2);drawLinks(scene.vias,'#65788e',2.7);drawLinks(scene.tsvs,'#e18b17',4.5);drawLinks(scene.ghost,null,3);
         for(const cap of scene.caps){const p=project(cap.p);ctx.fillStyle=cap.ghost?cap.color:cap.kind.includes('tsv')?'#e18b17':'#65788e';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);this.projectedLinks.push({...cap,pa:p,pb:p});}
         const groups=new Map(),focused=[];this.projectedPins=[];

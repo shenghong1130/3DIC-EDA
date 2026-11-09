@@ -38,6 +38,8 @@ function netColor(name){if(!S.colors.has(name))S.colors.set(name,'hsl('+(hash(na
 function layerVisible(l,tier){return (tier==='bottom'?l>=1&&l<=10:l>=11&&l<=20)&&($('layer').value==='all'||+$('layer').value===l);}
 function tierVisible(tier){return $('tier').value==='both'||$('tier').value===tier;}
 function guideOnly(){return S.data?.capabilities?.route_edges===false;}
+function traceRun(){return S.data?.source==='v5_trace';}
+function hasGuideEstimates(){return guideOnly()||!!S.data?.capabilities?.guide_estimates;}
 function layerLegend(){return guideOnly()&&$('guides').checked?S.data.layers.filter(l=>tierVisible(l.number<=10?'bottom':'top')&&layerVisible(l.number,l.number<=10?'bottom':'top')).map(l=>'<span><i style="background:hsl('+((l.number*47)%360)+',55%,43%)"></i>M'+l.number+'</span>').join(''):'';}
 function reference(){return S.data?.source==='official_reference_guide';}
 async function init(){try{
@@ -97,7 +99,7 @@ async function load(){
         else{if(!await buildIndex(id))return;S.active=new Map(data.nets.map(n=>[n.net,n]));setNets(false);setLoadStatus('完整结果已加载。');}
         installTrace(S.fullTrace);
         $('subtitle').textContent=$('case').value+' / '+(ref?'官方参考 Guide':data.run.label)+' · '+fmt(data.metrics.nets,0)+' Nets · '+(data.x_lines.length-1)+' × '+(data.y_lines.length-1)+' GCells'+(data.indexed?' · 按需加载':'');
-        $('estimatedPaths').disabled=ref||!guideOnly();$('paths').title=guideOnly()?'N/A · 已有阶段文件未记录真实 Route / A*':'';$('paths').disabled=ref||guideOnly();$('overviewPaths').disabled=ref||guideOnly();$('tsvs').disabled=ref;
+        $('estimatedPaths').disabled=ref||!hasGuideEstimates();$('paths').title=guideOnly()?'N/A · 已有阶段文件未记录真实 Route / A*':'';$('paths').disabled=ref||guideOnly();$('overviewPaths').disabled=ref||guideOnly();$('tsvs').disabled=ref;
         metrics();details();reports();if(S.view==='raw')await raw();
     }catch(e){if(id===S.loadId&&e.name!=='AbortError'){clearData();error(e);$('badge').textContent='LOAD FAILED';$('badge').classList.add('fail');$('subtitle').textContent='所选 Case / Run 加载失败；旧数据已清空。';}}
     finally{if(id===S.loadId){S.loading=false;draw();}}
@@ -160,6 +162,7 @@ function metrics(){const m=S.data.metrics;const rows=[['Net 总数',m.nets,'实�
 function reports(){const d=S.data;$('logs').textContent=d.router_log;$('warnings').textContent=JSON.stringify({source:d.source,inputs:d.run.inputs,warnings:d.warnings,trace_truncated:d.trace_truncated},null,2);ScoringUI.load(d);}
 function compare(){ScoringUI.load(S.data);}
 function node(id){
+    if(typeof id==='string')return S.explicitNodes?.get(id)||null;
     if(!S.data||!Number.isSafeInteger(id)||id<0)return null;
     const d=S.data,nx=d.x_lines.length-1,ny=d.y_lines.length-1,gx=id%nx,gy=Math.floor(id/nx)%ny,l=Math.floor(id/(nx*ny));
     if(!d.layers.some(layer=>layer.number===l))return null;
@@ -241,7 +244,7 @@ function render3D(){
     viewer.configure({spacing:+$('spacing3d').value/100,labels:$('labels3d').checked,onlyNetPins:$('onlyNetPins3d').checked});
     const stats=viewer.render({data:S.data,pins:filteredPins(),active:S.active,allowed:S.allowed,nets:visibleNets(),selected:S.selected,index:S.index,
         tier:$('tier').value,layer:$('layer').value,paths:$('paths').checked&&!guideOnly(),overviewPaths:$('overviewPaths').checked,
-        estimatedPaths:$('estimatedPaths').checked&&guideOnly()&&!reference(),pinRects:$('pinRects').checked,tsvs:$('tsvs').checked,guides:$('guides').checked,grid:$('grid').checked,showPins:$('pins').checked,reference:reference(),ghost:S.ghost,node,cellAt,color:netColor},S.fit3d);
+        estimatedPaths:$('estimatedPaths').checked&&hasGuideEstimates()&&!reference(),pinRects:$('pinRects').checked,tsvs:$('tsvs').checked,guides:$('guides').checked,grid:$('grid').checked,showPins:$('pins').checked,reference:reference(),ghost:S.ghost,replay:traceRun()&&S.index>=0?S.traceReplay:null,node,cellAt,color:netColor},S.fit3d);
     S.fit3d=false;
     $('overview').classList.toggle('active',S.selected==='all');$('focus').classList.toggle('active',S.selected!=='all');
     $('focus').disabled=S.selected==='all';$('fitNet').disabled=S.selected==='all';$('onlyNetPins3d').disabled=S.selected==='all';
@@ -253,7 +256,7 @@ function render3D(){
     }
     const items=[['layer3d-key','金属层示意平面'],['pin-key','Pin · 同 Net 同色'],['route-key','真实同层路径'],['via-key','普通 Via · 相邻层'],['tsv-key',guideOnly()?'Guide 解析 TSV · M10 ↔ M11':'TSV · M10 ↔ M11'],['guide-key','Guide 区域']];
     if(guideOnly()){items.splice(2,3,...(reference()?[]:[['tsv-key','Guide 解析 TSV · 中心示意']]));}
-    if($('estimatedPaths').checked&&guideOnly()&&!reference())items.push(['estimate-key','推导路径 / 非 Router 真实 A*']);
+    if($('estimatedPaths').checked&&hasGuideEstimates()&&!reference())items.push(['estimate-key','GUIDE_ESTIMATED · 推导虚线 / 非 Router 真实 A*']);
     if($('pinRects').checked)items.push(['pinrect-key','Pin 原始 RECT · 圆点为几何中心']);
     if(viewer.scene?.ghost.length)items.push([S.ghost.remove?'removed-key':'added-key',S.ghost.remove?'本步移除边':'本步新增边']);
     $('legend').innerHTML=items.map(([c,t])=>'<span><i class="'+c+'"></i>'+esc(t)+'</span>').join('')+layerLegend();
@@ -305,7 +308,7 @@ function legend(learn){
         if(S.inspect?.kind==='pin'&&!guideOnly())items.push(['mapping-key','Pin → Node 抽象映射辅助线']);
         if(S.ghost&&$('paths').checked&&(S.selected!=='all'||$('overviewPaths').checked))items.push([S.ghost.remove?'removed-key':'added-key',S.ghost.remove?'本步移除边':'本步新增边']);
     }
-    if(S.dimension==='2d'&&$('estimatedPaths').checked&&guideOnly()&&!reference())items.push(['estimate-key','推导路径 / 非 Router 真实 A*']);
+    if(S.dimension==='2d'&&$('estimatedPaths').checked&&hasGuideEstimates()&&!reference())items.push(['estimate-key','GUIDE_ESTIMATED · 推导虚线 / 非 Router 真实 A*']);
     if(S.dimension==='2d'&&$('pinRects').checked)items.push(['pinrect-key','Pin 原始 RECT · 圆点为几何中心']);
     $('legend').innerHTML=items.map(([c,t])=>'<span><i class="'+c+'"></i>'+esc(t)+'</span>').join('')+layerLegend();
 }
@@ -361,7 +364,7 @@ function drawPanel(tier,ns,learn){
             if($('guides').checked)for(const g of n.guides||[])if(layerVisible(g[4],tier)){
                 const layerColor=guideOnly()?'hsl('+((g[4]*47)%360)+',55%,43%)':color;ctx.globalAlpha=guideOnly()?.065:.10;rect(g,layerColor,null);ctx.globalAlpha=guideOnly()?.5:.35;ctx.setLineDash(guideOnly()&&g[4]%2?[3,2]:[]);rect(g,null,layerColor,guideOnly()?.8:.7);ctx.setLineDash([]);ctx.globalAlpha=1;canvas._guides.push({kind:'guide',net:n.net,g});
             }
-            if($('estimatedPaths').checked&&guideOnly()&&!reference())for(const e of n.estimated_paths?.segments||[])if(layerVisible(e.layer,tier)){if(line({x:e.a[0],y:e.a[1]},{x:e.b[0],y:e.b[1]},'#078a88',1.8,[5,3]))canvas._edges.push({kind:'estimate',net:n.net,a:xy(...e.a),b:xy(...e.b),layers:[e.layer],g:n.guides[e.guide_index]});}
+            if($('estimatedPaths').checked&&hasGuideEstimates()&&!reference())for(const e of n.estimated_paths?.segments||[])if(layerVisible(e.layer,tier)){if(line({x:e.a[0],y:e.a[1]},{x:e.b[0],y:e.b[1]},'#078a88',1.8,[5,3]))canvas._edges.push({kind:'estimate',net:n.net,a:xy(...e.a),b:xy(...e.b),layers:[e.layer],g:n.guides[e.guide_index]});}
             if(showPaths)for(const edge of n.edges||[])drawEdge(Object.assign([...edge],{_net:n.net}),color,focused?2.3:1);
         }
         if($('mst').checked&&!reference()&&focused)for(const topo of learn.topologies)if(topo.tier===tier){
@@ -387,6 +390,16 @@ function drawPanel(tier,ns,learn){
             const other=n.tsv_node+nx*ny;canvas._edges.push({kind:'tsv',net:n.net,edge:[n.tsv_node,other],a:[x,y],b:[x,y],layers:[tier==='bottom'?10:11]});
         }
         if(showPaths&&S.ghost&&(S.selected==='all'||S.ghost.net===S.selected))for(const edge of S.ghost.edges||[])drawEdge(Object.assign([...edge],{_net:S.ghost.net}),S.ghost.remove?'#d95062':'#12a178',2.8);
+        if(traceRun()&&$('tsvs').checked)for(const n of ns)for(const edge of n.trace_tsv_edges||[]){
+            const a=node(edge[0]),b=node(edge[1]);if(!a||!b||!layerVisible(tier==='bottom'?10:11,tier))continue;
+            const[x,y]=xy(a.x,a.y);ctx.strokeStyle='#d58218';ctx.fillStyle='#fff5da';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,5.2,0,2*Math.PI);ctx.fill();ctx.stroke();
+            canvas._edges.push({kind:'tsv',net:n.net,edge,a:[x,y],b:[x,y],layers:[a.l,b.l]});
+        }
+        if(traceRun()&&S.index>=0&&S.traceReplay){
+            const e=S.traceReplay,a=e.a||e.parent,b=e.b||e.node;
+            if(a&&b&&a[2]===b[2]&&layerVisible(b[2],tier))line({x:a[0],y:a[1]},{x:b[0],y:b[1]},'#b348bb',3,[3,3]);
+            if(b&&layerVisible(b[2],tier)){const[x,y]=xy(b[0],b[1]);ctx.fillStyle='#b348bb';ctx.beginPath();ctx.arc(x,y,4,0,2*Math.PI);ctx.fill();}
+        }
     }
     if(S.view==='routing'&&$('pinRects').checked&&focused)for(const n of ns)for(const p of n.pins||[])if(p.box&&layerVisible(p.layer,tier)){rect(p.box,'#aa40ba20','#aa40ba',1.5);canvas._guides.push({kind:'pin_rect',net:n.net,g:[...p.box,p.layer],pin:{p,net:n.net}});}
     const lo=canvas._world(0,h),hi=canvas._world(w,0),pins=queryPins([lo[0],lo[1],hi[0],hi[1]],tier);
@@ -431,6 +444,7 @@ function details(){
     if(!S.data)return;
     const n=S.netMap.get(S.selected);$('nettitle').textContent=n?n.net:'全部网络';
     $('netdetail').innerHTML=n?table(['属性','实际值'],[[guideOnly()?'独立 Pin / RECT 块':'引脚',guideOnly()?(n.terminal_count+' / '+n.pins.length):n.pins.length],...(guideOnly()?[['推导路径','仅同层示意 / 非 Router 真实 A*'],['TSV 位置状态',n.tsv_position_status||'N/A'],['TSV 合法性','未验证；解析位置不代表合法'],['TSV 候选 RECT',JSON.stringify(n.tsv_candidates||[])],['TSV 无法确定原因',n.tsv_selection_error||'—']]:[]),['类型',n.cross_die?'跨 Die':'Die 内'],['Guide 矩形',n.guides.length],['最终真实路径边',guideOnly()?'N/A':n.edges.length],[guideOnly()?'Via / Guide 解析 TSV':'Via / TSV',fmt(n.via_count)+' / '+fmt(n.tsv_count)],['图边长度 (DBU)',fmt(n.wirelength_dbu_local)],['状态',n.status]]):'<p class="small">总览显示全量端子分布。点击 Pin / 路径或搜索任意 Net 后聚焦；网络下拉分页不限制 Pin 数据。</p>';
+    if(traceRun()&&n)$('netdetail').innerHTML+=table(['路径来源','记录值'],[['最终核验',n.path_provenance],['生成来源',(n.path_origins||[]).join(' / ')],['Candidate ID',n.trace_candidate_id],['Guide SHA256',n.trace_guide_sha256],['说明',n.path_reason],['推导虚线','GUIDE_ESTIMATED · 独立开关']]);
     $('iterations').innerHTML=table(['轮次','本地 Overflow','接受','重布 Net'],(S.data.iterations||[]).map(i=>[i.iteration,i.overflow_local,i.iteration===0?'初始':i.accepted?'是':'否，已回滚',i.rerouted_nets??'—']));
 }
 function sameRoute(a,b){return a&&b&&a.tsv_node===b.tsv_node&&a.edges?.length===b.edges?.length&&a.edges.every((e,i)=>e[0]===b.edges[i][0]&&e[1]===b.edges[i][1]);}
@@ -458,6 +472,7 @@ function learning(){
 }
 function processPanel(learn){
     const n=S.netMap.get(S.selected);
+    if(traceRun()){$('process').innerHTML='<p class="small">'+esc(n?.path_provenance||'请选择 Net')+' · '+esc((n?.path_origins||[]).join(' / '))+'</p><p class="small">'+esc(n?.path_reason||'按 Net 查询真实路径记录。')+'</p><p class="small">回放仅显示已记录事件；候选标记 INTERMEDIATE_ONLY，不作为最终路径。只有记录了 search_expanded / search_relaxed 才有搜索扩展回放。</p>';return;}
     if(guideOnly()){$('process').innerHTML='<p class="small">V5：原始 Guide 已保存。真实 Route / A* 搜索 / MST / Trace 未记录，为 N/A；推导示意线不补充这些过程数据。TSV 仅按原始 Guide 规则解析。</p>';return;}
     if(!n){$('process').innerHTML='<p class="small">选择一个 Net，沿真实事件观察连接拓扑与实际路径。</p>';return;}
     const counts={};for(const e of learn.events)counts[e.event]=(counts[e.event]||0)+1;
@@ -473,6 +488,8 @@ function processPanel(learn){
     $('process').innerHTML=cards.map(([en,cn,status])=>'<div class="process-step"><small>'+esc(en)+'</small><strong>'+esc(cn)+'</strong><p>'+esc(status)+'</p></div>').join('');
 }
 function installTrace(events){
+    S.traceReplay=null;
+    S.traceNext=null;
     S.trace=events;S.traceByNet=new Map();S.traceVersion=(S.traceVersion||0)+1;S.learningKey=null;S.index=-1;S.ghost=null;S.pending=new Map();
     for(let i=0;i<events.length;i++){const e=events[i];if(e.net){if(!S.traceByNet.has(e.net))S.traceByNet.set(e.net,[]);S.traceByNet.get(e.net).push({event:e,index:i});}}
     $('timeline').max=Math.max(0,events.length-1);$('timeline').value=0;$('timeline').disabled=!events.length;
@@ -490,11 +507,29 @@ async function scopedTrace(){
         const tr=await api('/api/trace?id='+encodeURIComponent(run)+(selected==='all'?'':'&net='+encodeURIComponent(selected)));
         if(request!==S.traceRequest||S.data!==data||S.selected!==selected)return;
         installTrace(tr.events);
+        if(traceRun()){
+            S.traceNext=tr.next_after;
+            $('eventdetail').textContent=(tr.search_recorded?'已记录的搜索事件 / ':'仅已记录路径和候选事件 / ')+'INTERMEDIATE_ONLY · '+tr.events.length+' 条'+(tr.next_after?' · 已分页，可载入下一批':'');
+        }
     }else installTrace(selected==='all'?S.fullTrace:S.fullTrace.filter(e=>!e.net||e.net===selected));
     draw();
 }
+async function nextTraceEvent(){
+    stop();
+    if(traceRun()&&S.index===S.trace.length-1&&S.traceNext){
+        const selected=S.selected,data=S.data;
+        const tr=await api('/api/trace?'+new URLSearchParams({id:$('run').value,net:selected,after:S.traceNext,limit:1000}));
+        if(S.data!==data||S.selected!==selected)return;
+        installTrace(tr.events);S.traceNext=tr.next_after;
+    }
+    seek(S.index+1);
+}
 function applyEvent(e){
     S.ghost=null;
+    if(traceRun()){
+        S.active=new Map(S.data.nets.map(n=>[n.net,n]));S.pending=new Map();
+        S.traceReplay=e;return;
+    }
     if(e.event==='net_selected'){S.pending.set(e.net,[]);}
     else if(e.event==='net_added'){S.active.set(e.net,e);S.pending.delete(e.net);S.ghost={net:e.net,edges:e.edges,remove:false};}
     else if(e.event==='net_removed'){const old=S.active.get(e.net);S.ghost={net:e.net,edges:old?.edges,remove:true};S.active.delete(e.net);S.pending.delete(e.net);}
@@ -609,7 +644,7 @@ document.querySelectorAll('[data-camera3d]').forEach(button=>button.onclick=()=>
 $('spacing3d').oninput=()=>{$('spacing3dValue').textContent=(+$('spacing3d').value/100).toFixed(2)+'×';draw();};
 for(const id of ['labels3d','onlyNetPins3d'])$(id).onchange=draw;
 $('fit').onclick=fit;$('fitNet').onclick=fitNet;$('overview').onclick=()=>selectNet('all',{autoFit:false});$('focus').onclick=fitNet;
-$('scorer').onchange=compare;$('compare').onchange=compare;$('prev').onclick=()=>{stop();seek(S.index<0?S.trace.length-1:S.index-1);};$('next').onclick=()=>{stop();seek(S.index+1);};$('play').onclick=play;
+$('scorer').onchange=compare;$('compare').onchange=compare;$('prev').onclick=()=>{stop();seek(S.index<0?S.trace.length-1:S.index-1);};$('next').onclick=()=>nextTraceEvent().catch(error);$('play').onclick=play;
 $('speed').onchange=()=>{if(S.playing){stop();play();}};$('timeline').oninput=()=>{stop();seek(+$('timeline').value);};$('final').onclick=finalResult;
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=async()=>{setDimension('2d');S.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));if(S.view==='raw')await raw();draw();});
 new ResizeObserver(draw).observe($('layers3dPanel'));
