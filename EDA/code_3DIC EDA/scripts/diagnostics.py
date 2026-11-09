@@ -87,14 +87,79 @@ def windows_memory():
         return {'physical_available_bytes':info.PhysicalAvailable*info.PageSize,'commit_total_bytes':info.CommitTotal*info.PageSize,'commit_limit_bytes':info.CommitLimit*info.PageSize,'commit_available_bytes':(info.CommitLimit-info.CommitTotal)*info.PageSize}
     except (OSError,AttributeError):return {}
 
+
+def _windows_process_tree(pid):
+    """Read-only Win32 queries; no WMI subprocess per sampling interval."""
+    import ctypes
+    from ctypes import wintypes as w
+    kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+    class Entry(ctypes.Structure):
+        _fields_=[('dwSize',w.DWORD),('cntUsage',w.DWORD),('pid',w.DWORD),('heap',ctypes.c_size_t),('module',w.DWORD),('threads',w.DWORD),('parent',w.DWORD),('priority',w.LONG),('flags',w.DWORD),('exe',w.WCHAR*260)]
+    class Memory(ctypes.Structure):
+        _fields_=[('cb',w.DWORD),('faults',w.DWORD)]+[(n,ctypes.c_size_t) for n in ('peak','rss','qpp','qp','qnp','qn','pf','ppf')]
+    kernel.CreateToolhelp32Snapshot.restype=w.HANDLE
+    kernel.OpenProcess.restype=w.HANDLE
+    kernel.OpenProcess.argtypes=[w.DWORD,w.BOOL,w.DWORD]
+    kernel.CloseHandle.argtypes=[w.HANDLE]
+    kernel.Process32FirstW.argtypes=[w.HANDLE,ctypes.POINTER(Entry)]
+    kernel.Process32NextW.argtypes=[w.HANDLE,ctypes.POINTER(Entry)]
+    kernel.GetProcessTimes.argtypes=[w.HANDLE,*([ctypes.POINTER(w.FILETIME)]*4)]
+    kernel.GetExitCodeProcess.argtypes=[w.HANDLE,ctypes.POINTER(w.DWORD)]
+    memory_info=ctypes.WinDLL('psapi',use_last_error=True).GetProcessMemoryInfo
+    memory_info.argtypes=[w.HANDLE,ctypes.POINTER(Memory),w.DWORD]
+    handle=kernel.CreateToolhelp32Snapshot(2,0)
+    if handle==ctypes.c_void_p(-1).value:raise ctypes.WinError(ctypes.get_last_error())
+    parents={};entry=Entry();entry.dwSize=ctypes.sizeof(entry)
+    try:
+        ok=kernel.Process32FirstW(handle,ctypes.byref(entry))
+        while ok:
+            parents.setdefault(entry.parent,[]).append(entry.pid)
+            ok=kernel.Process32NextW(handle,ctypes.byref(entry))
+    finally:kernel.CloseHandle(handle)
+    pending=[pid];seen=set();times={};total=0;valid=0;root={}
+    def ticks(value):return (value.dwHighDateTime<<32)|value.dwLowDateTime
+    while pending and len(seen)<256:
+        child=pending.pop()
+        if child in seen:continue
+        seen.add(child);pending.extend(parents.get(child,[]))
+        handle=kernel.OpenProcess(0x410,False,child) or kernel.OpenProcess(0x1000,False,child)
+        if not handle:continue
+        try:
+            created,exited,user,system=(w.FILETIME() for _ in range(4))
+            if kernel.GetProcessTimes(handle,ctypes.byref(created),ctypes.byref(exited),ctypes.byref(system),ctypes.byref(user)):
+                times[child]=(ticks(created),(ticks(system)+ticks(user))/1e7)
+            mem=Memory();mem.cb=ctypes.sizeof(mem)
+            if memory_info(handle,ctypes.byref(mem),mem.cb):
+                total+=mem.rss;valid+=1
+                if child==pid:root.update(rss_bytes=mem.rss,process_peak_rss_bytes=mem.peak)
+            if child==pid:
+                code=w.DWORD()
+                if kernel.GetExitCodeProcess(handle,ctypes.byref(code)):root['process_state']='ALIVE' if code.value==259 else 'EXITED'
+        finally:kernel.CloseHandle(handle)
+    return dict(root,tree_rss_bytes=total if valid else None,tree_pids=';'.join(map(str,sorted(seen)))),times
+
+
+def process_metrics(pid):
+    """Optional process-tree metrics for Trace; failure never signals a process."""
+    if os.name=='nt':return _windows_process_tree(pid)
+    tree=process_tree_memory(pid);times={};rate=os.sysconf('SC_CLK_TCK')
+    for child in map(int,tree['tree_pids'].split(';')):
+        try:
+            fields=Path('/proc',str(child),'stat').read_text().rsplit(')',1)[1].split()
+            times[child]=(fields[19],(int(fields[11])+int(fields[12]))/rate)
+        except (OSError,ValueError,IndexError):pass
+    return {k:tree[k] for k in ('tree_rss_bytes','tree_pids')},times
+
 class ResourceMonitor:
-    def __init__(self,path,pid,role='router'):
+    def __init__(self,path,pid,role='router',process_metrics_enabled=False):
         self.pid=pid;self.role=role;self.start=time.monotonic();self.directory=cgroup_dir(pid) if sys.platform.startswith('linux') else None
         self.initial=cgroup_snapshot(self.directory);self.last={};self.peak=None;self.tree_peak=None
+        self.process_metrics_enabled=process_metrics_enabled;self.cpu_previous={};self.cpu_time=None
+        self.fields=RESOURCE_FIELDS+(['cpu_percent','cpu_scope','process_metrics_error'] if process_metrics_enabled else [])
         self.file=Path(path).open('x',encoding='utf8',newline='')
-        self.writer=csv.DictWriter(self.file,fieldnames=RESOURCE_FIELDS);self.writer.writeheader();self.file.flush()
+        self.writer=csv.DictWriter(self.file,fieldnames=self.fields);self.writer.writeheader();self.file.flush()
     def sample(self):
-        row={key:None for key in RESOURCE_FIELDS}
+        row={key:None for key in self.fields}
         row.update(timestamp_utc=utc(),elapsed_seconds=time.monotonic()-self.start,pid=self.pid,source='proc_'+self.role+'_pid' if sys.platform.startswith('linux') else 'linux_metrics_unsupported_on_host')
         if sys.platform.startswith('linux'):
             status=_numbers(Path('/proc',str(self.pid),'status'));mem=_numbers('/proc/meminfo')
@@ -108,6 +173,18 @@ class ResourceMonitor:
                 tree=process_tree_memory(self.pid);row.update({k:tree[k] for k in ('tree_rss_bytes','tree_pids')})
                 if tree['tree_rss_bytes'] is not None:self.tree_peak=max(self.tree_peak or 0,tree['tree_rss_bytes'])
                 row['tree_sampled_peak_rss_bytes']=self.tree_peak
+        if self.process_metrics_enabled:
+            try:
+                metrics,times=process_metrics(self.pid);now=time.monotonic();row.update(metrics)
+                if self.cpu_time is not None and now>self.cpu_time:
+                    pairs=[(value,self.cpu_previous[p]) for p,value in times.items() if p in self.cpu_previous and value[0]==self.cpu_previous[p][0]]
+                    if pairs:row['cpu_percent']=100*sum(max(0,a[1]-b[1]) for a,b in pairs)/(now-self.cpu_time)
+                self.cpu_previous=times;self.cpu_time=now
+                row['cpu_scope']='sampled live process tree; one core=100%; exited-between-samples CPU unavailable'
+                if os.name=='nt':row['source']='win32_process_tree'
+                if row.get('tree_rss_bytes') is not None:self.tree_peak=max(self.tree_peak or 0,row['tree_rss_bytes'])
+                row['tree_sampled_peak_rss_bytes']=self.tree_peak
+            except Exception as error:row['process_metrics_error']=repr(error)
         peak=row['process_peak_rss_bytes']
         if peak is not None:self.peak=max(self.peak or 0,peak)
         self.writer.writerow({k:('N/A' if v is None else v) for k,v in row.items()});self.file.flush();self.last=row
@@ -155,11 +232,12 @@ def classify(result,progress,supervisor,run_id,backend,success):
 
 class HostMonitor:
     """Runs in the launching Python process. Never starts WSL probes."""
-    def __init__(self,directory,interval=5,stall_after=30,lease_seconds=60,role='router'):
+    def __init__(self,directory,interval=5,stall_after=30,lease_seconds=60,role='router',observer=None,append=False,start_time=None,initial_state='LAUNCHING'):
         self.directory=Path(directory);self.interval=interval;self.stall_after=stall_after;self.role=role
-        self.start=time.monotonic();self.next=0;self.pid=None;self.errors=[];self.native_resources=None
-        self.file=(self.directory/'host_monitor.jsonl').open('x',encoding='utf8',newline='\n')
-        self.tick('LAUNCHING',force=True)
+        self.observer=observer
+        self.start=time.monotonic() if start_time is None else start_time;self.next=0;self.pid=None;self.errors=[];self.native_resources=None
+        self.file=(self.directory/'host_monitor.jsonl').open('a' if append else 'x',encoding='utf8',newline='\n')
+        self.tick(initial_state,force=True)
     def _error(self,e):
         if len(self.errors)<10:self.errors.append(str(e))
     def tick(self,state,force=False,returncode=None):
@@ -179,10 +257,17 @@ class HostMonitor:
                 item.update(process_role='evaluator',activity_source='evaluator.log mtime; may be buffered',
                             evaluator_liveness='UNKNOWN_TO_HOST; log activity is not proof of forward progress')
                 if item['progress_status']=='WAITING_FOR_ROUTER':item['progress_status']='WAITING_FOR_EVALUATOR'
+            if self.observer:
+                if self.native_resources:self.native_resources.sample()
+                try:item.update(self.observer.snapshot(state,self.pid))
+                except Exception as error:
+                    self._error(error);item.update(stage='PROGRESS_UNKNOWN',progress_status='PROGRESS_UNKNOWN',observation_error=repr(error))
             self.file.write(json.dumps(item,ensure_ascii=False)+'\n');self.file.flush()
             atomic_json(self.directory/'host_heartbeat.json',{'timestamp_utc':utc(),'elapsed_seconds':elapsed})
-            if self.native_resources:self.native_resources.sample()
-            print('[HOST] elapsed=%.1fs subprocess=%s last_progress=%s status=%s'%(elapsed,state,'N/A' if age is None else '%.1fs ago'%age,item['progress_status']),flush=True)
+            if self.native_resources and not self.observer:self.native_resources.sample()
+            if self.observer:
+                print('[HOST] elapsed=%.1fs subprocess=%s %s'%(elapsed,state,self.observer.format(item)),flush=True)
+            else:print('[HOST] elapsed=%.1fs subprocess=%s last_progress=%s status=%s'%(elapsed,state,'N/A' if age is None else '%.1fs ago'%age,item['progress_status']),flush=True)
         except OSError as e:self._error(e)
     def cancel(self,reason):
         try:atomic_json(self.directory/'host_cancel.json',{'reason':reason,'timestamp_utc':utc()})

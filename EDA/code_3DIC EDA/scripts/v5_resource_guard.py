@@ -82,6 +82,7 @@ def main():
     import resource
     p=argparse.ArgumentParser();p.add_argument('--directory',type=Path,required=True);p.add_argument('--run-id',required=True)
     p.add_argument('--interval',type=float,default=2);p.add_argument('--lease-seconds',type=float,default=120)
+    p.add_argument('--process-metrics',action='store_true',help='Observe descendant CPU/RSS; no change to safety thresholds')
     p.add_argument('command',nargs=argparse.REMAINDER);a=p.parse_args();cmd=a.command[1:] if a.command[:1]==['--'] else a.command
     if not cmd:p.error('Missing command')
     # Adopt orphaned nested sessions so cancellation also reaps original stage children.
@@ -96,7 +97,8 @@ def main():
     try:
         proc=subprocess.Popen(cmd,start_new_session=True);record['router_pid']=proc.pid;record['supervisor_pid']=os.getpid()
         atomic_json(a.directory/'router_process.json',record)
-        monitor=ResourceMonitor(a.directory/'resource_monitor.csv',proc.pid,role='evaluator')
+        options={'process_metrics_enabled':True} if a.process_metrics else {}
+        monitor=ResourceMonitor(a.directory/'resource_monitor.csv',proc.pid,role='evaluator',**options)
         next_sample=0
         while True:
             known.update(descendants(os.getpid()));known.pop(os.getpid(),None)

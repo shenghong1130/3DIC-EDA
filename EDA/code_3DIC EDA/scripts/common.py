@@ -158,12 +158,14 @@ def backend_command(args,backend,cwd=None,time_file=None,env=None,timeout=None):
     if time_file and os.name!='nt':args=['/usr/bin/time','-v','-o',str(time_file),*args]
     if timeout and os.name!='nt':args=['timeout','--signal=TERM','--kill-after=5s',str(timeout)+'s',*args]
     return list(map(str,args))
-def timed_process(args,log,timeout,cwd=None,env=None,monitor_dir=None,monitor_interval=5,stall_after=30,native_resources=False,process_role='router'):
+def timed_process(args,log,timeout,cwd=None,env=None,monitor_dir=None,monitor_interval=5,stall_after=30,native_resources=False,process_role='router',monitor_observer=None,process_metrics_enabled=False):
     log=Path(log);log.parent.mkdir(parents=True,exist_ok=True)
     start=time.perf_counter();status='FINISHED';code=None;proc=None;monitor=None;monitor_errors=[];forced=False
     if monitor_dir is not None:
         from diagnostics import HostMonitor,ResourceMonitor
-        try:monitor=HostMonitor(monitor_dir,monitor_interval,stall_after,role=process_role)
+        try:
+            options={'observer':monitor_observer} if monitor_observer is not None else {}
+            monitor=HostMonitor(monitor_dir,monitor_interval,stall_after,role=process_role,**options)
         except OSError as e:monitor_errors.append(str(e))
     # Preserve raw bytes, including mixed UTF-8/UTF-16LE WSL diagnostics.
     with log.open('ab' if monitor_dir is not None else 'wb') as out:
@@ -172,7 +174,9 @@ def timed_process(args,log,timeout,cwd=None,env=None,monitor_dir=None,monitor_in
             if monitor:
                 monitor.pid=proc.pid
                 if native_resources:
-                    try:monitor.native_resources=ResourceMonitor(Path(monitor_dir)/'resource_monitor.csv',proc.pid)
+                    try:
+                        options={'process_metrics_enabled':True} if process_metrics_enabled else {}
+                        monitor.native_resources=ResourceMonitor(Path(monitor_dir)/'resource_monitor.csv',proc.pid,**options)
                     except OSError as e:monitor_errors.append(str(e))
                 monitor.tick('RUNNING',force=True)
             try:
