@@ -2,11 +2,11 @@
 // Offline orthographic 3D projection. Z is schematic, never a process thickness.
 // Receives the existing UI's filtered data; owns no routing or replay state.
 window.LayerView3D = class LayerView3D {
-    constructor(canvas, {requestDraw, pickPin, hover}) {
-        this.canvas=canvas;this.requestDraw=requestDraw;this.pickPin=pickPin;this.hover=hover;
+    constructor(canvas, {requestDraw, pickPin, pickObject, hover}) {
+        this.canvas=canvas;this.requestDraw=requestDraw;this.pickPin=pickPin;this.pickObject=pickObject;this.hover=hover;
         this.camera={yaw:-.62,elevation:.48,zoom:1,panX:0,panY:0,center:[0,0,0]};
         this.spacing=1;this.labels=true;this.onlyNetPins=false;this.signature=null;this.scene=null;
-        this.projectedPins=[];this.projectedLinks=[];this.drag=null;this.moved=false;
+        this.projectedPins=[];this.projectedLinks=[];this.projectedRects=[];this.projectedPlanes=[];this.drag=null;this.moved=false;
         canvas.addEventListener('contextmenu',e=>e.preventDefault());
         canvas.addEventListener('pointerdown',e=>{
             if(e.button!==0&&e.button!==1&&e.button!==2)return;
@@ -25,7 +25,7 @@ window.LayerView3D = class LayerView3D {
         canvas.addEventListener('pointerup',e=>{
             const click=this.drag&&!this.moved&&!this.drag.pan;this.drag=null;
             if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
-            if(click){const hit=this.hit(e);if(hit?.pin)this.pickPin(hit.pin);}
+            if(click){const hit=this.hit(e);if(hit?.pin)this.pickPin(hit.pin);else if(hit)this.pickObject?.({...hit,kind:hit.kind||'guide',g:hit.g||[...(hit.box||[]),hit.layers?.[0]]});}
         });
         canvas.addEventListener('pointercancel',()=>{this.drag=null;});
         canvas.addEventListener('pointerleave',()=>this.hideHover());
@@ -37,7 +37,7 @@ window.LayerView3D = class LayerView3D {
         this.camera={yaw,elevation,zoom:1,panX:0,panY:0,center:[0,0,0]};this.requestDraw();
     }
     clear() {
-        this.scene=null;this.signature=null;this.projectedPins=[];this.projectedLinks=[];this.hideHover();
+        this.scene=null;this.signature=null;this.projectedPins=[];this.projectedLinks=[];this.projectedRects=[];this.projectedPlanes=[];this.hideHover();
         this.canvas.getContext('2d').clearRect(0,0,this.canvas.width,this.canvas.height);
     }
     hideHover(){this.hover.hidden=true;}
@@ -69,7 +69,7 @@ window.LayerView3D = class LayerView3D {
             const n=s.node(id);if(!n)return null;
             const result={p:point(n.x,n.y,n.l),layer:n.l,id};nodes.set(id,result);return result;
         };
-        const scene={planes:[],pins:[],paths:[],vias:[],tsvs:[],caps:[],guides:[],ghost:[],focus:[],sourcePins:s.pins.length,invalidEdges:0,reference:s.reference};
+        const scene={planes:[],pins:[],pinRects:[],estimates:[],paths:[],vias:[],tsvs:[],caps:[],guides:[],ghost:[],focus:[],sourcePins:s.pins.length,invalidEdges:0,reference:s.reference};
         const plane=(l)=>({layer:l.number,name:'M'+l.number,color:l.number<=10?'#4776a7':'#bb8b51',corners:[point(x1,y1,l.number),point(x2,y1,l.number),point(x2,y2,l.number),point(x1,y2,l.number)],grid:[]});
         for(const l of d.layers)if(visible(l.number)){
             const plate=plane(l);
@@ -89,7 +89,7 @@ window.LayerView3D = class LayerView3D {
         const addEdge=(edge,net,ghost=false)=>{
             const a=node(edge[0]),b=node(edge[1]);if(!a||!b)return;
             const av=visible(a.layer),bv=visible(b.layer);if(!av&&!bv)return;
-            const item={a:a.p,b:b.p,layers:[a.layer,b.layer],net,color:ghost?(s.ghost.remove?'#d95062':'#12a178'):s.color(net),ghost};
+            const item={a:a.p,b:b.p,layers:[a.layer,b.layer],edge,net,color:ghost?(s.ghost.remove?'#d95062':'#12a178'):s.color(net),ghost};
             if(a.layer===b.layer){
                 if(!s.paths)return;
                 item.kind='route';(ghost?scene.ghost:scene.paths).push(item);
@@ -107,13 +107,20 @@ window.LayerView3D = class LayerView3D {
         const showPaths=s.paths&&(s.selected!=='all'||s.overviewPaths)&&!s.reference;
         // Path/Guide overview follows the existing 150-Net geometry budget.
         for(const n of s.nets){
+            for(const p of n.pins||[])if(p.box&&visible(p.layer)){
+                const b=p.box,corners=[point(b[0],b[1],p.layer),point(b[2],b[1],p.layer),point(b[2],b[3],p.layer),point(b[0],b[3],p.layer)];
+                if(n.net===s.selected)scene.focus.push(...corners);
+                if(s.pinRects)scene.pinRects.push({corners,pin:{p,net:n.net},layer:p.layer});
+            }
+            if(s.estimatedPaths)for(const e of n.estimated_paths?.segments||[])if(visible(e.layer))scene.estimates.push({a:point(...e.a,e.layer),b:point(...e.b,e.layer),layers:[e.layer],net:n.net,kind:'estimate',color:'#078a88',g:n.guides[e.guide_index]});
+            if(n.net===s.selected)for(const g of n.guides||[])if(visible(g[4]))scene.focus.push(point(g[0],g[1],g[4]),point(g[2],g[3],g[4]));
             if(showPaths)for(const edge of n.edges||[]){
                 const a=node(edge[0]),b=node(edge[1]);
                 if(a&&b&&!(Math.min(a.layer,b.layer)===10&&Math.max(a.layer,b.layer)===11))addEdge(edge,n.net);
             }
             if(s.guides)for(const g of n.guides||[])if(visible(g[4])){
                 const corners=[point(g[0],g[1],g[4]),point(g[2],g[1],g[4]),point(g[2],g[3],g[4]),point(g[0],g[3],g[4])];
-                scene.guides.push({corners,net:n.net,color:s.color(n.net)});if(n.net===s.selected)scene.focus.push(...corners);
+                scene.guides.push({corners,net:n.net,g,kind:'guide',layers:[g[4]],color:d.capabilities?.route_edges===false?'hsl('+((g[4]*47)%360)+',55%,43%)':s.color(n.net)});if(n.net===s.selected)scene.focus.push(...corners);
             }
         }
         // TSVs use actual accepted edges, independently of the path toggle.
@@ -126,6 +133,9 @@ window.LayerView3D = class LayerView3D {
                 const item={a,b,layers:[la,lb],net:n.net,kind:'guide_tsv',box:marker.box};
                 if(av&&bv)scene.tsvs.push(item);else scene.caps.push({...item,p:av?a:b,layer:av?la:lb});
                 if(n.net===s.selected){if(av)scene.focus.push(a);if(bv)scene.focus.push(b);}
+            }
+            if(d.capabilities?.guide_tsv&&!n.tsv_markers?.length)for(const box of n.tsv_candidates||[])for(const l of [10,11])if(visible(l)){
+                scene.guides.push({corners:[point(box[0],box[1],l),point(box[2],box[1],l),point(box[2],box[3],l),point(box[0],box[3],l)],net:n.net,g:[...box,l],kind:'tsv_candidate',layers:[l],color:'#e18b17'});
             }
         }
         if(showPaths&&s.ghost&&(s.selected==='all'||s.ghost.net===s.selected)&&s.allowed.has(s.ghost.net))for(const edge of s.ghost.edges||[])addEdge(edge,s.ghost.net,true);
@@ -150,8 +160,9 @@ window.LayerView3D = class LayerView3D {
     // Fit the default oblique stack, including the enlarged Die gap.
     base(w,h){return Math.max(10,Math.min((w-140)/2.9,(h-80)/(1.29+.085*this.spacing*23*Math.cos(.48))));}
     render(s,fit=false) {
+        this.state=s;
         this.selection=s.selected;
-        const signature=[s.data,s.pins,s.active,s.allowed,s.index,s.selected,s.tier,s.layer,s.paths,s.overviewPaths,s.tsvs,s.guides,s.grid,s.reference,s.ghost,s.showPins,this.spacing,this.onlyNetPins];
+        const signature=[s.data,s.pins,s.active,s.allowed,s.index,s.selected,s.tier,s.layer,s.paths,s.overviewPaths,s.tsvs,s.guides,s.grid,s.reference,s.ghost,s.showPins,s.estimatedPaths,s.pinRects,this.spacing,this.onlyNetPins];
         if(!this.signature||signature.some((v,i)=>v!==this.signature[i])){this.scene=this.makeScene(s);this.signature=signature;}
         if(fit)this.fitSelection();
         const canvas=this.canvas,r=canvas.getBoundingClientRect(),w=r.width,h=r.height;
@@ -168,11 +179,14 @@ window.LayerView3D = class LayerView3D {
         };
         const line=(a,b,color,width=1,alpha=1)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.globalAlpha=1;};
         const plates=[...scene.planes].sort((a,b)=>project(a.corners[0])[2]-project(b.corners[0])[2]);
+        this.projectedPlanes=plates.map(p=>({...p,screen:p.corners.map(project)}));
         for(const plate of plates){
             polygon(plate.corners,plate.color,null,.024);polygon(plate.corners,null,plate.color,.38);
             for(const [a,b] of plate.grid)line(project(a),project(b),plate.color,.5,.12);
         }
-        for(const guide of scene.guides)polygon(guide.corners,guide.color,guide.color,.15);
+        this.projectedRects=[];
+        for(const guide of scene.guides){polygon(guide.corners,guide.color,guide.color,.12);this.projectedRects.push({...guide,screen:guide.corners.map(project)});}
+        for(const rect of scene.pinRects){polygon(rect.corners,'#aa40ba','#aa40ba',.6);this.projectedRects.push({...rect,screen:rect.corners.map(project)});}
         this.projectedLinks=[];
         const drawLinks=(items,color,width)=>{
             const ordered=items.map(item=>({...item,pa:project(item.a),pb:project(item.b)})).sort((a,b)=>(a.pa[2]+a.pb[2])-(b.pa[2]+b.pb[2]));
@@ -182,8 +196,9 @@ window.LayerView3D = class LayerView3D {
                 if(item.kind==='tsv'||item.kind==='guide_tsv')for(const p of [item.pa,item.pb]){ctx.fillStyle=color||'#d58218';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
             }
         };
+        ctx.setLineDash([5,3]);drawLinks(scene.estimates,'#078a88',2);ctx.setLineDash([]);
         drawLinks(scene.paths,null,2);drawLinks(scene.vias,'#65788e',2.7);drawLinks(scene.tsvs,'#e18b17',4.5);drawLinks(scene.ghost,null,3);
-        for(const cap of scene.caps){const p=project(cap.p);ctx.fillStyle=cap.ghost?cap.color:cap.kind.includes('tsv')?'#e18b17':'#65788e';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);}
+        for(const cap of scene.caps){const p=project(cap.p);ctx.fillStyle=cap.ghost?cap.color:cap.kind.includes('tsv')?'#e18b17':'#65788e';ctx.fillRect(p[0]-2.5,p[1]-2.5,5,5);this.projectedLinks.push({...cap,pa:p,pb:p});}
         const groups=new Map(),focused=[];this.projectedPins=[];
         for(const item of scene.pins){
             const p=project(item.p);if(p[0]<0||p[0]>w||p[1]<0||p[1]>h)continue;
@@ -208,7 +223,7 @@ window.LayerView3D = class LayerView3D {
                 placed.push(p);ctx.fillStyle='#ffffffdd';ctx.fillRect(p[0]-4,p[1]-10,68,12);ctx.fillStyle=plate.color;ctx.fillText(plate.name+(plate.layer===1?' · Die 1':plate.layer===11?' · Die 2':''),p[0],p[1]);
             }
         }
-        this.stats={layers:scene.planes.length,pins:scene.pins.reduce((n,p)=>n+(p.pin.count||1),0),inView:this.projectedPins.reduce((n,p)=>n+(p.pin.count||1),0),points,clusters,paths:scene.paths.length,vias:scene.vias.length,tsvs:scene.tsvs.length,caps:scene.caps.length,guides:scene.guides.length,invalidEdges:scene.invalidEdges};
+        this.stats={layers:scene.planes.length,pins:scene.pins.reduce((n,p)=>n+(p.pin.count||1),0),inView:this.projectedPins.reduce((n,p)=>n+(p.pin.count||1),0),points,clusters,paths:scene.paths.length,vias:scene.vias.length,tsvs:scene.tsvs.length,caps:scene.caps.length,guides:scene.guides.filter(g=>g.kind==='guide').length,invalidEdges:scene.invalidEdges};
         return this.stats;
     }
     hit(event) {
@@ -220,11 +235,25 @@ window.LayerView3D = class LayerView3D {
             const item=this.projectedLinks[i],a=item.pa,b=item.pb,dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));
             if(Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)<5)return item;
         }
+        for(const item of [...(this.projectedRects||[])].reverse()){
+            let inside=false;const ps=item.screen;
+            for(let i=0,j=ps.length-1;i<ps.length;j=i++)if((ps[i][1]>y)!==(ps[j][1]>y)&&x<(ps[j][0]-ps[i][0])*(y-ps[i][1])/(ps[j][1]-ps[i][1])+ps[i][0])inside=!inside;
+            if(inside)return item;
+        }
+        if(this.state?.cellAt)for(const plane of [...this.projectedPlanes].reverse()){
+            const [a,b,,d]=plane.screen,ux=b[0]-a[0],uy=b[1]-a[1],vx=d[0]-a[0],vy=d[1]-a[1],det=ux*vy-uy*vx;
+            if(Math.abs(det)<1e-6)continue;
+            const u=((x-a[0])*vy-(y-a[1])*vx)/det,v=(ux*(y-a[1])-uy*(x-a[0]))/det;
+            if(u<0||u>1||v<0||v>1)continue;
+            const die=this.state.data.die,cell=this.state.cellAt(die[0]+u*(die[2]-die[0]),die[1]+v*(die[3]-die[1]),plane.layer<=10?'bottom':'top');
+            if(cell){cell.hitLayer=plane.layer;return cell;}
+        }
         return null;
     }
     inspect(event) {
         const hit=this.hit(event);this.hover.hidden=!hit;if(!hit)return;
+        if(hit.kind==='cell'){this.hover.textContent='GCell ('+hit.gx+', '+hit.gy+') · M'+hit.hitLayer+' · 边界 ['+hit.box.join(', ')+'] · 点击查询 Guide 覆盖 / 资源来源';return;}
         if(hit.pin?.cluster){this.hover.textContent='聚合 '+hit.pin.count+' 个 Pin · M'+hit.layer+' · 点击后分页读取真实端子';return;}
-        this.hover.textContent=hit.pin?'Pin '+hit.pin.p.name+' · '+hit.pin.net+' · M'+hit.layer+' · XY ('+hit.pin.p.x+', '+hit.pin.p.y+')':(hit.kind==='guide_tsv'?'Guide 解析 TSV（中心示意，非合法性结论）':hit.kind==='tsv'?'TSV 跨 Die':hit.kind==='via'?'普通 Via':'真实路径')+' · '+hit.net+' · '+hit.layers.map(l=>'M'+l).join(' ↔ ');
+        this.hover.textContent=hit.pin?'Pin '+hit.pin.p.name+' · '+hit.pin.net+' · M'+hit.layer+' · 几何中心 ('+hit.pin.p.x+', '+hit.pin.p.y+')'+(hit.pin.p.box?' · RECT ['+hit.pin.p.box.join(', ')+']':''):(hit.kind==='estimate'?'推导路径 / 非 Router 真实 A*':hit.kind==='guide'?'原始 Guide':hit.kind==='guide_tsv'?'Guide 解析 TSV（中心示意，非合法性结论）':hit.kind==='tsv_candidate'?'TSV 候选 / 未验证':hit.kind==='tsv'?'TSV 跨 Die':hit.kind==='via'?'普通 Via':'真实路径')+' · '+hit.net+' · '+hit.layers.map(l=>'M'+l).join(' ↔ ');
     }
 };

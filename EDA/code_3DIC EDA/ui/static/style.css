@@ -71,3 +71,5 @@
 .metric strong{overflow-wrap:anywhere}.metric:has(strong:not(:empty)){min-width:0}
 .text-metric strong{font-size:14px;letter-spacing:0;line-height:1.6}
 #comparetable{overflow-x:auto}#localmetrics{margin-top:15px;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+
+.estimate-key{border-top:2px dashed #078a88!important;background:none!important}.pinrect-key{border:2px solid #aa40ba!important;background:#aa40ba20!important}

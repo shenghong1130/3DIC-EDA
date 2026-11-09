@@ -110,6 +110,7 @@ class Handler(BaseHTTPRequestHandler):
                 if u.path=='/api/instances':return self.send(s.instances(query))
             if u.path=='/api/run':return self.send(run_data(get('id')))
             if u.path=='/api/trace':
+                if is_v5(selected(get('id'))):return self.send({'events':[],'requires_net':False,'available':False,'reason':'V5 existing files contain Guide and summary logs, no per-net Route / MST / A* Trace.'})
                 p=selected(get('id'))/'trace.jsonl';scope=get('net')
                 large=p.exists() and p.stat().st_size>4*1024*1024
                 if large and not scope:return self.send({'events':[],'requires_net':True})

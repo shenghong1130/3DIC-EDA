@@ -2,7 +2,7 @@
 // Adapter for large immutable results. Existing drawing/replay consumes only
 // the currently selected Net and bounded, explicitly labelled overview data.
 window.RemoteResult=class RemoteResult{
-    constructor(data,run,signal){this.data=data;this.run=run;this.signal=signal;this.total=0;this.background=[];this.pinKey='';this.netFilterKey='';this.filtered=0;this.tiles={};this.cells=new Map();this.pageRequest=0;this.viewRequest=0;this.wanted='';this.timer=0;this.geometryKey='';this.choices=null;}
+    constructor(data,run,signal){this.data=data;this.run=run;this.signal=signal;this.total=0;this.background=[];this.pinKey='';this.netFilterKey='';this.filtered=0;this.tiles={};this.cells=new Map();this.cellMetadata=new Map();this.pageRequest=0;this.viewRequest=0;this.wanted='';this.timer=0;this.geometryKey='';this.choices=null;}
     live(){return S.remote===this&&S.data===this.data&&!this.signal.aborted;}
     query(extra={}){return {id:this.run,version:this.data.version,source:this.data.source==='official_reference_guide'?'reference':'own',q:$('search').value,cross:$('crossOnly').checked?'1':'0',tier:$('tier').value,layer:$('layer').value,...extra};}
     url(name,extra={}){return '/api/'+name+'?'+new URLSearchParams(this.query(extra));}
@@ -41,7 +41,7 @@ window.RemoteResult=class RemoteResult{
         const[x1,y1,x2,y2]=die,scale=Math.min((r.width-48)/(x2-x1),(r.height-48)/(y2-y1))*S.zoom,cx=r.width/2+S.panX,cy=r.height/2+S.panY;
         return [Math.max(x1,-cx/scale+(x1+x2)/2),Math.max(y1,(cy-r.height)/scale+(y1+y2)/2),Math.min(x2,(r.width-cx)/scale+(x1+x2)/2),Math.min(y2,cy/scale+(y1+y2)/2)];
     }
-    key(){return JSON.stringify([this.query(),this.box().map(n=>Math.round(n)),S.selected,S.view,S.dimension,$('paths').checked,$('overviewPaths').checked,$('guides').checked,$('tsvs').checked,$('instances').checked]);}
+    key(){return JSON.stringify([this.query(),this.box().map(n=>Math.round(n)),S.selected,S.view,S.dimension,$('onlyNetPins').checked,$('paths').checked,$('overviewPaths').checked,$('guides').checked,$('tsvs').checked,$('instances').checked]);}
     schedule(){
         if(!this.live()||S.loading)return;const key=this.key();if(key===this.wanted)return;this.wanted=key;clearTimeout(this.timer);this.viewAbort?.abort();
         this.timer=setTimeout(()=>this.refresh(key).catch(e=>{if(this.live()&&e.name!=='AbortError'){error(e);this.wanted='';}}),140);
@@ -49,19 +49,19 @@ window.RemoteResult=class RemoteResult{
     async refresh(key){
         if(!this.live())return;const request=++this.viewRequest;this.viewAbort?.abort();this.viewAbort=new AbortController();const signal=AbortSignal.any([this.signal,this.viewAbort.signal]);this.wanted=key;
         const box=this.box(),extra={box:box.join(','),exclude:S.selected==='all'?'':S.selected};
-        const geometryKey=JSON.stringify([this.query(),S.selected,$('paths').checked,$('overviewPaths').checked,$('guides').checked,$('tsvs').checked]);
-        const pinKey=JSON.stringify(this.query(extra)),work=[pinKey===this.pinKey?Promise.resolve({items:this.background,total:this.filtered}):this.get('pins',extra,signal)];
+        const geometryKey=JSON.stringify([box,this.query(),S.selected,$('paths').checked,$('overviewPaths').checked,$('guides').checked,$('tsvs').checked]);
+        const pinKey=JSON.stringify([this.query(extra),$('onlyNetPins').checked]),work=[$('onlyNetPins').checked&&S.selected!=='all'?Promise.resolve({items:[],total:0}):pinKey===this.pinKey?Promise.resolve({items:this.background,total:this.filtered}):this.get('pins',extra,signal)];
         const tileTiers=S.dimension==='2d'&&['thermal','density','congestion'].includes(S.view)?($('tier').value==='both'?['bottom','top']:[$('tier').value]):[];
         for(const tier of tileTiers)work.push(this.get('tiles',{box:extra.box,tier,view:S.view},signal));
         const geometry=S.selected==='all'&&geometryKey!==this.geometryKey;
         setLoadStatus(S.view==='raw'&&!S.raw?'正在读取原始温度节点 / 构建抽样缓存…':'正在更新当前视口的 Pin 聚合与显示数据…');
-        if(geometry)work.push(($('guides').checked||$('paths').checked&&$('overviewPaths').checked||$('tsvs').checked)?this.get('geometry',{full:$('guides').checked||$('paths').checked&&$('overviewPaths').checked?'1':'0'},signal):Promise.resolve({nets:[]}));
+        if(geometry)work.push(($('guides').checked||$('paths').checked&&$('overviewPaths').checked||$('tsvs').checked)?this.get('geometry',{box:extra.box,full:$('guides').checked||$('paths').checked&&$('overviewPaths').checked?'1':'0'},signal):Promise.resolve({nets:[]}));
         if($('instances').checked&&S.dimension==='2d')work.push(this.get('instances',{box:extra.box},signal));
         const results=await Promise.all(work);if(!this.live()||request!==this.viewRequest||key!==this.wanted)return;
         const pins=results.shift();this.background=pins.items;this.pinKey=pinKey;this.filtered=pins.total;this.tiles={};for(const tier of tileTiers)this.tiles[tier]=results.shift();
-        if(geometry){const g=results.shift();S.data.nets=g.nets;S.netMap=new Map(g.nets.map(n=>[n.net,n]));S.active=new Map(g.nets.map(n=>[n.net,n]));this.geometryKey=geometryKey;}
+        if(geometry){const g=results.shift();S.data.nets=g.nets;S.netMap=new Map(g.nets.map(n=>[n.net,n]));S.active=new Map(g.nets.map(n=>[n.net,n]));this.geometryKey=geometryKey;this.geometryTruncated=g.truncated;}
         S.data.instances=$('instances').checked&&S.dimension==='2d'?results.shift().items:[];
-        this.installPins();setLoadStatus(S.view==='raw'&&!S.raw?'正在读取原始温度节点；首次构建抽样缓存…':'按需加载 · '+fmt(this.total,0)+' 个符合条件 Net · 当前视口 '+fmt(this.filtered,0)+' 个背景 Pin / '+fmt(this.background.length,0)+' 个显示点；总览几何上限 150 Net / 4 MiB。');draw();
+        this.installPins();setLoadStatus(S.view==='raw'&&!S.raw?'正在读取原始温度节点；首次构建抽样缓存…':'按需加载 · '+fmt(this.total,0)+' 个符合条件 Net · 当前视口 '+fmt(this.filtered,0)+' 个背景 Pin / '+fmt(this.background.length,0)+' 个显示点；总览几何上限 150 Net / 12000 RECT / 4 MiB。' +(this.geometryTruncated?'当前视口已截断；缩放或搜索 Net 查看。':'')+'');draw();
     }
     async cell(gx,gy){
         const key=gx+','+gy;if(this.cells.has(key))return this.cells.get(key);
@@ -73,7 +73,7 @@ window.RemoteResult=class RemoteResult{
     async readCell(gx,gy){
         const key=gx+','+gy;
         const r=await this.get('cell',{gx,gy});if(!this.live())return null;
-        this.cells.set(key,r.resources);if(this.cells.size>128)this.cells.delete(this.cells.keys().next().value);
+        this.cellMetadata.set(key,r);if(this.cellMetadata.size>128)this.cellMetadata.delete(this.cellMetadata.keys().next().value);this.cells.set(key,r.resources);if(this.cells.size>128)this.cells.delete(this.cells.keys().next().value);
         for(const row of r.resources)S.resourceMap.set(row[0],row);if(S.resourceMap.size>2560){S.resourceMap=new Map();for(const rows of this.cells.values())for(const row of rows)S.resourceMap.set(row[0],row);}
         return r.resources;
     }

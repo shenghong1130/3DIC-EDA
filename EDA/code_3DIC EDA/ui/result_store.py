@@ -7,12 +7,21 @@ Normal memory is proportional to one Net, never to the full result's Net array.
 from pathlib import Path
 import json,sqlite3,hashlib,threading,time,os,uuid,math,re
 from contextlib import contextmanager
+from cache_policy import trim_cache
 
-VERSION=3
+VERSION=4
 LARGE_BYTES=16*1024*1024
 _jobs={};_lock=threading.RLock();_import_slot=threading.Semaphore(1)
 _query_slot=threading.BoundedSemaphore(4)
 _thermal_slot=threading.Lock()
+
+def lower_index_priority():
+    if os.name=='nt':
+        import ctypes
+        kernel=ctypes.windll.kernel32
+        kernel.GetCurrentThread.restype=ctypes.c_void_p
+        kernel.SetThreadPriority.argtypes=[ctypes.c_void_p,ctypes.c_int]
+        kernel.SetThreadPriority(kernel.GetCurrentThread(),-1)
 
 def thermal_sample(path,cache):
     """Uniform deterministic stride sample, at most 10k original thermal nodes."""
@@ -133,10 +142,14 @@ class Store:
             job=_jobs.get(str(self.path))
             if retry and job and job['state']=='error':_jobs.pop(str(self.path));job=None
             if job is None:
+                for key in list(_jobs):
+                    if len(_jobs)<32:break
+                    if _jobs[key]['state']!='indexing':_jobs.pop(key)
                 job={'state':'indexing','phase':'queued','nets':0,'pins':0,'resources':0,'processed_bytes':0,'total_bytes':self.result.stat().st_size,'started':time.monotonic()};_jobs[str(self.path)]=job
                 threading.Thread(target=self._build,args=(job,),daemon=True).start()
             return {k:v for k,v in job.copy().items() if k!='started'}|{'elapsed_seconds':time.monotonic()-job['started'],'version':self.token}
     def _build(self,job):
+        lower_index_priority()
         temp=self.path.with_name(self.path.name+'.'+uuid.uuid4().hex+'.building');c=None;r=None
         try:
             with _import_slot:
@@ -145,14 +158,16 @@ class Store:
                 c.executescript('''
 CREATE TABLE meta(k TEXT PRIMARY KEY,v TEXT);
 CREATE TABLE nets(name TEXT PRIMARY KEY,ordinal INTEGER,cross_die INTEGER,pin_count INTEGER,off INTEGER,len INTEGER,tsv_a INTEGER,tsv_b INTEGER);
-CREATE TABLE pins(id INTEGER PRIMARY KEY,net TEXT,name TEXT,x REAL,y REAL,layer INTEGER,node INTEGER);
+CREATE TABLE pins(id INTEGER PRIMARY KEY,net TEXT,name TEXT,x REAL,y REAL,layer INTEGER,node INTEGER,geometry TEXT);
 CREATE VIRTUAL TABLE pin_space USING rtree(id,x1,x2,y1,y2);
+CREATE TABLE guides(id INTEGER PRIMARY KEY,net TEXT,layer INTEGER,x1 REAL,y1 REAL,x2 REAL,y2 REAL);
+CREATE VIRTUAL TABLE guide_space USING rtree(id,x1,x2,y1,y2);
 CREATE TABLE resources(id INTEGER PRIMARY KEY,cap REAL,usage REAL,fixed REAL,overflow REAL,gx INTEGER,gy INTEGER,layer INTEGER);
 CREATE TABLE grid(kind TEXT,idx INTEGER,value REAL,gx INTEGER,gy INTEGER,PRIMARY KEY(kind,idx));
 CREATE TABLE instances(name TEXT PRIMARY KEY,off INTEGER,len INTEGER,x1 REAL,y1 REAL,x2 REAL,y2 REAL,bottom INTEGER,top INTEGER);
 CREATE TABLE reference(name TEXT PRIMARY KEY,cross_die INTEGER,guide TEXT);
 ''')
-                r=Cursor(self.result);r.take('{');root={};pin_id=0;counts={};max_net=0
+                r=Cursor(self.result);r.take('{');root={};pin_id=0;guide_id=0;counts={};max_net=0
                 while r.char()!='}':
                     key,_,_=r.value();r.take(':');job['phase']=key
                     if key in ['nets','instances','resources','heat','thermal_node_counts','tsv_density']:
@@ -160,9 +175,11 @@ CREATE TABLE reference(name TEXT PRIMARY KEY,cross_die INTEGER,guide TEXT);
                         for value,off,length in r.array():
                             if key=='nets':
                                 n=value;candidate=[e for e in n.get('edges',[]) if n.get('cross_die') and min(e)==n.get('tsv_node')];edge=max(candidate,key=lambda e:abs(e[1]-e[0]),default=[None,None])
-                                c.execute('INSERT INTO nets VALUES(?,?,?,?,?,?,?,?)',(n['net'],count,int(n.get('cross_die',False)),len(n.get('pins',[])),off,length,min(edge) if edge[0] is not None else None,max(edge) if edge[0] is not None else None))
+                                c.execute('INSERT INTO nets VALUES(?,?,?,?,?,?,?,?)',(n['net'],count,int(n.get('cross_die',False)),n.get('terminal_count',len(n.get('pins',[]))),off,length,min(edge) if edge[0] is not None else None,max(edge) if edge[0] is not None else None))
                                 for p in n.get('pins',[]):
-                                    pin_id+=1;c.execute('INSERT INTO pins VALUES(?,?,?,?,?,?,?)',(pin_id,n['net'],p['name'],p['x'],p['y'],p['layer'],p.get('node')));c.execute('INSERT INTO pin_space VALUES(?,?,?,?,?)',(pin_id,p['x'],p['x'],p['y'],p['y']))
+                                    pin_id+=1;c.execute('INSERT INTO pins VALUES(?,?,?,?,?,?,?,?)',(pin_id,n['net'],p['name'],p['x'],p['y'],p['layer'],p.get('node'),json.dumps(p,separators=(',',':')) if p.get('box') else None));c.execute('INSERT INTO pin_space VALUES(?,?,?,?,?)',(pin_id,p['x'],p['x'],p['y'],p['y']))
+                                for g in n.get('guides',[]):
+                                    guide_id+=1;c.execute('INSERT INTO guides VALUES(?,?,?,?,?,?,?)',(guide_id,n['net'],g[4],*g[:4]));c.execute('INSERT INTO guide_space VALUES(?,?,?,?,?)',(guide_id,g[0],g[2],g[1],g[3]))
                                 max_net=max(max_net,length);job.update(nets=count+1,pins=pin_id)
                             elif key=='instances':
                                 b=value['box'];c.execute('INSERT INTO instances VALUES(?,?,?,?,?,?,?,?,?)',(value['name'],off,length,*b,int(1 in value['tiers']),int(2 in value['tiers'])))
@@ -185,7 +202,7 @@ CREATE TABLE reference(name TEXT PRIMARY KEY,cross_die INTEGER,guide TEXT);
                 # An interface marker is valid only when the original Net had
                 # this actual M10->M11 edge; tsv_node alone never creates one.
                 c.execute('UPDATE nets SET tsv_a=NULL,tsv_b=NULL WHERE tsv_b-tsv_a!=? OR tsv_a/?!=10',(nx*ny,nx*ny))
-                c.executescript('CREATE INDEX net_order ON nets(ordinal);CREATE INDEX net_cross ON nets(cross_die,ordinal);CREATE INDEX pin_net ON pins(net);CREATE INDEX resource_xy ON resources(gy,gx,layer);CREATE INDEX grid_xy ON grid(kind,gy,gx);')
+                c.executescript('CREATE INDEX net_order ON nets(ordinal);CREATE INDEX net_cross ON nets(cross_die,ordinal);CREATE INDEX pin_net ON pins(net);CREATE INDEX guide_net ON guides(net,layer);CREATE INDEX resource_xy ON resources(gy,gx,layer);CREATE INDEX grid_xy ON grid(kind,gy,gx);')
                 if self.reference:
                     job['phase']='reference Guide';name=None;guides=[]
                     with self.reference.open(encoding='utf8') as f:
@@ -202,6 +219,9 @@ CREATE TABLE reference(name TEXT PRIMARY KEY,cross_die INTEGER,guide TEXT);
                 c.commit();c.close();c=None;r.close();r=None
                 if self.signature!=[VERSION,fingerprint(self.result),fingerprint(self.reference) if self.reference else None]:raise ValueError('Result changed during indexing; retry loading')
                 os.replace(temp,self.path);job.update(state='ready',phase='ready',processed_bytes=job['total_bytes'])
+                try:trim_cache(self.path.parent,keep=[self.path,self.result])
+                except ValueError:
+                    self.path.unlink(missing_ok=True);raise
         except Exception as e:job.update(state='error',error=type(e).__name__+': '+str(e))
         finally:
             if c:c.close()
@@ -286,7 +306,7 @@ CREATE TABLE reference(name TEXT PRIMARY KEY,cross_die INTEGER,guide TEXT);
                     bx,by=row['bx'],row['by'];items.append({'cluster':True,'count':row['count'],'net':'','key':'cluster:'+str(row['layer'])+':'+str(bx)+':'+str(by),'p':{'x':row['x'],'y':row['y'],'layer':row['layer']},'box':[x1+bx*dx,y1+by*dy,x1+(bx+1)*dx,y1+(by+1)*dy]})
             return {'items':items,'total':total,'box':box,'bins':bins}
     @staticmethod
-    def pin_row(r):return {'key':r['id'],'net':r['net'],'cross':bool(r['cross_die']),'p':{'name':r['name'],'x':r['x'],'y':r['y'],'layer':r['layer'],'node':r['node']}}
+    def pin_row(r):return {'key':r['id'],'net':r['net'],'cross':bool(r['cross_die']),'p':json.loads(r['geometry']) if r['geometry'] else {'name':r['name'],'x':r['x'],'y':r['y'],'layer':r['layer'],'node':r['node']}}
     def cell(self,gx,gy):
         with self.db() as c:return {'resources':[[r['id'],r['cap'],r['usage'],r['fixed'],r['overflow']] for r in c.execute('SELECT * FROM resources WHERE gx=? AND gy=?',(gx,gy))]}
     def tiles(self,q):
