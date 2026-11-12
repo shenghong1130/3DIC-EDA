@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "slides": 15,
+  "native_charts": 5,
+  "native_tables": 4,
+  "selected_images": 7,
+  "original_notes_retained": true,
+  "chart_values_match_original": true,
+  "native_powerpoint_rendered": true,
+  "checked_text_boxes": 131,
+  "outputs": {
+    "3DIC比赛汇报_清华模板优化版.pptx": {
+      "bytes": 7175877,
+      "sha256": "720ae9ab1211a5a3c6b836f99cff0fa98f689eebbcd42fb7f464d76865378abe"
+    },
+    "3DIC比赛汇报_清华模板优化版.pdf": {
+      "bytes": 1931143,
+      "sha256": "42c2002dbd0252ad3e0e55b077d82feb14d846a0713a520a9997a8049f8d0829"
+    }
+  },
+  "sources": {
+    "3DIC比赛复盘_15页叙事版.pptx": {
+      "bytes": 98601,
+      "sha256": "39ccd1d5d9d9c4b149837e2ce8bd1a301204a3dd94dd24ab2b92ecf7f14efc65"
+    },
+    "清华大学2025年度演示文稿系列模板2-通用主题.pptx": {
+      "bytes": 39500779,
+      "sha256": "20ec6e6cb55e783aedaf5ca900eb1c977a2bb1554651b6bf0e26bddf5304faff"
+    }
+  }
+}

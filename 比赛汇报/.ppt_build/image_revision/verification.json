@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "modified_slides": [
+    7,
+    9,
+    10
+  ],
+  "unchanged_render_verified": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "original_notes_preserved": true,
+  "all_chart_and_workbook_parts_byte_identical": true,
+  "source_sha256": "720ae9ab1211a5a3c6b836f99cff0fa98f689eebbcd42fb7f464d76865378abe",
+  "slide_count": 15
+}

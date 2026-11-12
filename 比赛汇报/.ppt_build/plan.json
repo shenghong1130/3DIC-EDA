@@ -1,0 +1,1417 @@
+[
+  {
+    "title": "3DIC 布线优化与 Agent 能力复盘",
+    "source": 1,
+    "elements": [],
+    "notes": "本报告保留主要阶段，演讲者备注补充版本、提交ID和证据。制作与平台只读核验截至2026-11-11。公开质量成绩不能作为包含三个隐藏案例的最终成绩。\n本地证据：D:/3DEDA/work/official_submissions/deadline_monitor_20261107/post_deadline_verification.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "比赛任务与优化目标",
+    "source": 2,
+    "elements": [
+      {
+        "type": "text",
+        "text": "2026 EDA 精英挑战赛 · 赛题八",
+        "x": 40,
+        "y": 94,
+        "w": 460,
+        "h": 32,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "LEF / DEF / 热场输入\n在两个 Die 的金属层中连接网络\n输出每网分层矩形 GUIDE",
+        "x": 40,
+        "y": 144,
+        "w": 450,
+        "h": 112,
+        "size": 21,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "45%  线长\n30%  拥塞\n25%  热优化",
+        "x": 40,
+        "y": 282,
+        "w": 240,
+        "h": 120,
+        "size": 27,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "减少连接距离与资源溢出\n改善 TSV 与温升场的匹配\n合法性是接受候选的前提",
+        "x": 245,
+        "y": 288,
+        "w": 260,
+        "h": 112,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "image",
+        "id": 4,
+        "x": 535,
+        "y": 100,
+        "w": 365,
+        "h": 355,
+        "caption": "跨 Die 网络与 TSV 连接结构"
+      },
+      {
+        "type": "text",
+        "text": "全局布线尚未细化到轨道、线宽与制造 DRC。源码须独立运行，并适应隐藏案例。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "本题是全局布线，不等于详细布线。GUIDE是每网分层矩形，尚未细化到全部轨道、线宽和制造DRC。目标存在权衡，不能只追单个指标，也不能用本地分数替代官方结果。\n本地证据：D:/3DEDA/work/analysis/latest_rules_lock_20261107.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；4。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "Benchmark 与算法开发流程",
+    "source": 3,
+    "elements": [
+      {
+        "type": "text",
+        "text": "01 输入解析",
+        "x": 40,
+        "y": 100,
+        "w": 212,
+        "h": 33,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "LEF / DEF / 热场",
+        "x": 40,
+        "y": 141,
+        "w": 212,
+        "h": 52,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "02 初始布线",
+        "x": 262,
+        "y": 100,
+        "w": 212,
+        "h": 33,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "PIN / OBS 与网格",
+        "x": 262,
+        "y": 141,
+        "w": 212,
+        "h": 52,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "03 迭代优化",
+        "x": 484,
+        "y": 100,
+        "w": 212,
+        "h": 33,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "缩线、资源与热重接",
+        "x": 484,
+        "y": 141,
+        "w": 212,
+        "h": 52,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "04 验收冻结",
+        "x": 706,
+        "y": 100,
+        "w": 212,
+        "h": 33,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "回归、官方回执、哈希",
+        "x": 706,
+        "y": 141,
+        "w": 212,
+        "h": 52,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "工程层次",
+            "对应文件与职责"
+          ],
+          [
+            "解析与基线",
+            "design.py / grid_router.py"
+          ],
+          [
+            "优化模块",
+            "guarded_wire.py / tree_reattach.py"
+          ],
+          [
+            "独立测试",
+            "work/validation/"
+          ],
+          [
+            "证据与冻结",
+            "runs / official_submissions / final"
+          ]
+        ],
+        "x": 40,
+        "y": 220,
+        "w": 495,
+        "h": 240,
+        "widths": [
+          0.29,
+          0.71
+        ],
+        "size": 16
+      },
+      {
+        "type": "image",
+        "id": 1,
+        "x": 565,
+        "y": 232,
+        "w": 340,
+        "h": 164,
+        "caption": "公开输入中的双 Die PIN 分布"
+      },
+      {
+        "type": "text",
+        "text": "输入、算法、测试与官方证据分开保存\n哈希绑定版本，降低追踪混乱风险",
+        "x": 565,
+        "y": 413,
+        "w": 340,
+        "h": 58,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "最终冻结目录：work/final/20261106_v16_safe/；运行入口与依赖说明见备注。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "完整入口run.sh调用final_router.py，再调用baseline_v12/portable.py。work/candidates保存冻结候选，work/analysis保存实验编排与规则摘录，work/submission保存练习ZIP。源码运行只依赖Python标准库和bash。\n本地证据：D:/3DEDA/contest_router/README.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；1。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "本地评估模型与合法性边界",
+    "source": 4,
+    "elements": [
+      {
+        "type": "image",
+        "id": 11,
+        "x": 40,
+        "y": 130,
+        "w": 338,
+        "h": 306,
+        "caption": "GCell 网格与真实路径的叠加视图"
+      },
+      {
+        "type": "text",
+        "text": "几何合法性",
+        "x": 420,
+        "y": 106,
+        "w": 480,
+        "h": 30,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "实际 PIN 接入、全网连通、GCell 对齐、\n方向约束及 TSV 禁放区",
+        "x": 420,
+        "y": 141,
+        "w": 480,
+        "h": 53,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "线长代价",
+        "x": 420,
+        "y": 202,
+        "w": 480,
+        "h": 30,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "覆盖 GCell、普通层间连接及 TSV，\n早期参考分母采用树代理",
+        "x": 420,
+        "y": 237,
+        "w": 480,
+        "h": 53,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "资源与热代理",
+        "x": 420,
+        "y": 298,
+        "w": 480,
+        "h": 30,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "从轨道及 PIN/OBS 估计资源需求，\n计算溢出惩罚与 TSV 热相关性",
+        "x": 420,
+        "y": 333,
+        "w": 480,
+        "h": 53,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "比较与验收",
+        "x": 420,
+        "y": 394,
+        "w": 480,
+        "h": 30,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "固定输入和预算，冻结版本做对照，\n再通过官方成绩确认改善",
+        "x": 420,
+        "y": 429,
+        "w": 480,
+        "h": 53,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "LOCAL_PASS 仅代表本地模型检查通过；不等于官方合法性，也不等于详细布线 DRC。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "本地LOCAL_PASS不是官方合法性或详细布线DRC。local_quality.py是早期历史工具，含旧0.1拥塞因子，后期主要使用各优化模块的资源和热模型。FLUTE参考未完整复现，资源边界、TSV需求及热归一化仍有误差。旧Linux评分器后期停用。\n本地证据：D:/3DEDA/work/analysis/v21_generality_status_20261107.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；11。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "通用性 Benchmark 与输入覆盖",
+    "source": 5,
+    "elements": [
+      {
+        "type": "table",
+        "rows": [
+          [
+            "变化的输入条件",
+            "要检查的适应性"
+          ],
+          [
+            "PIN 位置与多个 RECT / PORT",
+            "不同引脚形状和接入方式"
+          ],
+          [
+            "旋转、ORIGIN 与布局偏移",
+            "坐标变换是否正确"
+          ],
+          [
+            "DBU 缩放与非均匀网格",
+            "单位和网格参数是否写死"
+          ],
+          [
+            "障碍、边界与稀疏轨道",
+            "越界、资源使用与 TSV 禁放"
+          ],
+          [
+            "高扇出、密集跨 Die 网络及不同热场",
+            "搜索稳定性与热点分布适应性"
+          ]
+        ],
+        "x": 40,
+        "y": 101,
+        "w": 875,
+        "h": 287,
+        "widths": [
+          0.46,
+          0.54
+        ],
+        "size": 18
+      },
+      {
+        "type": "text",
+        "text": "29 例 / 2,980 网",
+        "x": 40,
+        "y": 405,
+        "w": 400,
+        "h": 48,
+        "size": 30,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "其中 4 例 / 320 网在源码冻结后生成\n未用于调整该冻结候选的参数",
+        "x": 500,
+        "y": 405,
+        "w": 410,
+        "h": 59,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "一个用例仅由 OpenROAD GCD 连接拓扑派生。自建测试与解析热场不能替代官方隐藏案例。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "通过组合变化生成LEF、DEF与解析热场JSON，检查几何、输入处理和优化行为。OpenROAD GCD只是连接拓扑派生。29例由21例2404网、4例256网、冻结后4例320网组成。后4例没有用于该冻结候选调参，前面的已见回归不能称为盲测。自建用例不等于官方隐藏案例，解析热场也不是完整热仿真。\n本地证据：D:/3DEDA/work/validation/holdout_v4_v21/manifest.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "评估器更新与开发侧调整",
+    "source": 6,
+    "elements": [
+      {
+        "type": "table",
+        "rows": [
+          [
+            "阶段",
+            "规则或反馈变化",
+            "开发侧调整"
+          ],
+          [
+            "10 月规则确认",
+            "GCell 对齐、方向、实际 PIN 与连通性",
+            "v0.4 重建整格布线"
+          ],
+          [
+            "10 月下旬",
+            "TSV 禁放、轨道需求与拥塞惩罚变化",
+            "硬障碍检查，重查接口资源"
+          ],
+          [
+            "11 月 3 日",
+            "修复轨道间 PIN 错计到左侧 GCell",
+            "核对最新模型，停用旧评分器验收"
+          ],
+          [
+            "后期对照",
+            "旧结果在新口径下显著降分",
+            "同窗口提交当前版与候选比较"
+          ]
+        ],
+        "x": 40,
+        "y": 111,
+        "w": 875,
+        "h": 296,
+        "widths": [
+          0.18,
+          0.45,
+          0.37
+        ],
+        "size": 17
+      },
+      {
+        "type": "text",
+        "text": "评分规则变化要求重新校准模型和验收基线",
+        "x": 40,
+        "y": 433,
+        "w": 870,
+        "h": 38,
+        "size": 23,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "旧拥塞公式含 0.1 因子，新公式已移除。历史与当前成绩不能拼接为连续提分曲线。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "官方20261103更新包含对此前20261029/20261027修改的说明。10月20线长平台改为min(1,1/L)。后来平台拥塞公式去掉旧0.1因子，不能直接混比。权威以官方原件、Q&A和最新官方反馈为主，参赛者自制ZIP仅供诊断。\n本地证据：D:/3DEDA/work/analysis/scoring_update_20261103.txt\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "v0.1–v0.4：建立合规搜索空间",
+    "source": 7,
+    "elements": [
+      {
+        "type": "text",
+        "text": "v0.1–v0.2",
+        "x": 40,
+        "y": 99,
+        "w": 275,
+        "h": 34,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "初布线与热区 TSV 候选\n兼顾连接距离和热收益",
+        "x": 40,
+        "y": 141,
+        "w": 275,
+        "h": 61,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "v0.3",
+        "x": 335,
+        "y": 99,
+        "w": 275,
+        "h": 34,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "按可移除拥塞贡献选网\n比较层组合与 L/Z 型候选",
+        "x": 335,
+        "y": 141,
+        "w": 275,
+        "h": 61,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "v0.4",
+        "x": 630,
+        "y": 99,
+        "w": 275,
+        "h": 34,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "整格通道、格中心拐弯\n在 Die 边界截断",
+        "x": 630,
+        "y": 141,
+        "w": 275,
+        "h": 61,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "image",
+        "id": 2,
+        "x": 40,
+        "y": 219,
+        "w": 620,
+        "h": 253,
+        "caption": "单网在两个 Die 中的真实路径与 PIN 接入"
+      },
+      {
+        "type": "text",
+        "text": "关键修正",
+        "x": 690,
+        "y": 247,
+        "w": 220,
+        "h": 32,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "早期局部代理改善\n主要来自小例。\n\n旧窄矩形未覆盖\n后续确认的对齐规则，\n需重建有效基线。",
+        "x": 690,
+        "y": 289,
+        "w": 220,
+        "h": 175,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "早期仅有本地代理结果，不与后期官方成绩连接。图示说明结构，不代表版本前后对照。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "早期v0.2/v0.3仅有本地代理结果，不能与后期官方成绩串成提分曲线。refine.py负责选择性拆线重布，grid_router.py落实GCell规则。旧LOCAL_PASS不含后来确认的全部约束。\n本地证据：D:/3DEDA/contest_router/grid_optimization_report.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；2。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "v0.5：有界 A* 与协商重布",
+    "source": 8,
+    "elements": [
+      {
+        "type": "text",
+        "text": "早期 GUIDE 官方综合分",
+        "x": 40,
+        "y": 100,
+        "w": 510,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "chart",
+        "source": 8,
+        "x": 40,
+        "y": 141,
+        "w": 510,
+        "h": 275
+      },
+      {
+        "type": "text",
+        "text": "按拥塞贡献选择网络\n提高拥塞价格并协商重布\n部分网络采用有界三维 A*",
+        "x": 585,
+        "y": 105,
+        "w": 325,
+        "h": 107,
+        "size": 20,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "case003 总溢出",
+        "x": 585,
+        "y": 237,
+        "w": 320,
+        "h": 27,
+        "size": 18,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "160,445  降至  4,058",
+        "x": 585,
+        "y": 271,
+        "w": 325,
+        "h": 36,
+        "size": 24,
+        "bold": true,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "case005 总溢出",
+        "x": 585,
+        "y": 324,
+        "w": 320,
+        "h": 27,
+        "size": 18,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "576,141  降至  13,909",
+        "x": 585,
+        "y": 358,
+        "w": 325,
+        "h": 36,
+        "size": 24,
+        "bold": true,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "综合分提高 16.60 分，完整版三例合法",
+        "x": 40,
+        "y": 439,
+        "w": 870,
+        "h": 36,
+        "size": 23,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "平均线长分 67.06 降至 66.86，综合收益主要来自拥塞改善。该图仅比较同一早期阶段。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "官方提交18413=51.3033，18752=61.97，18820=67.8967。数据四舍五入为两位。v0.5按边际贡献选择网络并尝试更高拥塞价格，部分网络用有界三维A*。平均线长分67.06到66.86，综合收益主要来自拥塞。\n本地证据：D:/3DEDA/contest_router/v05_optimization_report.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "v0.6–v0.8：TSV 优化与合法性冲突",
+    "source": 9,
+    "elements": [
+      {
+        "type": "table",
+        "rows": [
+          [
+            "版本",
+            "官方反馈",
+            "方法与结论"
+          ],
+          [
+            "v0.6a",
+            "73.13，三例合法",
+            "保留有效基线"
+          ],
+          [
+            "v0.6b / c",
+            "合法性 0",
+            "多 TSV 候选暴露接口歧义"
+          ],
+          [
+            "v0.7",
+            "75.50，三例合法",
+            "冻结 M10/M11，优化其他层"
+          ],
+          [
+            "v0.8",
+            "0 分，三例失败",
+            "补充 PIN/OBS 的 TSV 硬禁放"
+          ]
+        ],
+        "x": 40,
+        "y": 113,
+        "w": 595,
+        "h": 275,
+        "widths": [
+          0.21,
+          0.3,
+          0.49
+        ],
+        "size": 16
+      },
+      {
+        "type": "image",
+        "id": 10,
+        "x": 670,
+        "y": 110,
+        "w": 235,
+        "h": 250,
+        "caption": "TSV 跨接 M10 与 M11"
+      },
+      {
+        "type": "text",
+        "text": "独立源码流程必须\n显式检查接口硬约束",
+        "x": 670,
+        "y": 410,
+        "w": 240,
+        "h": 62,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "高分候选仍须通过合法性与可复现性验收",
+        "x": 40,
+        "y": 432,
+        "w": 595,
+        "h": 42,
+        "size": 21,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "75.50 为历史评分口径的 GUIDE 实验，不能与后期源码公开输出的 73.50 直接比较。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "20035=73.13，20098与20233合法性0，20616=75.50。v0.7依赖历史已通过GUIDE，run.sh仍为v0.5。v0.8用portable.py建立独立源码流程，但21058因TSV落点含PIN/OBS失败。tsv_obstacles.py补齐硬约束，旧75.99预测作废，并按用户要求停用旧Linux评分器。\n本地证据：D:/3DEDA/contest_router/README.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；10。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "v0.9–v0.14：共享树与资源模型修正",
+    "source": 10,
+    "elements": [
+      {
+        "type": "text",
+        "text": "v0.9–v0.11\n共享树搜索与输入热增益",
+        "x": 40,
+        "y": 101,
+        "w": 285,
+        "h": 65,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "v0.12\n接口资源修正、拥塞抬层",
+        "x": 40,
+        "y": 180,
+        "w": 285,
+        "h": 65,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "v0.13–v0.14\n逐格保护、暖区树重接",
+        "x": 345,
+        "y": 101,
+        "w": 285,
+        "h": 65,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "chart",
+        "source": 10,
+        "x": 40,
+        "y": 263,
+        "w": 520,
+        "h": 211
+      },
+      {
+        "type": "image",
+        "id": 9,
+        "x": 610,
+        "y": 176,
+        "w": 298,
+        "h": 286,
+        "caption": "共享路径、层间连接与 TSV 的空间关系"
+      },
+      {
+        "type": "text",
+        "text": "11 月新口径的公开三例 GUIDE 对照：62.32、70.40、70.97、71.94，均通过官方合法性。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "此图只展示11月新口径已确认GUIDE，不连接旧75.50。28829/28830=62.32，30230=70.40，30477=70.97，30729=71.94。此前v0.10官方49.39/52.63/52.49暴露新拥塞公式影响，v0.11.1按热收益和延伸距离排序并在循环内过滤障碍。源码单例35.77与GUIDE三例平均不能混用。\n本地证据：D:/3DEDA/contest_router/README.md\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；9。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "v0.15–v0.16：最终稳定策略",
+    "source": 11,
+    "elements": [
+      {
+        "type": "text",
+        "text": "后期源码对应公开输出的官方评分",
+        "x": 40,
+        "y": 100,
+        "w": 510,
+        "h": 31,
+        "size": 19,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "chart",
+        "source": 11,
+        "x": 40,
+        "y": 145,
+        "w": 495,
+        "h": 280
+      },
+      {
+        "type": "text",
+        "text": "PIN 邻域逃逸",
+        "x": 575,
+        "y": 100,
+        "w": 330,
+        "h": 29,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "改善拥塞区域的接入",
+        "x": 575,
+        "y": 134,
+        "w": 330,
+        "h": 44,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "按拥塞程度分配抬层预算",
+        "x": 575,
+        "y": 180,
+        "w": 330,
+        "h": 29,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "满足输入驱动门槛，允许线长增长 1%–8%",
+        "x": 575,
+        "y": 214,
+        "w": 330,
+        "h": 44,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "按规模分配共享树搜索",
+        "x": 575,
+        "y": 260,
+        "w": 330,
+        "h": 29,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "统一策略，适应不同网络规模",
+        "x": 575,
+        "y": 294,
+        "w": 330,
+        "h": 44,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "超时与合法检查点恢复",
+        "x": 575,
+        "y": 340,
+        "w": 330,
+        "h": 29,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "保留可恢复、可运行的合法候选",
+        "x": 575,
+        "y": 374,
+        "w": 330,
+        "h": 44,
+        "size": 17,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "三例输出均合法，最终选择 v0.16",
+        "x": 40,
+        "y": 443,
+        "w": 870,
+        "h": 35,
+        "size": 23,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "70.10、72.80、73.50 仅为对应源码生成的 GUIDE 公开评分，不是六例最终分或端到端计时。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "官方对照32398=70.10、33353=72.80、33484=73.50。它们是对应源码生成的GUIDE公开评分，不是Final六例评分，也不是源码端到端官方计时。抬层允许线长增长1%–8%，但须满足输入驱动门槛。\n本地证据：D:/3DEDA/work/final/20261106_v16_safe/public_quality_review.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "最终公开结果与 case005 短板",
+    "source": 12,
+    "elements": [
+      {
+        "type": "chart",
+        "source": 12,
+        "x": 40,
+        "y": 115,
+        "w": 610,
+        "h": 318
+      },
+      {
+        "type": "text",
+        "text": "公开三例平均",
+        "x": 690,
+        "y": 105,
+        "w": 220,
+        "h": 29,
+        "size": 19,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "73.50",
+        "x": 690,
+        "y": 145,
+        "w": 220,
+        "h": 62,
+        "size": 44,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "平均分项\n线长 72.09\n拥塞 95.36\n热项 49.80",
+        "x": 690,
+        "y": 231,
+        "w": 220,
+        "h": 126,
+        "size": 21,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "case005 热项仅 20.28\n继续降低溢出的收益有限",
+        "x": 690,
+        "y": 378,
+        "w": 225,
+        "h": 67,
+        "size": 18,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "综合分：case001 78.52    case003 77.45    case005 64.53",
+        "x": 40,
+        "y": 449,
+        "w": 870,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "分项均越高越好。热分是 TSV 与温升相关性代理，不代表实测降温；隐藏案例最终成绩未知。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "各分项越高越好。三例平均线长72.09、拥塞95.36、热49.80。case005拥塞接近满分但热仅20.28，继续只降低溢出的边际空间有限。热分是TSV与温升相关性代理，不是实测降温。\n本地证据：D:/3DEDA/work/official_submissions/submission_33484/downloads/scores.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "v0.17–v0.21：通用性测试与保守回退",
+    "source": 13,
+    "elements": [
+      {
+        "type": "text",
+        "text": "本地逐例对照（共 29 例）",
+        "x": 40,
+        "y": 104,
+        "w": 445,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "chart",
+        "source": 13,
+        "x": 40,
+        "y": 151,
+        "w": 445,
+        "h": 270
+      },
+      {
+        "type": "text",
+        "text": "后续探索",
+        "x": 535,
+        "y": 104,
+        "w": 375,
+        "h": 30,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "PIN 接入叶子裁剪\n层对搜索与暖区探索\n修正过孔及轨道计数",
+        "x": 535,
+        "y": 148,
+        "w": 375,
+        "h": 101,
+        "size": 21,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "29 例 / 2,980 网通过本地几何检查\n其中 2 例线长代价回退\n没有官方更优成绩",
+        "x": 535,
+        "y": 280,
+        "w": 375,
+        "h": 107,
+        "size": 20,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "未满足逐例不退化的替换门槛，保留 v0.16",
+        "x": 40,
+        "y": 446,
+        "w": 870,
+        "h": 35,
+        "size": 23,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "模型指标与本地几何检查不能证明官方更优或隐藏案例表现；冻结后的 4 例不参与候选调参。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "模型指标无退化不等于官方更优或隐藏案例保证。29例由21例2404网、4例256网、冻结后4例320网构成。严格门槛要求逐例线长、资源惩罚、热代理不退化。候选在两个已见回归用例上线长退化，所以未满足用户的保守替换要求。没有据此对冻结候选调参。\n本地证据：D:/3DEDA/work/runs/v21_generality_comparison/summary.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  },
+  {
+    "title": "Agent 的有效能力：诊断与实验执行",
+    "source": 14,
+    "elements": [
+      {
+        "type": "text",
+        "text": "读取并定位",
+        "x": 40,
+        "y": 103,
+        "w": 410,
+        "h": 31,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "规则、官方日志与逐格资源报告\n支持合法性及计数问题定位",
+        "x": 40,
+        "y": 142,
+        "w": 420,
+        "h": 60,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "提出并实现",
+        "x": 40,
+        "y": 205,
+        "w": 410,
+        "h": 31,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "共享树、协商重布、PIN 逃逸\n以及 TSV 重接等实验方法",
+        "x": 40,
+        "y": 244,
+        "w": 420,
+        "h": 60,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "执行与留证",
+        "x": 40,
+        "y": 307,
+        "w": 410,
+        "h": 31,
+        "size": 22,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "按已定义流程运行实验和对照\n冻结代码、输入哈希、隔离 ZIP 与回执",
+        "x": 40,
+        "y": 346,
+        "w": 420,
+        "h": 60,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "image",
+        "id": 12,
+        "x": 490,
+        "y": 112,
+        "w": 420,
+        "h": 285,
+        "caption": "可视化辅助检查跨层路径和 PIN 接入"
+      },
+      {
+        "type": "text",
+        "text": "实例：v0.5 官方分 51.30 至 67.90\nv0.8 禁放错误定位，v0.18 过孔计数审计",
+        "x": 490,
+        "y": 421,
+        "w": 425,
+        "h": 60,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "Agent 用于开发和实验决策，参赛程序本身不调用在线 LLM。自动化仍依赖明确门槛和工具反馈。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "具体证据包括v0.5官方51.30到67.90、v0.8禁放错误定位、v0.18过孔计数审计。这里的agent是开发环节的实验决策与工具使用，参赛程序本身不调用在线LLM。自动监控依赖明确门槛和独立进程，曾出现后台中断后恢复。\n本地证据：D:/3DEDA/work/official_submissions/deadline_monitor_20261107/events.jsonl\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。\n图像来源：用户本地 images 文件夹；12。用于结构解释，未声明截图与版本绑定或优化前后对应。Z 层距为示意，不代表工艺厚度。"
+  },
+  {
+    "title": "能力边界、最终决策与改进方向",
+    "source": 15,
+    "elements": [
+      {
+        "type": "text",
+        "text": "保留 Final 33584 / v0.16",
+        "x": 40,
+        "y": 104,
+        "w": 870,
+        "h": 39,
+        "size": 28,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "73.50",
+        "x": 40,
+        "y": 167,
+        "w": 320,
+        "h": 69,
+        "size": 48,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "公开三例输出平均分\n合法性 1",
+        "x": 40,
+        "y": 246,
+        "w": 350,
+        "h": 66,
+        "size": 21,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "六例最终成绩未知",
+        "x": 500,
+        "y": 179,
+        "w": 410,
+        "h": 44,
+        "size": 30,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "公开结果无法替代三个隐藏案例的反馈\n截至 2026-11-11 的状态以原 PPT 记录为准",
+        "x": 500,
+        "y": 244,
+        "w": 410,
+        "h": 64,
+        "size": 18,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "模型误差",
+        "x": 40,
+        "y": 343,
+        "w": 145,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "本地通过曾出现官方零分，必须保留外部验收",
+        "x": 200,
+        "y": 343,
+        "w": 705,
+        "h": 39,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "决策约束",
+        "x": 40,
+        "y": 390,
+        "w": 145,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "平均代理改善不足以替换，两例回退触发保守门槛",
+        "x": 200,
+        "y": 390,
+        "w": 705,
+        "h": 39,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "后续方向",
+        "x": 40,
+        "y": 437,
+        "w": 145,
+        "h": 30,
+        "size": 20,
+        "bold": true,
+        "color": "purple"
+      },
+      {
+        "type": "text",
+        "text": "针对 case005 的线长与热项优化，强化独立回归和版本绑定",
+        "x": 200,
+        "y": 437,
+        "w": 705,
+        "h": 39,
+        "size": 19,
+        "bold": false,
+        "color": "ink"
+      },
+      {
+        "type": "text",
+        "text": "Agent 可提高算法开发与实验效率，可靠结论仍需工具反馈、严格测试与版本管理支持。",
+        "x": 40,
+        "y": 487,
+        "w": 875,
+        "h": 31,
+        "size": 14,
+        "bold": false,
+        "color": "muted"
+      }
+    ],
+    "notes": "截止前没有候选的官方更优结果，且29例对照有两例线长退化，所以保留已验证版本。11月11日只读核验仍仅33584，后续五个练习提交仍Submitted。正式包work/final/20261106_v16_safe/eda260890.zip。学习结论是让agent承担可检查的诊断、实现和实验任务，同时用官方验收、版本证据和独立回归约束其判断。\n本地证据：D:/3DEDA/work/official_submissions/deadline_monitor_20261107/post_deadline_verification.json\n复盘制作：2026-11-11。官方结果、开发模型、历史状态分别标注。"
+  }
+]
